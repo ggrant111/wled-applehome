@@ -1,6 +1,6 @@
 # Phase 1 setup: one WLED device in Apple Home
 
-**Current state:** firmware candidate; hardware pairing/operation not yet verified.
+**Current state:** D1 Mini, CYD, and host-test builds passed [GitHub CI](https://github.com/ggrant111/wled-applehome/actions/runs/42427318407). Hardware pairing/operation not yet verified.
 
 ## Prerequisites
 
@@ -31,7 +31,7 @@ In the PlatformIO Serial Monitor at **115200 baud**:
 
 1. Type `?` for HomeSpan CLI help.
 2. Type `W` to configure Wi-Fi credentials using the CLI. Follow its prompts.
-3. Type `S` to set your own **unique eight-digit HomeKit pairing code**. Keep it private and record it somewhere safe. HomeSpan's documented default code is public and must not be kept for permanent use.
+3. Type `S <your-eight-digit-code>` (for example, `S 12345678`, but choose a unique private code) to set your own **unique eight-digit HomeKit pairing code**. Keep it private and record it somewhere safe. HomeSpan's documented default code is public and must not be kept for permanent use.
 4. Restart if prompted. Confirm the bridge has Wi-Fi. Do not place passwords or HomeKit codes in `platformio.ini`, source files, GitHub issues, or CI secrets.
 
 If serial provisioning is inconvenient, HomeSpan also offers a setup access point via its `A` CLI command; follow the HomeSpan official guide and disable the setup AP when finished.

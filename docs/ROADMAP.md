@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.1 / Phase 1 (in progress) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.1 / Phase 1 (CI passed; physical verification pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -23,15 +23,15 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 
 ## Phases
 
-### Phase 1 — v0.1: HomeKit + one WLED proof of concept — **IN PROGRESS**
+### Phase 1 — v0.1: HomeKit + one WLED proof of concept — **CODE COMPLETE / HARDWARE PENDING**
 
-- [ ] P1.1 PlatformIO firmware for ESP32 D1 Mini on Arduino-ESP32 3.3+ with HomeSpan 2.1.8.
-- [ ] P1.2 CYD ESP32-2432S028R board build, initially without display/touch drivers.
-- [ ] P1.3 One HomeKit *bridged* LightBulb, containing On and Brightness characteristics.
-- [ ] P1.4 WLED JSON API GET state and POST on/off/brightness, with status checks.
-- [ ] P1.5 Configure a WLED IPv4 address over serial CLI and persist it in ESP32 NVS.
-- [ ] P1.6 Poll WLED for external changes; notify HomeKit only on changes.
-- [ ] P1.7 GitHub Actions build both firmware configurations and run host-only checks.
+- [x] P1.1 PlatformIO firmware for ESP32 D1 Mini on Arduino-ESP32 3.3+ with HomeSpan 2.1.8.
+- [x] P1.2 CYD ESP32-2432S028R board build, initially without display/touch drivers.
+- [x] P1.3 One HomeKit *bridged* LightBulb, containing On and Brightness characteristics.
+- [x] P1.4 WLED JSON API GET state and POST on/off/brightness, with status checks.
+- [x] P1.5 Configure a WLED IPv4 address over serial CLI and persist it in ESP32 NVS.
+- [x] P1.6 Poll WLED for external changes; notify HomeKit only on changes.
+- [x] P1.7 GitHub Actions build both firmware configurations and run host-only checks.
 - [ ] P1.8 **Physical verification:** iPhone pairs with bridge; on/off and brightness control a real WLED device.
 - [ ] P1.9 **Physical verification:** power-cycle the ESP32 and verify the pairing remains.
 
@@ -91,9 +91,9 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 
 | Check | Status | Evidence |
 | --- | --- | --- |
-| Host-side logic checks | Pending | GitHub Actions |
-| D1 Mini PlatformIO build | Pending | GitHub Actions |
-| CYD PlatformIO build | Pending | GitHub Actions |
+| Host-side logic checks | Passed | [CI run 42427318407](https://github.com/ggrant111/wled-applehome/actions/runs/42427318407) |
+| D1 Mini PlatformIO build | Passed | [CI run 42427318407](https://github.com/ggrant111/wled-applehome/actions/runs/42427318407) |
+| CYD PlatformIO build | Passed | [CI run 42427318407](https://github.com/ggrant111/wled-applehome/actions/runs/42427318407) |
 | D1 Mini physical pairing / WLED actuation | Not tested | User hardware |
 | CYD physical pairing / WLED actuation | Not tested | User hardware |
 

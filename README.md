@@ -24,13 +24,13 @@
 - Boot-safe configuration, network timeouts, separate hardware build environments.
 - Automated native brightness math tests and firmware-build workflow.
 
-**No device has yet been physically paired or tested.** GitHub Actions builds need to complete before binary downloads are considered verified.
+**Build verified:** Both board firmware builds and the host brightness test passed [GitHub Actions CI](https://github.com/ggrant111/wled-applehome/actions/runs/42427318407). **No device has yet been physically paired or tested.**
 
 ### Quick start
 
 1. Install [PlatformIO](https://platformio.org/); confirm that your D1 Mini uses **ESP32**, not ESP8266.
 2. Plug it into USB and run `pio run -e d1_mini_esp32 -t upload` (or CYD: `-e cyd_2432s028r`).
-3. Open `pio device monitor -b 115200`. Use `W` to set Wi-Fi, `S` to set a **unique HomeKit code**, and `@w192.168.1.50` to set your WLED address (replace example IP).
+3. Open `pio device monitor -b 115200`. Use `W` to set Wi-Fi, `S <your-eight-digit-code>` to set a **unique HomeKit code**, and `@w192.168.1.50` to set your WLED address (replace example IP).
 4. Pair the **WLED Apple Home Bridge** from Apple Home → Add Accessory → More Options.
 5. Verify On, Brightness, and reflection of WLED changes.
 
