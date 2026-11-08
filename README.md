@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.4.0-dev — **Phase 4A code candidate** (hardware verification pending; see CI).
+**Current version:** v0.4.0-dev — **Phase 4A CI passed, hardware verification pending** ([CI run 42439628403](https://github.com/ggrant111/wled-applehome/actions/runs/42439628403)).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -21,7 +21,7 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 - v0.4: **Native HomeSpan OTA** (no browser uploader) with user-provisioned admin password and 60-second deferred firmware validation/rollback safety, plus binary-size CI guard.
 - Automated PlatformIO builds for D1 Mini/CYD and host-side brightness/registry policy tests.
 
-**Build verified:** v0.3 passed native tests, D1 Mini and CYD firmware builds ([CI run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722)). **Physical tests remain pending** for Phase 2 and Phase 3. **Not yet hardware-verified:** v0.2 discovery, 8-light operation, and paired Apple Home database refresh after adding/removing devices. No presets, web setup UI, or CYD touchscreen interface yet.
+**Build verified:** v0.3 passed native tests, D1 Mini and CYD firmware builds ([CI run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722)). **Physical tests remain pending** for Phases 2, 3 and 4. **Not yet hardware-verified:** v0.2 discovery, 8-light operation, and paired Apple Home database refresh after adding/removing devices. No presets, web setup UI, or CYD touchscreen interface yet.
 
 ## Phase 4A first-run setup
 
@@ -41,7 +41,7 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 4. Type `@d` to discover WLED, then `@a1` to add a discovered controller, or `@m192.168.1.50` to add directly by IP (use your IP).
 5. Type `R` to reboot and refresh the bridged accessories in Apple Home.
 
-**Flash budget:** CI now enforces at least 70KB spare in each 2,031,616-byte OTA app slot; keep future web/GUI additions size-conscious. Monitor size as the project grows.
+**Flash budget:** v0.4 full firmware.bin consumes **96.2%** of each 2,031,616-byte OTA app slot, leaving **~76KB**. CI enforces at least 70KB spare. Significant additional features will likely require optimizing firmware size or moving to larger-flash ESP32 hardware. Monitor size as the project grows.
 
 ## Project tracking
 

@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.4 / Phase 4A (firmware candidate; Phase 1–3 physical verification remains open) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.4 / Phase 4A (CI passed; physical verification for Phases 1–4 remains open) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -58,7 +58,7 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 - [ ] Hardware verify observation of WLED/GlowDeck/external state and selected preset changes on multiple lights; polling-based sync code is in place.
 - [ ] WebSocket-assisted live updates / fully nonblocking transport (deferred; 8s periodic polling retained as fallback).
 
-### Phase 4 — v0.4/1.0: Web setup, OTA, reliability and release — **IN PROGRESS; CODE CANDIDATE**
+### Phase 4 — v0.4/1.0: Web setup, OTA, reliability and release — **CI PASSED / HARDWARE VERIFICATION OPEN**
 
 - [x] **Code delivered:** Password-gated local web manager on port 8080 (device list, status, 8-light discovery/add/remove, preset selection, controls, diagnostics and reboot). **Network/hardware verification pending.**
 - [ ] Test real browser Digest login, CSRF protections, reconnection and Apple Home coexistence; optimize any WebServer-induced HomeKit latency.
@@ -139,10 +139,15 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 | v0.3 D1 Mini firmware, CYD firmware and host tests | **Passed** | [Phase 3 CI run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722) |
 | v0.3 preset control / switch-reset / state reconciliation | Pending hardware | [Phase 3 test plan](PHASE3_TEST_PLAN.md) |
 
+| v0.4 D1 Mini, CYD firmware builds + host/NVS migration tests | **Passed** | [CI run 42439628403](https://github.com/ggrant111/wled-applehome/actions/runs/42439628403) |
+| v0.4 authenticated portal / OTA recovery on physical hardware | **Not yet verified** | [Phase 4 test plan](PHASE4_TEST_PLAN.md) |
+
 ## Engineering risk / budget
 
 - **4MB OTA flash budget is tight.** v0.2 compiled binary uses ~1,733,463 bytes (85.3%) of each 2,031,616-byte app slot; approximately 298KB remains. Major additions (especially touchscreen/web assets) will need explicit size-budget tests, optimization, larger flash hardware, or an altered OTA strategy.
-- v0.3 builds use **1,758,847 bytes (86.6%)** on D1 Mini and **1,758,863 bytes (86.6%)** on CYD of the 2,031,616-byte OTA application slot. Approximately **273KB** remains per slot.
+- v0.3 linked flash use was **1,758,847 bytes (86.6%)** of 2,031,616 per OTA application slot.
+- **v0.4 linked flash:** D1 Mini **1,876,139 bytes (92.3%)**, CYD 1,876,155 (92.3%). **Full firmware.bin** (includes headers/padding): D1 Mini **1,955,232** bytes, CYD **1,955,248**; **96.2% OTA slot** and only **76,384 / 76,368 bytes spare** respectively. Do not plan significant more UI code on 4MB boards without moving to larger-flash hardware, compression, or optimizing flash use. CI requires at least 70KB spare.
+- **Important migration fix:** Empty WLED MAC and IP strings are valid on the v0.1 original light, but ESP32 Preferences::putString returns 0 for a successful empty write. DeviceRegistry now verifies NVS string writes by readback; a native mock-Preferences regression test checks AID=2 migration and stable IDs across reboots.
 - Current network operations use a bounded blocking HTTP client; eight offline lights and mDNS scans may temporarily delay HomeKit servicing. Treat nonblocking IO as a priority before closing Phase 2.
 
 ## Release decision process

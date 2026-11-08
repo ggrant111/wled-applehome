@@ -55,3 +55,7 @@ Use `homeSpan.enableOTA(adminPassword)` **only after** serial provisioning; do n
 ## ADR-015 — Explicit code and partition-size gates (2026-11-07)
 
 GitHub Actions must compile both targets and run host validation tests. A dedicated post-build gate compares `firmware.bin` against the 2,031,616-byte OTA partition and requires at least 70,000 bytes spare, preventing oversized releases. Report size and note limits before adding UI/touchscreen assets.
+
+## ADR-016 — Empty-string NVS migration must validate stored value, not putString count (2026-11-07)
+
+The ESP32 Preferences API returns `strlen(value)` for `putString` (including a **successful zero** on `""`). The Phase 2 original-light migration intentionally writes an empty WLED MAC and sometimes an empty IP; treating a return of zero as failure could halt startup and leave the paired HomeKit bridge unreachable. `DeviceRegistry::save` now writes each string and verifies it via `isKey()` + `getString()` before persisting the AID. A native mock-Preferences integration test validates v0.1-to-v0.4 registry migration, stable original AID=2, IP/MAC updates, and never-reused IDs across reboot. Verified by CI run 42439628403. This fix has **not yet been validated on real hardware**.
