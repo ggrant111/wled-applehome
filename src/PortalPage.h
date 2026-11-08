@@ -94,17 +94,41 @@ footer{color:var(--muted);font-size:12px;padding-top:12px}
 </main>
 <script>
 "use strict";
-const CSRF="__CSRF__";
+let CSRF="__CSRF__";
 const $=id=>document.getElementById(id);
 let snapshot={devices:[],presets:[]};
 function safe(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function notice(message){const n=$("notice");n.innerHTML='<div class="notice">'+safe(message)+'</div>';setTimeout(()=>{n.textContent="";},7000);}
-async function api(path,fields){
-  const opts={credentials:"same-origin"};
-  if(fields){opts.method="POST";opts.body=new URLSearchParams(Object.assign({token:CSRF},fields));}
+async function api(path,fields,retry=true){
+  const modifying=fields!==undefined;
+  const sentToken=CSRF;
+  const opts={credentials:"same-origin",cache:"no-store"};
+  if(modifying){
+    opts.method="POST";
+    opts.headers={"X-Bridge-Token":sentToken,"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"};
+    opts.body=new URLSearchParams(Object.assign({token:sentToken},fields));
+  }
   const response=await fetch(path,opts);
-  if(!response.ok)throw Error("HTTP "+response.status);
-  const json=await response.json();
+  const next=response.headers.get("X-Bridge-Token");
+  if(/^[0-9A-F]{24}$/.test(next||""))CSRF=next;
+
+  // After an ESP32 reboot the browser tab can retain an OLD boot token.
+  // Refresh it from an authenticated, same-origin GET and retry ONCE.
+  // A rejected CSRF request has not executed the requested mutation.
+  if(modifying&&retry&&response.status===403){
+    try{
+      const freshResponse=await fetch("/api/status",{credentials:"same-origin",cache:"no-store"});
+      const fresh=freshResponse.headers.get("X-Bridge-Token");
+      if(freshResponse.ok&&/^[0-9A-F]{24}$/.test(fresh||"")&&fresh!==sentToken){
+        CSRF=fresh;
+        return api(path,fields,false);
+      }
+    }catch(_ignored){/* Return the original 403 below. */}
+  }
+
+  let json;
+  try{json=await response.json();}catch(_ignored){throw Error("HTTP "+response.status);}
+  if(!response.ok)throw Error(json.error||("HTTP "+response.status));
   if(json.ok===false)throw Error(json.error||"Request failed");
   return json;
 }

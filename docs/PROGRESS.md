@@ -53,6 +53,15 @@
 - Phase 4B priority order: preset switch end-to-end test; safe OTA and pairing/NVS retention; nonblocking WLED traffic and offline recovery; flash-size optimization; extended stability tests.
 - Existing v0.4 build uses about 96.2% OTA app slot; substantial code/UI expansion on this 4 MB board should be avoided until footprint is reduced or hardware capacity increased.
 
+## 2026-11-07 — v0.4.1 preset-add CSRF 403 correction
+
+- User reported HTTP 403 `{"ok":false,"error":"Missing or invalid CSRF token"}` when adding a WLED preset through the working portal.
+- **Probable cause from code:** Per-boot random token is replaced when the bridge restarts after newly added lights. The browser tab keeps the prior token until reloaded; other read-only GETs remain functional. Confirm on hardware after update.
+- Immediate workaround: hard-refresh the portal tab; this does not delete any paired HomeKit devices or WLED configuration.
+- Code fix: return token from Digest-authenticated same-origin status GET, refresh JavaScript token on status updates, and on CSRF 403 fetch a new token + retry the mutation only once if the token changed. Send same token in request header and form field; server validates either with exact-match policy.
+- Added tests for C++ CSRF validation and for the **actual** portal JavaScript request code simulating reboot, retry bounds, invalid token and real application errors.
+- **Verification:** Pending CI firmware and host tests; then user can test on device without NVS erase.
+
 ## Next actions
 
 1. **Done:** v0.4 host tests, migration regression, D1 Mini/CYD builds and OTA size guard passed.

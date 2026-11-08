@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.4 / Phase 4B (portal discovery and Apple Home enrollment user-verified; preset, OTA and long-run tests pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.4.1 portal CSRF recovery fix; preset, OTA and long-run hardware tests still pending · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -101,6 +101,16 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 - Existing light AIDs, HomeKit pairing, and WLED NVS registry are preserved; **new switches get fresh AIDs from the same allocator used for lights**.
 - Instant WebSocket state sync is **still open** (a local portal now exists in Phase 4A). Large WLED catalog reads are on-demand and may temporarily block HomeKit while the request finishes.
 - Portal-based WLED discovery and Apple Home enrollment are user-verified; other v0.2 and v0.3 tests remain open. Do not mark those phases released solely from CI.
+
+## v0.4.1 — Portal 403 CSRF reboot recovery fix
+
+- [x] Root cause identified: the portal generates a new random CSRF token on each ESP32 boot, while an already-open browser tab keeps the old one after users restart to publish newly added Apple Home accessories.
+- [x] Dashboard now refreshes a boot token from authenticated same-origin `/api/status` responses and retries **one** rejected POST after a 403 only when a different valid token is returned.
+- [x] Device accepts the exact current token through either the collected `X-Bridge-Token` request header (reliable modern browsers) or legacy form field (backward compatibility); no authentication or CSRF bypass.
+- [x] Add C++ CSRF policy tests and actual browser `api()` helper regression tests for stale token, invalid token, no infinite retry, and unrelated 409 behavior.
+- [ ] **Pending hardware:** Update via normal upload/OTA without erasing NVS; reboot with browser tab open; add preset; validate Apple Home preset switch appears and triggers WLED.
+
+**Immediate user workaround on v0.4.0:** Reload the browser dashboard after an ESP32 reboot, then add the preset again. Do not reset Apple Home pairings.
 
 ## Phase 4 safety & deployment notes
 

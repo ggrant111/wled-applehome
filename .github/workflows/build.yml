@@ -35,6 +35,13 @@ jobs:
           g++ -std=c++17 -Wall -Wextra -Werror -Itests/stubs -Isrc -Iinclude tests/test_device_registry.cpp src/DeviceRegistry.cpp -o /tmp/bridge-registry-migration
           /tmp/bridge-registry-migration
 
+      - name: Test CSRF token authorization
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_csrf_policy.cpp -o /tmp/bridge-csrf-policy
+          /tmp/bridge-csrf-policy
+      - name: Test browser CSRF stale-session recovery
+        run: node tests/test_portal_csrf.mjs
+
   firmware:
     runs-on: ubuntu-latest
     strategy:
