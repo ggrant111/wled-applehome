@@ -14,6 +14,15 @@
 - **Not yet confirmed:** On/off actuation, two-way synchronization, reboot/pairing preservation. Leave P1.8/P1.9 open until tested.
 - Beginning v0.2 increment: mDNS WLED discovery, manual approval, multi-device NVS registry with stable accessory IDs and backward-compatible AID=2.
 
+## 2026-11-07 — Phase 2 candidate implementation
+
+- Implemented opt-in `_wled._tcp` mDNS scan; probe discovered devices at `/json/info` and verify WLED version, LED data, and MAC.
+- Serial CLI: `@l` list, `@d` discover, `@aN` add discovered device, `@m<IPv4>` verified manual enrollment, `@r<AID>` remove, `@w<IPv4>` original light IP.
+- NVS registry persists up to 8 devices, allocates monotonic AIDs and preserves original AID=2 (same service/characteristics and name).
+- Enrollment is explicit; adding/removing devices requires reboot `R` to refresh HomeKit accessories.
+- Staggered WLED state polling, bounded HTTP timeouts and a 30-second retry backoff for offline devices.
+- **Not yet verified on hardware:** mDNS results, multiple bridged Home lights, Home app refresh following add/remove, reboot pairing preservation. See `docs/PHASE2_TEST_PLAN.md`.
+
 ## Next actions
 
 1. Flash the ESP32 D1 Mini; pair using a unique code; test real WLED power/brightness and state reflection.

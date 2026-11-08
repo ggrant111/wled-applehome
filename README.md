@@ -1,49 +1,42 @@
 # WLED Apple Home Bridge
 
-**Current release:** v0.1 development / Phase 1. This project runs a local HomeKit bridge on an ESP32 and maps WLED's JSON API to Apple Home light controls. **One WLED light** is implemented in the initial firmware; 8-device discovery, presets, web UI, and touchscreen control are roadmap items, not yet delivered.
+A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-- **Primary board:** WEMOS/LOLIN ESP32 D1 Mini (`wemos_d1_mini32`; **not** ESP8266).
-- **Secondary board:** ESP32-2432S028R ("CYD"; headless firmware initially).
-- **HomeKit layer:** HomeSpan 2.1.8.
-- **WLED transport:** HTTP JSON API (`/json/state`).
-- **Build:** PlatformIO Espressif32 8.0.0 / Arduino-ESP32 3.3.12.
+**Current version:** v0.2.0-dev — **Phase 2 firmware candidate** (multi-device validation pending).
 
-## Project documents
+## Hardware
+- **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
+- **Secondary:** ESP32-2432S028R CYD (headless for now; no touchscreen support yet).
 
-- [ROADMAP.md](docs/ROADMAP.md) — primary milestone tracker, acceptance gates, and future features.
-- [SETUP.md](docs/SETUP.md) — flash, Wi-Fi, WLED configuration, Apple Home pairing, and testing.
-- [DECISIONS.md](docs/DECISIONS.md) — architectural choices and their rationale.
-- [PROGRESS.md](docs/PROGRESS.md) — chronological development and verification record.
+## Current features
 
-## Current functionality (Phase 1 firmware)
+- HomeSpan bridge with On and Brightness characteristics.
+- **User-confirmed:** Original firmware paired with Apple Home and changed brightness on a real WLED controller.
+- v0.2: Up to eight persistent WLED accessory entries, stable AIDs, initial AID=2 migration.
+- v0.2: On-demand mDNS WLED scan, `/json/info` validation, manual IP addition and explicit enrollment.
+- v0.2: Serial add/list/remove commands, 8-second staggered polling with 30s offline backoff.
+- Automated PlatformIO builds for D1 Mini/CYD and host-side brightness/registry policy tests.
 
-- A real HomeSpan bridge with **one bridged LightBulb accessory**.
-- Apple Home **On** and **Brightness** mapped to WLED JSON POST.
-- WLED GET polling to reflect changes made in other apps.
-- Store/change a WLED IPv4 address in ESP32 NVS using HomeSpan's serial CLI.
-- Boot-safe configuration, network timeouts, separate hardware build environments.
-- Automated native brightness math tests and firmware-build workflow.
+**Not yet hardware-verified:** v0.2 discovery, 8-light operation, and paired Apple Home database refresh after adding/removing devices. No presets, web setup UI, or CYD touchscreen interface yet.
 
-**Build verified:** Both board firmware builds and the host brightness test passed [GitHub Actions CI](https://github.com/ggrant111/wled-applehome/actions/runs/42427318407). **No device has yet been physically paired or tested.**
+## Quick start
 
-### Quick start
+1. Read [setup and safety instructions](docs/SETUP.md).
+2. Flash the same paired ESP32 normally (`pio run -e d1_mini_esp32 -t upload`). **Do not erase flash/NVS.**
+3. Open serial at 115200 baud. Type `@l` to inspect the migrated original AID=2 light.
+4. Type `@d` to discover WLED, then `@a1` to add a discovered controller, or `@m192.168.1.50` to add directly by IP (use your IP).
+5. Type `R` to reboot and refresh the bridged accessories in Apple Home.
 
-1. Install [PlatformIO](https://platformio.org/); confirm that your D1 Mini uses **ESP32**, not ESP8266.
-2. Plug it into USB and run `pio run -e d1_mini_esp32 -t upload` (or CYD: `-e cyd_2432s028r`).
-3. Open `pio device monitor -b 115200`. Use `W` to set Wi-Fi, `S <your-eight-digit-code>` to set a **unique HomeKit code**, and `@w192.168.1.50` to set your WLED address (replace example IP).
-4. Pair the **WLED Apple Home Bridge** from Apple Home → Add Accessory → More Options.
-5. Verify On, Brightness, and reflection of WLED changes.
+## Project tracking
 
-Read [full setup instructions](docs/SETUP.md) before flashing.
-
-## Technical constraints
-
-HomeSpan 2.1.8 needs Arduino-ESP32 >=3.3.0 and a >=1.9MiB app partition. We use two 0x1F0000 OTA partitions on a 4MB flash device, reserving an upgrade path. The official Espressif32 8.0.0 platform provides Arduino-ESP32 3.3.12. Apple Home may identify a DIY accessory as uncertified. A HomePod or Apple TV home hub is recommended/required by HomeSpan for supported use.
-
-This bridge communicates over the LAN; it does not alter WLED firmware. Its configuration and pairing credentials stay on the ESP32, **not in git**.
+- **[Roadmap](docs/ROADMAP.md)** — milestone checklists, acceptance criteria, CI/hardware verification status.
+- **[Progress log](docs/PROGRESS.md)** — work completed and verified, in chronological order.
+- **[Phase 2 hardware test plan](docs/PHASE2_TEST_PLAN.md)** — safe test cases.
+- **[Architecture decisions](docs/DECISIONS.md)** — board, HomeKit, NVS and network choices.
+- **[Setup](docs/SETUP.md)** — commands and deployment steps.
 
 ## References
 
-- https://github.com/HomeSpan/HomeSpan
-- https://kno.wled.ge/interfaces/json-api/
-- https://github.com/platformio/platform-espressif32/releases/tag/v8.0.0
+- [HomeSpan](https://github.com/HomeSpan/HomeSpan)
+- [WLED JSON API](https://kno.wled.ge/interfaces/json-api/)
+- [PlatformIO Espressif32](https://github.com/platformio/platform-espressif32)

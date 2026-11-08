@@ -17,3 +17,15 @@ Assign AID=1 for bridge and AID=2 for Phase 1 light. Future discovered devices m
 
 ## ADR-006 — Flash/OTA budget (2026-11-07)
 HomeSpan requires about 1.9MiB app partition. On 4MB ESP32, use two `0x1F0000` (~1.94MiB) OTA slots, retaining NVS and OTA metadata. OTA transport/UI remains Phase 4. Confirm partition sizes with the actual firmware build.
+
+## ADR-007 — Opt-in discovery and cold-boot HomeKit database changes (2026-11-07)
+
+Probe devices advertised as `_wled._tcp` by mDNS, confirm `/json/info` before showing them, and require explicit enrollment (`@aN` or `@m<IP>`). Persist registry entries and change bridged-accessory topology only on the next reboot to avoid mutation during normal HomeKit operations. HomeSpan recomputes the database configuration on startup. Do **not** initialize a second mDNS responder: HomeSpan owns that responder. This is a deliberate safe-first v0.2 choice; background discovery/web enrollment is later.
+
+## ADR-008 — Preserve original pairing and stable MAC/AID identity (2026-11-07)
+
+Migrate the original `wled-home/ip` into slot 0 with **AID=2**, the existing HomeKit services, model and name; keep HomeSpan's NVS credentials untouched. Future devices are validated via `/json/info` and keyed by normalized hardware MAC, with never-reused AIDs allocated monotonically and persisted across reboots. An IP change for a previously identified MAC updates its endpoint without replacing its AID. Deleting devices is explicit and completed by reboot. WLED devices missing valid MACs aren't enrolled until supported stable identity fallback is designed.
+
+## ADR-009 — Transport performance compromise in v0.2 (2026-11-07)
+
+Use staggered 8-second polling and 650ms request timeouts; back off failed polling to 30 seconds. The HTTP client and on-demand mDNS scan are still blocking. This is a constrained intermediate implementation; moving WLED traffic off the HomeKit poll loop must precede claiming production-grade 8-device responsiveness.

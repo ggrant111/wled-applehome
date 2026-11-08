@@ -37,14 +37,17 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 
 **Acceptance gate:** P1.1–P1.9 passed, with actual device evidence. Compiling is not sufficient.
 
-### Phase 2 — v0.2: Discovery and stable multi-device bridge — **IN PROGRESS**
+### Phase 2 — v0.2: Discovery and stable multi-device bridge — **CODE CANDIDATE / CI + HARDWARE VERIFICATION PENDING**
 
-- [ ] Discover WLED using mDNS/service discovery and verify candidates via `/json/info`.
-- [ ] Manual device add, rename, remove; de-duplicate by persistent identity.
-- [ ] Assign stable HomeKit accessory IDs saved in NVS, **never** based on scan order/IP.
-- [ ] Device health and offline states; nonblocking network I/O and bounded retries.
-- [ ] Support 8 WLED devices by default, test up to capacity limits.
-- [ ] Ensure addition/removal updates the HomeKit database without accidental re-pairing.
+- [x] **Code delivered:** On-demand mDNS scan of `_wled._tcp` and HTTP `/json/info` verification. **Physical discovery test pending.**
+- [x] **Code delivered:** CLI manual add/remove and de-duplicate by normalized hardware MAC; rename remains planned.
+- [ ] Device renaming (separate from WLED's own name) and polished web configuration.
+- [x] **Code delivered:** NVS-backed monotonic HomeKit AIDs; original light retains AID=2, without reallocating removed AIDs.
+- [x] **Code delivered:** Per-light WLED polling stagger, timeout cap, and 30s offline backoff.
+- [ ] Nonblocking WLED networking, exposed device-health UI, and advanced reconnection behavior.
+- [x] **Code delivered:** Eight WLED registry slots and bridged accessory creation.
+- [ ] Hardware test with eight WLED devices and evaluate memory/latency.
+- [ ] Hardware verify that add/remove + reboot refreshes Apple Home without accidental re-pairing.
 - [ ] Test reboot, IP changes, reordering, and missing devices.
 
 ### Phase 3 — v0.3: Presets and state sync — **PLANNED**
@@ -87,6 +90,15 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 7. The D1 Mini must be **ESP32**, not ESP8266.
 8. Keep HomeKit/UDP/mDNS traffic on the same permitted LAN; no cloud required.
 
+## Phase 2 deployment notes
+
+1. Use the **existing paired ESP32**. Flash without erasing flash/NVS (do not run `pio run -t erase`).
+2. v0.2 migrates the existing `wled-home` IP to AID=2 before creating any new accessories.
+3. On the serial CLI: `@l` list lights, `@d` discover, `@a1` enroll discovery result 1, `@m192.168.1.50` manually enroll an IP, and `@r3` remove AID=3.
+4. New additions/removals take effect in Apple Home on the next `R` reboot. Discovery alone never enrolls devices.
+5. Restore stable IP identity via matching WLED MAC. If mDNS fails, use manual verified IP enrollment.
+6. v0.2 intentionally remains serial-managed; web UI is still a Phase 4 goal.
+
 ## Build/test tracking
 
 | Check | Status | Evidence |
@@ -97,6 +109,7 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 | User hardware Apple Home pairing and brightness | **Verified by user (2026-11-07)** | First firmware installed, paired and changed brightness of real WLED |
 | D1 Mini physical on/off and reboot persistence | Not yet reported | Requires physical test |
 | CYD physical pairing / WLED actuation | Not tested | User hardware |
+| v0.2 mDNS discovery, multi-light behavior | Pending hardware | [Phase 2 test plan](PHASE2_TEST_PLAN.md) |
 
 ## Release decision process
 

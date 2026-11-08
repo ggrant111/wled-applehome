@@ -1,84 +1,61 @@
-# Phase 1 setup: one WLED device in Apple Home
+# v0.2 setup and hardware test guide
 
-**Current state:** D1 Mini, CYD, and host-test builds passed [GitHub CI](https://github.com/ggrant111/wled-applehome/actions/runs/42427318407). Hardware pairing/operation not yet verified.
+**v0.2 is a development build:** The first release paired successfully with Apple Home and controlled real WLED brightness (user confirmed 2026-11-07). The discovery/multi-WLED changes need real hardware testing. Preserve your Apple Home bridge pairing.
 
-## Prerequisites
+## Flash the paired ESP32 without erasing NVS
 
-- One **ESP32** D1 Mini (NOT ESP8266) or ESP32-2432S028R CYD (screen disabled in v0.1).
-- USB data cable, 2.4GHz Wi-Fi, iPhone with Apple Home.
-- An already working WLED controller on the same reachable LAN. Know its IPv4 address.
-- PlatformIO Core 6+ / IDE extension. Python 3.12 recommended.
-- For reliable/supported HomeKit, a HomePod or Apple TV as home hub.
-- Local multicast/mDNS allowed (isolation/VLAN/firewall rules can prevent discovery).
-
-## 1. Flash
+Use the **same physical ESP32** already paired to Apple Home. Its HomeSpan pairing is stored on-board. Do not run a full erase or change partition layouts.
 
 ```bash
 git clone https://github.com/ggrant111/wled-applehome.git
 cd wled-applehome
-pio run -e d1_mini_esp32
 pio run -e d1_mini_esp32 -t upload
 pio device monitor -b 115200
 ```
 
-For the CYD use `-e cyd_2432s028r` instead; in v0.1 the screen stays blank because this is **headless** firmware.
+If you are actually using the CYD, replace `d1_mini_esp32` with `cyd_2432s028r`. CYD display/touch remain disabled.
 
-Do not flash ESP8266 hardware. Confirm your board variant and its flash capacity before proceeding. The partition table is intended for **4MB flash**, with two ~1.94MiB application slots; if your variant differs, stop and adapt the table.
+On the first v0.2 boot, the previous single-light IP stored in `wled-home` is copied into the new `wled-reg` registry as **AID=2**. This should preserve the original light in Apple Home. Your existing Wi-Fi and HomeKit credentials should also survive a normal upload.
 
-## 2. Provision Wi-Fi and a unique HomeKit code
+**IMPORTANT:** Keep a note of the current WLED IP and an exact screenshot of the original Apple Home light before installing. If pairing is lost, collect logs before using HomeSpan's reset CLI commands.
 
-In the PlatformIO Serial Monitor at **115200 baud**:
+## Serial commands (115200 baud)
 
-1. Type `?` for HomeSpan CLI help.
-2. Type `W` to configure Wi-Fi credentials using the CLI. Follow its prompts.
-3. Type `S <your-eight-digit-code>` (for example, `S 12345678`, but choose a unique private code) to set your own **unique eight-digit HomeKit pairing code**. Keep it private and record it somewhere safe. HomeSpan's documented default code is public and must not be kept for permanent use.
-4. Restart if prompted. Confirm the bridge has Wi-Fi. Do not place passwords or HomeKit codes in `platformio.ini`, source files, GitHub issues, or CI secrets.
+| Command | Purpose |
+| --- | --- |
+| `@l` | Show enrolled lights, IP addresses, MAC identities, and accessory IDs |
+| `@d` | Discover WLED on the LAN via mDNS and verify `/json/info` |
+| `@a1` | Enroll the first scanned device (use `@a2` for the second, etc.) |
+| `@m192.168.1.50` | Manually verify and enroll a controller by IP |
+| `@r3` | Remove accessory AID=3 from the persistent registry |
+| `@w192.168.1.50` | Keep the original AID=2 light and set its WLED IP (legacy compatible) |
+| `R` | HomeSpan reboot, needed after adding/removing accessories |
+| `?` | HomeSpan help (Wi-Fi setup `W`, pairing code command `S`) |
 
-If serial provisioning is inconvenient, HomeSpan also offers a setup access point via its `A` CLI command; follow the HomeSpan official guide and disable the setup AP when finished.
+**Replace example IPs** with your WLED controllers' actual local IPv4 addresses. WLED controllers must provide a stable hardware MAC in `/json/info` (or mDNS TXT) to be enrolled. WLED normally advertises `_wled._tcp`, but some networks block mDNS—use `@m<IP>` if `@d` is empty.
 
-## 3. Configure the WLED IPv4 target
+Do **not** run `H`, `F`, `E`, or erase flash casually; those reset pairing/credentials and undermine the preservation test.
 
-Type a HomeSpan user command with the address of **your own** controller:
+## Example: bring a second WLED into Apple Home
 
-```text
-@w192.168.1.50
-```
+1. Flash v0.2 and type `@l`; verify your original light remains **AID=2** and operates in Apple Home.
+2. Type `@d`; check the serial list of verified WLED names, IPs, and MACs.
+3. Type `@a2` (replace 2 with the scan list index for the *other* controller). Already-known devices report their existing AID instead of being duplicated.
+4. Type `@l`; confirm a **new AID** was allocated.
+5. Type `R` to reboot. Reopen Apple Home; the new accessory should appear under your bridge. You should not have to pair the bridge again.
+6. Test both lights independently: on/off, brightness, and external-state changes.
+7. Repeat enrollment up to **eight** active WLED devices.
 
-Then `@w` to verify what was stored. This command is backed by ESP32 NVS and survives reboots. Only IPv4 targets are accepted in Phase 1. Do not include `http://`, port, or path. An unconfigured target safely rejects HomeKit writes.
+If the Home app doesn't immediately refresh its accessory list, close/reopen the app. Don't factory reset the bridge just to refresh Home's cache.
 
-Check that `http://<your-wled-ip>/json/state` responds in a browser or curl and that the WLED device itself works.
+## Known boundaries and safety
 
-## 4. Pair Apple Home
+- v0.2 has no web setup UI; commands are intentionally serial-only.
+- Discovery scans only default port 80 and filters devices without a validated MAC.
+- AID values are never reused; removing then adding a different WLED should assign a new AID.
+- State polling is staggered, but **HTTP and scan operations remain blocking**. Performance with eight lights needs testing and later nonblocking refactor.
+- WLED's presets, segments, colors and effects are untouched by the bridge unless the user changes power or brightness.
+- WLED devices on another VLAN may require multicast/mDNS routing, or a manual IP if reachable.
+- Presets and touchscreen management are **not yet included**.
 
-1. On iPhone: Home → Add Accessory → More Options.
-2. Select **WLED Apple Home Bridge** when discovered by local mDNS.
-3. Enter your unique code. The WLED Light should appear as a bridged light.
-4. An 'Uncertified Accessory' warning is expected with DIY HomeSpan firmware; review before accepting.
-
-If the bridge doesn't appear: confirm same reachable LAN, Wi-Fi connection, and multicast/mDNS. If you have paired previously and changed the HomeKit database, cached accessories may require additional investigation — don't immediately factory-reset NVS.
-
-## 5. Phase 1 physical smoke test (record in docs/PROGRESS.md)
-
-- [ ] Apple Home identifies bridge and WLED Light.
-- [ ] On works.
-- [ ] Off works.
-- [ ] Brightness ~25% and ~80% work.
-- [ ] Changing WLED from WLED's UI updates Apple Home within ~5 seconds.
-- [ ] Reboot ESP32; paired accessory reappears without a new pairing session.
-- [ ] Reboot WLED; bridge resumes within polling intervals.
-- [ ] No unexpected changes to WLED presets or LED segments.
-
-## Limitations
-
-- One WLED light, configured manually by IPv4. **No discovery or presets yet**.
-- Polling every 5 seconds, with a bounded blocking network request.
-- No GUI, remote access, dedicated OTA upload action, or screen/touch mode yet.
-- Updating/reflashing with an incompatible partition/NVS layout can erase pairing.
-- CI compilation is not a substitute for iPhone and WLED tests.
-
-## Troubleshooting
-
-- `[Config] Invalid IPv4 address`: use `@w192.168.x.x`, no URL or spaces inside the address.
-- `[WLED] GET/POST failed`: verify IP, WLED API availability, Wi-Fi routing/firewall.
-- HomeKit reports 'No Response': check HomeSpan CLI pairing/Wi-Fi status, WLED network, and whether the bridge was rebooted.
-- A successful build doesn't guarantee a specific clone's flash pinout/flash capacity. Confirm your actual D1 Mini/CYD hardware.
+See [Phase 2 testing plan](PHASE2_TEST_PLAN.md), [roadmap](ROADMAP.md), and [progress log](PROGRESS.md).
