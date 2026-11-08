@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.1 / Phase 1 (CI passed; physical verification pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.2 / Phase 2 (in progress; Phase 1 reboot and on/off gate pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -37,7 +37,7 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 
 **Acceptance gate:** P1.1–P1.9 passed, with actual device evidence. Compiling is not sufficient.
 
-### Phase 2 — v0.2: Discovery and stable multi-device bridge — **PLANNED**
+### Phase 2 — v0.2: Discovery and stable multi-device bridge — **IN PROGRESS**
 
 - [ ] Discover WLED using mDNS/service discovery and verify candidates via `/json/info`.
 - [ ] Manual device add, rename, remove; de-duplicate by persistent identity.
@@ -94,7 +94,8 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 | Host-side logic checks | Passed | [CI run 42427318407](https://github.com/ggrant111/wled-applehome/actions/runs/42427318407) |
 | D1 Mini PlatformIO build | Passed | [CI run 42427318407](https://github.com/ggrant111/wled-applehome/actions/runs/42427318407) |
 | CYD PlatformIO build | Passed | [CI run 42427318407](https://github.com/ggrant111/wled-applehome/actions/runs/42427318407) |
-| D1 Mini physical pairing / WLED actuation | Not tested | User hardware |
+| User hardware Apple Home pairing and brightness | **Verified by user (2026-11-07)** | First firmware installed, paired and changed brightness of real WLED |
+| D1 Mini physical on/off and reboot persistence | Not yet reported | Requires physical test |
 | CYD physical pairing / WLED actuation | Not tested | User hardware |
 
 ## Release decision process
