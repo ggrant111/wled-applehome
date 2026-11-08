@@ -17,7 +17,7 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 - v0.2: Serial add/list/remove commands, 8-second staggered polling with 30s offline backoff.
 - Automated PlatformIO builds for D1 Mini/CYD and host-side brightness/registry policy tests.
 
-**Not yet hardware-verified:** v0.2 discovery, 8-light operation, and paired Apple Home database refresh after adding/removing devices. No presets, web setup UI, or CYD touchscreen interface yet.
+**Build verified:** v0.2 passes both firmware targets and host tests ([CI run 42430738405](https://github.com/ggrant111/wled-applehome/actions/runs/42430738405)). **Not yet hardware-verified:** v0.2 discovery, 8-light operation, and paired Apple Home database refresh after adding/removing devices. No presets, web setup UI, or CYD touchscreen interface yet.
 
 ## Quick start
 
@@ -26,6 +26,8 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 3. Open serial at 115200 baud. Type `@l` to inspect the migrated original AID=2 light.
 4. Type `@d` to discover WLED, then `@a1` to add a discovered controller, or `@m192.168.1.50` to add directly by IP (use your IP).
 5. Type `R` to reboot and refresh the bridged accessories in Apple Home.
+
+**Flash budget:** The current binary consumes ~85% of each OTA app slot on 4MB hardware. Monitor size as the project grows.
 
 ## Project tracking
 

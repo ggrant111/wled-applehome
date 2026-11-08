@@ -37,7 +37,7 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 
 **Acceptance gate:** P1.1–P1.9 passed, with actual device evidence. Compiling is not sufficient.
 
-### Phase 2 — v0.2: Discovery and stable multi-device bridge — **CODE CANDIDATE / CI + HARDWARE VERIFICATION PENDING**
+### Phase 2 — v0.2: Discovery and stable multi-device bridge — **CI PASSED / HARDWARE VERIFICATION PENDING**
 
 - [x] **Code delivered:** On-demand mDNS scan of `_wled._tcp` and HTTP `/json/info` verification. **Physical discovery test pending.**
 - [x] **Code delivered:** CLI manual add/remove and de-duplicate by normalized hardware MAC; rename remains planned.
@@ -109,7 +109,13 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 | User hardware Apple Home pairing and brightness | **Verified by user (2026-11-07)** | First firmware installed, paired and changed brightness of real WLED |
 | D1 Mini physical on/off and reboot persistence | Not yet reported | Requires physical test |
 | CYD physical pairing / WLED actuation | Not tested | User hardware |
+| v0.2 D1 Mini firmware, CYD firmware, host tests | **Passed** | [CI run 42430738405](https://github.com/ggrant111/wled-applehome/actions/runs/42430738405) |
 | v0.2 mDNS discovery, multi-light behavior | Pending hardware | [Phase 2 test plan](PHASE2_TEST_PLAN.md) |
+
+## Engineering risk / budget
+
+- **4MB OTA flash budget is tight.** v0.2 compiled binary uses ~1,733,463 bytes (85.3%) of each 2,031,616-byte app slot; approximately 298KB remains. Major additions (especially touchscreen/web assets) will need explicit size-budget tests, optimization, larger flash hardware, or an altered OTA strategy.
+- Current network operations use a bounded blocking HTTP client; eight offline lights and mDNS scans may temporarily delay HomeKit servicing. Treat nonblocking IO as a priority before closing Phase 2.
 
 ## Release decision process
 
