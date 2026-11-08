@@ -95,7 +95,8 @@
 - One experimental controller, bound to one WLED light, is added from the authenticated web portal after choosing the light and saved preset. Subsequent additions append inputs until reaching five; user can remove the entire controller. Reboot required for the HomeKit accessory topology to refresh.
 - Selection queues a saved WLED preset using v0.5 worker. TV Off sends WLED Off; TV On re-applies the last selected preset. WLED-originated saved preset selections are reconciled back to TV input when observed.
 - HomeSpan's TV guide warns that Television behind a bridge may show a **generic icon**, and iOS has no supported Lighting effects list. Actual Apple Home UI on user's iPhone remains to be validated.
-- **CI and physical device tests pending** until build and acceptance checklist are complete; see [Phase 7 test plan](PHASE7_TEST_PLAN.md).
+- **CI passed:** [run 42448093812](https://github.com/ggrant111/wled-applehome/actions/runs/42448093812) — new NVS/AID persistence test, existing host regressions, D1 Mini/CYD firmware builds, and OTA margin. Both `firmware.bin` files: 1,557,792/2,031,616 bytes (**473,824 bytes free**). **No physical Apple Home TV input UI or preset actions verified.** See [Phase 7 test plan](PHASE7_TEST_PLAN.md).
+- **Merged into main:** [PR #6](https://github.com/ggrant111/wled-applehome/pull/6). Feature is still disabled until user adds a saved preset to an Effects Controller in the portal.
 
 ## Next actions
 

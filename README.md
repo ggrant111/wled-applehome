@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.7.0-dev — experimental opt-in TV-style effects selector (**code candidate; CI and Apple Home UI test pending**).
+**Current version:** v0.7.0-dev — experimental opt-in TV-style effects selector (**CI passed; Apple Home UI/hardware validation pending**). [Download firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42448093812).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -26,7 +26,7 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 
 ## v0.7 — Experimental effects selector
 
-The management portal can optionally expose **one** HomeKit Television-style Effects Controller for **one** WLED light. Select up to **five existing saved WLED presets** in the portal. After a bridge restart, Apple Home should present these as named inputs under a separate accessory; each input invokes the corresponding WLED preset via the existing queued HTTP worker. This is NOT a native Lighting effects dropdown, and TV-style accessories may show a generic icon when bridged. The current full-color light stays intact. See [Phase 7 checklist](docs/PHASE7_TEST_PLAN.md).
+The management portal can optionally expose **one** HomeKit Television-style Effects Controller for **one** WLED light. Select up to **five existing saved WLED presets** in the portal. After a bridge restart, Apple Home should present these as named inputs under a separate accessory; each input invokes the corresponding WLED preset via the existing queued HTTP worker. This is NOT a native Lighting effects dropdown, and TV-style accessories may show a generic icon when bridged. **Both firmware targets and automated checks passed** in [CI run 42448093812](https://github.com/ggrant111/wled-applehome/actions/runs/42448093812) (1,557,792-byte images, 473,824 bytes free in each OTA slot); iPhone Home UI and WLED behavior have not been verified. The current full-color light stays intact. See [Phase 7 checklist](docs/PHASE7_TEST_PLAN.md).
 
 ## v0.6 — Apple Home RGB color wheel
 

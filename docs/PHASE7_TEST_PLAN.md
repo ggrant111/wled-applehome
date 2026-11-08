@@ -1,6 +1,6 @@
 # Phase 7 — Experimental Apple Home TV-style Effects Controller
 
-**Do not treat a successful firmware build as proof that Apple Home shows linked TV InputSource entries behind a bridge.** HomeSpan's [Television Services](https://github.com/HomeSpan/HomeSpan/blob/master/docs/TVServices.md) document warns that a bridged TV can appear as a generic icon. This is an explicit opt-in experiment.
+**CI [42448093812](https://github.com/ggrant111/wled-applehome/actions/runs/42448093812) passed all tests and both board builds. Do not treat a successful firmware build as proof that Apple Home shows linked TV InputSource entries behind a bridge.** HomeSpan's [Television Services](https://github.com/HomeSpan/HomeSpan/blob/master/docs/TVServices.md) document warns that a bridged TV can appear as a generic icon. This is an explicit opt-in experiment.
 
 ## Update and opt-in
 - [ ] Save the last known-good firmware image and note your current Apple Home light AIDs / existing preset switches.
