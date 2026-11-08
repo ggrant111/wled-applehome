@@ -25,9 +25,19 @@
 - **Flash budget:** D1 Mini firmware 1,733,463 / 2,031,616 bytes (85.3% app slot); CYD 1,733,479 / 2,031,616. Keep expansion size-constrained.
 - **Not yet verified on hardware:** mDNS results, multiple bridged Home lights, Home app refresh following add/remove, reboot pairing preservation. See `docs/PHASE2_TEST_PLAN.md`.
 
+## 2026-11-07 — Phase 3 work started while user away from hardware
+
+- The user requested progression without physical testing until returning home. Phase 2's discovery, multi-light and pairing regression gates stay open.
+- Implemented filtered `/presets.json` catalog reader with on-demand `@c<light-AID>`.
+- Implemented explicit, persistent selection of up to 12 HomeKit momentary preset switches using `@p<light-AID>:<preset-ID>`, `@s` to list, and `@q<switch-AID>` to remove. Each switch sends only `{"ps":id}`; no WLED preset modification.
+- Introduced shared NVS-backed AID allocation for WLED lights and preset switches, maintaining original AID=2 and preventing AID collisions/reuse.
+- Enhanced local POST acknowledgement with a ~450ms settle window and prompt WLED power/brightness reconcile (periodic external-change polling remains).
+- **Build status:** Pending GitHub Actions verification; not hardware tested. See `docs/PHASE3_TEST_PLAN.md`.
+
 ## Next actions
 
-1. Flash the ESP32 D1 Mini; pair using a unique code; test real WLED power/brightness and state reflection.
-2. Run reboot, reconnection, and HomeKit state-notification tests.
-3. Record real device results in this log and update the remaining Phase 1 acceptance boxes.
-4. Begin Phase 2 discovery only once Phase 1 hardware tests are verified.
+1. Pass v0.3 host-side policy checks, D1 Mini and CYD PlatformIO builds, flash-size checks.
+2. Preserve existing NVS/HomeSpan pairing: upload on the **same paired ESP32** without erase when home.
+3. Verify pending Phase 2 identity/discovery/multi-device acceptance tests before relying on preset switches.
+4. Test a named preset: `@c2` -> `@p2:5` (use actual saved preset ID) -> `R` -> trigger in Apple Home -> verify switch resets and WLED responds.
+5. Record observations in progress log, update phase checkboxes, and plan asynchronous networking / Phase 4 portal.

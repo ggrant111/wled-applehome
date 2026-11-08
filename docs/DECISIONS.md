@@ -29,3 +29,15 @@ Migrate the original `wled-home/ip` into slot 0 with **AID=2**, the existing Hom
 ## ADR-009 — Transport performance compromise in v0.2 (2026-11-07)
 
 Use staggered 8-second polling and 650ms request timeouts; back off failed polling to 30 seconds. The HTTP client and on-demand mDNS scan are still blocking. This is a constrained intermediate implementation; moving WLED traffic off the HomeKit poll loop must precede claiming production-grade 8-device responsiveness.
+
+## ADR-010 — Read-only preset discovery and opt-in HomeKit triggers (2026-11-07)
+
+WLED stores up to 250 saved presets at `/presets.json`; selected presets are activated by POST `{"ps":id}` to `/json/state`. Apple Home has no native WLED preset dropdown, so expose opt-in `Service::Switch` accessories that automatically reset to Off after a confirmed trigger. Limit to **12 bridge-wide HomeKit preset switches** initially. List stored presets read-only; never create, delete, save, or overwrite a WLED preset from the bridge.
+
+## ADR-011 — Shared accessory identity namespace (2026-11-07)
+
+Allocate all newly enrolled light and preset-switch HomeKit AIDs via the existing `DeviceRegistry` NVS `nextAid` high watermark, advance it in NVS **before** recording the new accessory and never reuse removed IDs. Original light remains AID=2. Preset entries in separate `wled-ps` NVS namespace refer to their parent light AIDs; missing parent prevents the switch appearing at boot. A reboot is still required after enrollment/removal.
+
+## ADR-012 — Poll-based reconciliation during Phase 3 (2026-11-07)
+
+On successful WLED POST (light/preset), increment a mutation revision and avoid querying the WLED state until ~450ms later to prevent stale state from replacing recently accepted HomeKit changes. After settling, read authoritative WLED power/brightness, notify Apple Home of changed values, and log observed `ps` preset ID. Keep 8-second staggered polling for external changes and existing offline backoff; implement WebSockets/nonblocking networking in a later reliability iteration. HTTP 2xx alone does not prove WLED physically applied a preset; hardware validation remains required.

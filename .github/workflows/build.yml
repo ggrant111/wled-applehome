@@ -20,6 +20,11 @@ jobs:
           g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_registry_policy.cpp -o /tmp/bridge-registry-tests
           /tmp/bridge-registry-tests
 
+      - name: Build and run preset policy tests
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_preset_policy.cpp -o /tmp/bridge-preset-tests
+          /tmp/bridge-preset-tests
+
   firmware:
     runs-on: ubuntu-latest
     strategy:

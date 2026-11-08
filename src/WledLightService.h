@@ -14,6 +14,8 @@ private:
   SpanCharacteristic *brightness_;
   uint32_t lastPollMs_ = 0;
   uint32_t retryIntervalMs_ = 8000;
+  uint32_t acknowledgedRevision_ = 0;
+  int lastObservedPresetId_ = -2;
   static constexpr uint32_t kPollEveryMs = 8000;
   static constexpr uint32_t kOfflineBackoffMs = 30000;
 };
