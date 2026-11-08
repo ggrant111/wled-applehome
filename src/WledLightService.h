@@ -4,7 +4,7 @@
 
 class WledLightService : public Service::LightBulb {
 public:
-  explicit WledLightService(WledClient &wled);
+  explicit WledLightService(WledClient &wled, unsigned position = 0);
   boolean update() override;
   void loop() override;
 
@@ -13,5 +13,7 @@ private:
   SpanCharacteristic *power_;
   SpanCharacteristic *brightness_;
   uint32_t lastPollMs_ = 0;
-  static constexpr uint32_t kPollEveryMs = 5000;
+  uint32_t retryIntervalMs_ = 8000;
+  static constexpr uint32_t kPollEveryMs = 8000;
+  static constexpr uint32_t kOfflineBackoffMs = 30000;
 };

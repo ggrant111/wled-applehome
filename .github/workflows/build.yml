@@ -15,6 +15,10 @@ jobs:
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_brightness.cpp -o /tmp/bridge-brightness-tests
           /tmp/bridge-brightness-tests
+      - name: Build and run registry policy tests
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_registry_policy.cpp -o /tmp/bridge-registry-tests
+          /tmp/bridge-registry-tests
 
   firmware:
     runs-on: ubuntu-latest
