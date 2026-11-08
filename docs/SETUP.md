@@ -1,5 +1,42 @@
 # WLED Apple Home Bridge — setup and hardware validation
 
+## Phase 4A — local web management & HomeSpan OTA
+
+**v0.4.0-dev is under CI/hardware validation.** This build incorporates previous phases but does not eliminate the need to test v0.2 multi-WLED discovery and v0.3 preset switches on physical hardware.
+
+### Safe installation
+
+1. Download the **correct board binary** from the GitHub Actions artifacts after the D1 Mini/CYD builds pass.
+2. Flash onto the **same ESP32** paired with Apple Home, using a normal PlatformIO upload. **Never erase NVS or change the partition table while upgrading**.
+3. Open HomeSpan serial monitor at 115200 baud. Verify `@l` still shows original WLED as HomeKit AID=2.
+4. **Opt into LAN management + OTA** via `@k <your-unique-admin-password>` (14–64 ASCII characters without spaces; enter a unique value and do **not** share it in GitHub or chat). Reboot with `R`.
+5. On the ESP32 serial output, read the management portal URL: `http://<ESP32-local-IP>:8080/`. Sign in as `admin` with the password you set.
+6. Use the Dashboard for WLED discovery, status, control, selected preset switches and restarting after accessory additions/removals.
+
+**The web portal does not start until an admin password has been configured.** `@k` reports provisioning status without displaying the password. To disable web access and OTA, use `@k -` then `R` (HomeSpan pairing and WLED devices are not erased).
+
+### OTA updates (no web upload form in this version)
+
+HomeSpan supplies its built-in password-protected **ArduinoOTA** uploader. Use your administrator password rather than HomeSpan's public default; for example, select the ESP32's **network port** in Arduino IDE and upload the next compatible firmware sketch. PlatformIO ESP OTA clients are also possible when configured locally with `espota` (keep passwords out of version-controlled files).
+
+- Both OTA app slots are `0x1F0000` bytes. Firmware CI rejects images with less than 70KB spare.
+- HomeSpan validates that an OTA-uploaded sketch is still a HomeSpan sketch with OTA enabled.
+- `SpanRollback.h` defers marking a newly booted OTA image as good until it has run ~60 seconds with Wi-Fi. An early crash/panic is intended to let ESP32 bootloader return to the last valid image; this **must be tested** before unattended use.
+- Firmware uploaded via **USB** is not protected from all kinds of bricking by this rollback mechanism.
+- Do not trigger an OTA update mid-celebration or while controlling lights.
+
+### Security and limitations
+
+- **Never port-forward** port 8080 or the ESP32 OTA endpoint to the internet.
+- Dashboard is accessible on trusted local Wi-Fi only, over HTTP with Digest authentication and CSRF protection; **there is no HTTPS**.
+- The portal password is stored in the device's local NVS for use by the web server and HomeSpan OTA. Plain NVS is not encrypted against physical flash extraction.
+- Discovery, WLED catalog fetches and control POSTs are on-demand; a slow WLED or busy LAN may temporarily pause HomeKit servicing. Test with eight controllers.
+- A portal restart changes accessible HomeKit accessories; pairing identity should remain, but must be verified on hardware before marking production ready.
+- Presets cannot be created or edited here: the portal exposes existing WLED presets as HomeKit trigger switches.
+
+See [Phase 4 physical acceptance plan](PHASE4_TEST_PLAN.md).
+
+
 ## Phase 3 — v0.3 firmware (CI + physical testing required)
 
 Phase 3 adds **on-demand** saved-preset discovery and **opt-in** Apple Home preset switches. You do not need to upload it until you return home. Phase 2 hardware testing is still pending.

@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.3 / Phase 3 (firmware development; Phase 1/2 hardware gates remain open) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.4 / Phase 4A (firmware candidate; Phase 1–3 physical verification remains open) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -58,14 +58,19 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 - [ ] Hardware verify observation of WLED/GlowDeck/external state and selected preset changes on multiple lights; polling-based sync code is in place.
 - [ ] WebSocket-assisted live updates / fully nonblocking transport (deferred; 8s periodic polling retained as fallback).
 
-### Phase 4 — v1.0 MVP: Web setup, reliability, and release — **PLANNED**
+### Phase 4 — v0.4/1.0: Web setup, OTA, reliability and release — **IN PROGRESS; CODE CANDIDATE**
 
-- [ ] Local configuration portal with device list, pairing/setup instructions, and diagnostics.
-- [ ] OTA firmware with configuration/paired-identity preservation and recovery plan.
-- [ ] Network reconnection/backoff, watchdog checks, reboot tests.
-- [ ] Local-network-only security posture; protect setup mode and dangerous operations.
-- [ ] Config export/import, release changelog, binary artifacts, and user documentation.
-- [ ] Final 8-device and 24-hour run verification.
+- [x] **Code delivered:** Password-gated local web manager on port 8080 (device list, status, 8-light discovery/add/remove, preset selection, controls, diagnostics and reboot). **Network/hardware verification pending.**
+- [ ] Test real browser Digest login, CSRF protections, reconnection and Apple Home coexistence; optimize any WebServer-induced HomeKit latency.
+- [x] **Code delivered:** HomeSpan built-in password-protected ArduinoOTA enabled only after serial-set administrator password (no default OTA password); OTA partition validation delayed 60s with `SpanRollback.h`. **OTA hardware recovery/pairing test pending.**
+- [ ] Validate OTA with firmware image and ensure pairing, Wi-Fi and WLED registry survive; test rollback after invalid/new image.
+- [x] **Code delivered:** Existing per-device 30s offline backoff; portal begins only once Wi-Fi becomes connected; read-only cached health endpoint, no additional WLED polling on dashboard refresh.
+- [ ] Nonblocking WLED polling, improved network recovery and 24h soak / reboot/power loss tests.
+- [x] **Code delivered:** Serial-only admin-secret provisioning, Digest login, CSRF tokens for POST mutations; portal and OTA both disabled until provisioned. No default credentials or embedded secrets.
+- [ ] Hardware security review, no open router forwarding, authentication rate-limit/timeouts, threat-model/credentials lifecycle review. Note local HTTP is not TLS.
+- [x] **Code delivered:** Release documentation, web/OTA setup guide, GitHub CI firmware artifacts and binary OTA-partition headroom check.
+- [ ] Configuration export/import with secret redaction, release changelog and versioned release tagging.
+- [ ] Final **8-device and 24-hour run verification**; phase must remain open until real hardware evidence.
 
 ## After MVP
 
@@ -86,6 +91,17 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 - Existing light AIDs, HomeKit pairing, and WLED NVS registry are preserved; **new switches get fresh AIDs from the same allocator used for lights**.
 - Full URL/local web portal and instant WebSocket state sync are **still open**. Large WLED catalog reads are on-demand and may temporarily block HomeKit while the request finishes.
 - No hardware verification yet for v0.2 or v0.3. Do not mark those phases released merely because CI passes.
+
+## Phase 4 safety & deployment notes
+
+- This is **v0.4.0-dev Phase 4A**, not a finished v1.0 release. Leave Phase 1–3 unverified hardware gates open until tested.
+- **The portal is OFF by default**. On USB serial console, enter `@k <strong-unique-password>` (14–64 printable non-space ASCII characters) and reboot with `R`; then visit `http://<bridge-ip>:8080/`, sign in with username `admin`.
+- The administrator password is stored in local ESP32 NVS for web Digest login and reused to activate HomeSpan's password-protected ArduinoOTA. It is **not hardcoded in firmware or written to git**, but plaintext NVS is not encryption-at-rest—physical flash access remains a security boundary.
+- Disable portal + OTA via `@k -` followed by `R`; HomeKit/WLED configuration must remain unchanged.
+- **No web firmware upload form in Phase 4A.** Use HomeSpan's OTA workflow with Arduino IDE / compatible uploader. No remote flashing at all until unique secret is configured. `SpanRollback.h` marks pending OTA firmware valid after ~60 seconds of running with Wi-Fi.
+- Portal uses HTTP Digest authentication and CSRF tokens; **it does not use HTTPS**. Trusted LAN only; never expose port 8080 or OTA publicly.
+- Network operations are still partially blocking. Portal is polled after HomeSpan's loop and starts only with Wi-Fi. Multi-device latency and 8-light capacity remain to test.
+- Firmware CI now rejects builds if OTA app partition headroom falls below 70,000 bytes.
 
 ## Non-goals / guardrails
 
