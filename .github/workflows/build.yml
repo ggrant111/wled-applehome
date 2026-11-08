@@ -42,6 +42,13 @@ jobs:
       - name: Test browser CSRF stale-session recovery
         run: node tests/test_portal_csrf.mjs
 
+      - name: Test compressed portal asset
+        run: python tests/test_portal_asset.py
+      - name: Test network worker state freshness policy
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_worker_policy.cpp -o /tmp/bridge-worker-policy
+          /tmp/bridge-worker-policy
+
   firmware:
     runs-on: ubuntu-latest
     strategy:

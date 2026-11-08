@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.4.1 portal CSRF recovery fix; preset, OTA and long-run hardware tests still pending · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.5 background WLED networking, diagnostics and flash optimization (CI / hardware verification pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -81,6 +81,23 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 5. **Production polish:** Security review, diagnostic logs, backup/export with sensitive data redacted, versioned release, and documented recovery instructions.
 
 **User-verified hardware evidence:** Web manager operational; discovered WLED controllers using portal and successfully added lights to Apple Home. Do not infer tests of every light's independent power/brightness, pairing across reboot, preset activation, removal, or OTA.
+
+### Phase 5 / v0.5 — Background WLED networking & firmware footprint — **CODE CANDIDATE / CI PENDING**
+
+- [x] **Code:** Moved routine WLED polling and HomeKit/portal light + preset JSON POSTs into one bounded FreeRTOS task on ESP32 core 0. The HomeSpan main loop now queues commands without synchronously waiting on WLED HTTP.
+- [x] **Code:** Fixed-length command queue (24 commands), enqueue rejection on saturation, per-light queue depth, HTTP failures, drop counts, online state and last-success timestamps surfaced in cached portal status.
+- [x] **Code:** Queue commands ahead of polling; stagger periodic GETs by device, use 8-second healthy poll, 30-second offline backoff, and 450ms post-write reconciliation.
+- [x] **Code:** In-flight GETs are invalidated when a newer command or host/IP update arrives; only the main loop updates HomeKit characteristics from worker snapshots.
+- [x] **Code:** Portal page now precompressed to gzip at build time, served directly from flash with no 13KB HTML String allocation; authenticated status endpoint supplies the live CSRF token.
+- [x] **Code:** Added native freshness/scheduler checks, compressed asset tests and existing browser CSRF regression to CI.
+- [ ] **CI:** Verify D1 Mini/CYD builds, binaries respect minimum 70KB OTA margin, and all regression tests pass.
+- [ ] **Hardware:** Validate multiple connected WLED lights, offline device isolation, commands queued/failed, preset switch timing, HomeKit state reconciliation, Wi-Fi disconnect/reconnect, 24-hour soak and stability.
+- [ ] On-demand discovery, WLED preset catalog and manual IP verification still use bounded **blocking** calls in the portal/serial action path; make these async later if real latency tests justify.
+- [ ] Continue measuring heap and browser performance, and evaluate queuing/coalescing latest brightness changes if heavy automation fills the queue.
+
+**Behavior change:** A successful HomeKit/portal write means **accepted by the bridge command queue**, *not* confirmed executed by WLED. Failed WLED POSTs appear as per-light errors/health diagnostics and are reconciled on the next successful poll. Queue saturation rejects a new command rather than blocking HomeKit.
+
+**Preservation:** No NVS schema, HomeKit AID, password, preset registry, partition table or pairing change in v0.5. Upgrade without erase.
 
 ## After MVP
 

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
-const source = readFileSync("src/PortalPage.h", "utf8");
+const source = readFileSync("web/portal.html", "utf8");
 const start = source.indexOf("async function api(path,fields,retry=true){");
 const end = source.indexOf("\nfunction card(d){", start);
 assert(start > 0 && end > start, "Cannot find the portal's actual JS API helper");

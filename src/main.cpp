@@ -11,11 +11,12 @@
 #include "PresetRegistry.h"
 #include "PresetSwitchService.h"
 #include "WledClient.h"
+#include "WledNetworkWorker.h"
 #include "WledDiscovery.h"
 #include "WledLightService.h"
 
 #ifndef WLED_APP_VERSION
-#define WLED_APP_VERSION "0.4.1"
+#define WLED_APP_VERSION "0.5.0-dev"
 #endif
 
 namespace {
@@ -23,6 +24,7 @@ DeviceRegistry registry;
 PresetRegistry presets;
 WledDiscovery discovery;
 WledClient clients[bridge::kMaxDevices];
+WledNetworkWorker networkWorker;
 WledLightService *lightServices[bridge::kMaxDevices] = {};
 AdminCredentials admin;
 PortalServer portal(registry, presets, discovery, clients, lightServices);
@@ -270,10 +272,11 @@ void addDevices() {
     const DeviceRecord &record = registry.at(i);
     if (!record.aid) continue;
     clients[i].setHost(record.ip);
+    clients[i].attachWorker(&networkWorker, i);
     new SpanAccessory(record.aid);
       addBridgeInformation(record.aid == 2 ? "WLED Light" : record.name.c_str(),
                            "WLED JSON Light");
-      lightServices[i] = new WledLightService(clients[i], i);
+      lightServices[i] = new WledLightService(clients[i], i, &networkWorker);
   }
 }
 
@@ -312,6 +315,10 @@ void setup() {
     addBridgeInformation("WLED Apple Home Bridge", "ESP32 HomeKit Bridge");
   addDevices();
   addPresetSwitches();
+  if (!networkWorker.start()) {
+    Serial.println("[Boot] Background WLED HTTP worker failed; stopping to protect HomeKit responsiveness.");
+    while (true) delay(1000);
+  }
 
   new SpanUserCommand('w', " <IPv4> set existing AID=2 IP", wledCommand);
   new SpanUserCommand('l', " list registered WLED lights", listCommand);

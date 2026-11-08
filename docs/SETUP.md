@@ -1,5 +1,15 @@
 # WLED Apple Home Bridge — setup and hardware validation
 
+## v0.5 background network worker candidate — hardware checks pending
+
+- Firmware uses an off-main-loop HTTP task for ordinary state polls and queued Apple Home/portal power, brightness and preset commands. **UI/HomeKit acceptance means queued**, not that the WLED HTTP response has already succeeded.
+- Portal per-light diagnostics show queued commands, failures and online state. An offline WLED controller should no longer block the other HomeKit accessories while its HTTP request waits.
+- Keep the ESP32 connected to the existing Apple Home bridge. Upload a matching D1 Mini/CYD firmware build **without erasing flash or NVS** and without changing partitions or pairings.
+- The dashboard HTML is edited at `web/portal.html`; PlatformIO automatically gzips it with `tools/prepare_portal.py`. If manually invoking a compiler outside PlatformIO, generate `include/PortalGzip.generated.h` first.
+- Verify existing saved presets and WLED devices survived, and follow [Phase 5 smoke tests](PHASE5_TEST_PLAN.md). If an offline device fails to apply a queued command, the diagnostic counter will increase; do not assume successful actuation merely from HomeKit's immediate response.
+
+
+
 ## Phase 4A — local web management & HomeSpan OTA
 
 **v0.4.0-dev is under CI/hardware validation.** This build incorporates previous phases but does not eliminate the need to test v0.2 multi-WLED discovery and v0.3 preset switches on physical hardware.

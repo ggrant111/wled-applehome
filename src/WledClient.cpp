@@ -6,6 +6,7 @@
 #include <WiFiClient.h>
 #include <ctype.h>
 #include "BridgeMath.h"
+#include "WledNetworkWorker.h"
 
 namespace {
 constexpr uint16_t kStateTimeoutMs = 650;
@@ -22,7 +23,14 @@ void WledClient::setHost(const String &host) {
   if (host_ != host) {
     host_ = host;
     markMutation();
+    if (worker_) worker_->setHost(workerSlot_, host);
   }
+}
+
+void WledClient::attachWorker(WledNetworkWorker *worker, unsigned slot) {
+  worker_ = worker;
+  workerSlot_ = slot;
+  if (worker_) worker_->setHost(slot, host_);
 }
 const String &WledClient::host() const { return host_; }
 bool WledClient::configured() const { return host_.length() > 0; }
@@ -120,6 +128,12 @@ bool WledClient::sendJson(const String &body) {
 bool WledClient::writeState(bool changePower, bool power,
                             bool changeBrightness, int brightnessPercent) {
   if (!changePower && !changeBrightness) return true;
+  if (worker_) {
+    const bool queued = worker_->queueWrite(workerSlot_, changePower, power,
+                                             changeBrightness, brightnessPercent);
+    if (queued) markMutation();
+    return queued;
+  }
   JsonDocument data;
   if (changePower) data["on"] = power;
   if (changeBrightness)
@@ -131,6 +145,11 @@ bool WledClient::writeState(bool changePower, bool power,
 
 bool WledClient::applyPreset(uint8_t presetId) {
   if (!bridge::validPresetId(presetId)) return false;
+  if (worker_) {
+    const bool queued = worker_->queuePreset(workerSlot_, presetId);
+    if (queued) markMutation();
+    return queued;
+  }
   return sendJson(String("{\"ps\":") + presetId + "}");
 }
 

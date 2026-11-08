@@ -85,12 +85,15 @@ bool PortalServer::parseRequestId(const String &text, uint32_t &out) const {
 
 void PortalServer::handleIndex() {
   if (!authorize()) return;
-  // Only boot-local secret is interpolated, not any WLED-supplied strings.
-  String page(FPSTR(kPortalHtml));
-  page.replace("__CSRF__", token_);
+  // Compressed read-only page is served directly from PROGMEM, eliminating
+  // the 13 KB per-request String allocation and saving OTA flash headroom.
+  // The per-boot CSRF secret is fetched via Digest-authenticated /api/status.
   http_.sendHeader("Cache-Control", "no-store");
+  http_.sendHeader("Content-Encoding", "gzip");
   http_.sendHeader("X-Content-Type-Options", "nosniff");
-  http_.send(200, "text/html; charset=utf-8", page);
+  http_.send_P(200, "text/html; charset=utf-8",
+               reinterpret_cast<const char *>(kPortalGzip),
+               kPortalGzipLength);
 }
 
 void PortalServer::handleStatus() {
@@ -100,7 +103,7 @@ void PortalServer::handleStatus() {
   http_.sendHeader("X-Bridge-Token", token_);
   JsonDocument doc;
   doc["ok"] = true;
-  doc["version"] = "0.4.1";
+  doc["version"] = "0.5.0-dev";
   doc["wifi"] = WiFi.status() == WL_CONNECTED;
   doc["ip"] = WiFi.localIP().toString();
   doc["rssi"] = WiFi.RSSI();
@@ -126,6 +129,10 @@ void PortalServer::handleStatus() {
       row["brightness"] = services_[i]->observedBrightness();
       row["lastSeenSec"] = services_[i]->lastSeenMs() == 0
           ? -1 : static_cast<int32_t>((millis() - services_[i]->lastSeenMs()) / 1000);
+      row["pendingCommands"] = services_[i]->pendingCommands();
+      row["networkFailures"] = services_[i]->networkFailures();
+      row["droppedCommands"] = services_[i]->droppedCommands();
+      row["lastCommandOK"] = services_[i]->lastCommandOK();
     }
   }
 
@@ -243,10 +250,10 @@ void PortalServer::handleControl() {
     succeeded = clients_[index].writeState(true, true, true, static_cast<int>(level));
   } else return respond(400, "Unknown control action");
 
-  if (!succeeded) return respond(502, "WLED HTTP command failed");
+  if (!succeeded) return respond(503, "WLED command queue unavailable or full");
   JsonDocument response;
   response["ok"] = true;
-  response["message"] = "Command accepted by WLED; bridge state will reconcile.";
+  response["message"] = "Command queued. WLED acknowledgement and state will update asynchronously.";
   sendJSON(response);
 }
 

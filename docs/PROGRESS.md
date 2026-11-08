@@ -63,10 +63,19 @@
 - **CI VERIFIED:** [run 42442460633](https://github.com/ggrant111/wled-applehome/actions/runs/42442460633): all host tests passed (including actual-browser-helper reboot simulation), firmware builds passed on D1 Mini and CYD, and 70KB minimum OTA space guard passed. Both full binaries are 1,956,928 bytes, with 74,688 bytes free in each OTA app slot. **Hardware test pending.**
 - **Merged to main:** [PR #3](https://github.com/ggrant111/wled-applehome/pull/3). No user HomeKit pairing/WLED NVS data changed.
 
+## 2026-11-07 — v0.5 background HTTP worker candidate
+
+- Implemented a single FreeRTOS network worker on ESP32 core 0. Routine WLED GETs and HomeKit/web/preset POSTs run off the main HomeSpan/Arduino loop, avoiding up-to-650ms synchronous WLED delays there.
+- Fixed-length 24-command queue sends immediately from HAP/web callbacks, protects WLED identity with per-slot host-version checks, discards stale GETs when a newer command arrives, and reconciles state using a 450ms post-write read. Worker polls every ~8 seconds and backs off ~30 seconds on failures.
+- Per-light health metrics now include pending commands, HTTP failures and dropped commands. A queued write is **not** a confirmed WLED execution; expect eventual state reconciliation and inspect diagnostics for errors.
+- Added build-time gzip compression of the HTML portal: `web/portal.html` is the editable source, `tools/prepare_portal.py` generates `include/PortalGzip.generated.h`. Remove HTML String allocation at page request time and preserve reboot-safe CSRF recovery using authenticated status header.
+- No HomeKit/NVS registry/administrator secret/partition changes.
+- **CI status:** Awaiting host tests and both firmware builds. **Hardware:** unverified; requires tests on user's existing bridge. [Phase 5 test plan](PHASE5_TEST_PLAN.md).
+
 ## Next actions
 
 1. **Done:** v0.4 host tests, migration regression, D1 Mini/CYD builds and OTA size guard passed.
 2. **Done (user verified):** v0.4 web portal works and discovers/enrolls WLED controllers in Apple Home.
-3. **Next user test:** Add one saved preset using the web portal, restart bridge, trigger it from Apple Home, confirm momentary switch reset and WLED power/brightness sync.
+3. **Next user test:** Verify v0.4.1 preset-add success and trigger before upgrading to v0.5; then run the Phase 5 background worker hardware test plan without clearing NVS.
 4. Test independent on/off/brightness on multiple devices and restart/power-cycle retention of all existing pairing/IDs.
 5. Validate OTA safely, then prioritize nonblocking WLED networking, monitoring, flash-budget optimization and 24h soak.

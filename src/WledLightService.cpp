@@ -3,8 +3,9 @@
 #include "RegistryPolicy.h"
 #include "PresetPolicy.h"
 
-WledLightService::WledLightService(WledClient &wled, unsigned position)
-    : Service::LightBulb(), wled_(wled) {
+WledLightService::WledLightService(WledClient &wled, unsigned position,
+                                     WledNetworkWorker *worker)
+    : Service::LightBulb(), wled_(wled), worker_(worker), workerSlot_(position) {
   power_ = new Characteristic::On(false);
   brightness_ = new Characteristic::Brightness(50);
   const uint32_t delayMs = 450 + (position % bridge::kMaxDevices) * 850;
@@ -24,7 +25,7 @@ boolean WledLightService::update() {
   const bool sendPower = changedPower || changedBrightness;
   const bool sendBrightness = changedBrightness && brightness > 0;
   if (!wled_.writeState(sendPower, power, sendBrightness, brightness)) {
-    Serial.printf("[HomeKit] WLED write rejected (%s)\n", wled_.host().c_str());
+    Serial.printf("[HomeKit] WLED command could not be queued (%s)\n", wled_.host().c_str());
     retryIntervalMs_ = kOfflineBackoffMs;
     return false;
   }
@@ -32,12 +33,41 @@ boolean WledLightService::update() {
   if (power_->getVal<bool>() != power && !changedPower) power_->setVal(power);
   retryIntervalMs_ = kPollEveryMs;
   lastPollMs_ = millis();
-  Serial.printf("[HomeKit] %s power=%d brightness=%d\n",
-                wled_.host().c_str(), power, brightness);
+  Serial.printf("[HomeKit] %s %s power=%d brightness=%d\n",
+                wled_.host().c_str(), worker_ ? "queued" : "accepted",
+                power, brightness);
   return true;
 }
 
 void WledLightService::loop() {
+  if (worker_) {
+    WledNetworkWorker::Snapshot result;
+    if (!worker_->snapshot(workerSlot_, result)) return;
+    online_ = result.online;
+    pendingCommands_ = result.pendingCommands;
+    failures_ = result.totalFailures;
+    droppedCommands_ = result.queueDrops;
+    lastCommandOK_ = result.lastCommandOK;
+    lastSeenMs_ = result.lastSeenMs;
+
+    // Only the main HomeSpan loop modifies HAP characteristics. A stale
+    // worker GET or an in-flight command must never roll a new setting back.
+    if (!result.valid || result.pendingCommands
+        || result.generation == lastWorkerGeneration_) return;
+    lastWorkerGeneration_ = result.generation;
+    observedOn_ = result.state.on;
+    observedBrightness_ = result.state.brightness;
+    if (power_->getVal<bool>() != result.state.on)
+      power_->setVal(result.state.on);
+    if (brightness_->getVal<int>() != result.state.brightness)
+      brightness_->setVal(result.state.brightness);
+    if (lastObservedPresetId_ != result.state.presetId) {
+      lastObservedPresetId_ = result.state.presetId;
+      Serial.printf("[WLED] %s active preset=%d\n",
+                    wled_.host().c_str(), result.state.presetId);
+    }
+    return;
+  }
   const uint32_t now = millis();
   const uint32_t elapsed = now - lastPollMs_;
   const uint32_t currentRevision = wled_.mutationRevision();
