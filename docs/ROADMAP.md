@@ -107,7 +107,7 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 - [x] Root cause identified: the portal generates a new random CSRF token on each ESP32 boot, while an already-open browser tab keeps the old one after users restart to publish newly added Apple Home accessories.
 - [x] Dashboard now refreshes a boot token from authenticated same-origin `/api/status` responses and retries **one** rejected POST after a 403 only when a different valid token is returned.
 - [x] Device accepts the exact current token through either the collected `X-Bridge-Token` request header (reliable modern browsers) or legacy form field (backward compatibility); no authentication or CSRF bypass.
-- [x] Add C++ CSRF policy tests and actual browser `api()` helper regression tests for stale token, invalid token, no infinite retry, and unrelated 409 behavior.
+- [x] C++ CSRF policy and real browser JS regression tests passed, including token refresh after restart, one safe retry, invalid tokens and unrelated errors. [CI run 42442460633](https://github.com/ggrant111/wled-applehome/actions/runs/42442460633).
 - [ ] **Pending hardware:** Update via normal upload/OTA without erasing NVS; reboot with browser tab open; add preset; validate Apple Home preset switch appears and triggers WLED.
 
 **Immediate user workaround on v0.4.0:** Reload the browser dashboard after an ESP32 reboot, then add the preset again. Do not reset Apple Home pairings.
@@ -164,10 +164,14 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 | v0.4 portal load / discovery / add to Home | **User-verified (2026-11-07)** | Web portal works; WLED devices discovered and added to Apple Home |
 | v0.4 web authentication hardening / OTA recovery | **Not yet verified** | [Phase 4 test plan](PHASE4_TEST_PLAN.md) |
 
+| v0.4.1 CSRF fix, browser regression, D1 Mini/CYD firmware & OTA size | **Passed** | [CI run 42442460633](https://github.com/ggrant111/wled-applehome/actions/runs/42442460633) |
+| v0.4.1 live preset-add / stale-tab recovery | **Hardware pending** | User to verify without NVS erase |
+
 ## Engineering risk / budget
 
 - **4MB OTA flash budget is tight.** v0.2 compiled binary uses ~1,733,463 bytes (85.3%) of each 2,031,616-byte app slot; approximately 298KB remains. Major additions (especially touchscreen/web assets) will need explicit size-budget tests, optimization, larger flash hardware, or an altered OTA strategy.
 - v0.3 linked flash use was **1,758,847 bytes (86.6%)** of 2,031,616 per OTA application slot.
+- **v0.4.1 full firmware.bin:** 1,956,928 / 2,031,616 bytes (96.3% OTA slot); **74,688 bytes remaining** on both D1 Mini and CYD.
 - **v0.4 linked flash:** D1 Mini **1,876,139 bytes (92.3%)**, CYD 1,876,155 (92.3%). **Full firmware.bin** (includes headers/padding): D1 Mini **1,955,232** bytes, CYD **1,955,248**; **96.2% OTA slot** and only **76,384 / 76,368 bytes spare** respectively. Do not plan significant more UI code on 4MB boards without moving to larger-flash hardware, compression, or optimizing flash use. CI requires at least 70KB spare.
 - **Important migration fix:** Empty WLED MAC and IP strings are valid on the v0.1 original light, but ESP32 Preferences::putString returns 0 for a successful empty write. DeviceRegistry now verifies NVS string writes by readback; a native mock-Preferences regression test checks AID=2 migration and stable IDs across reboots.
 - Current network operations use a bounded blocking HTTP client; eight offline lights and mDNS scans may temporarily delay HomeKit servicing. Treat nonblocking IO as a priority before closing Phase 2.

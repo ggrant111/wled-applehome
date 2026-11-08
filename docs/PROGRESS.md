@@ -60,7 +60,8 @@
 - Immediate workaround: hard-refresh the portal tab; this does not delete any paired HomeKit devices or WLED configuration.
 - Code fix: return token from Digest-authenticated same-origin status GET, refresh JavaScript token on status updates, and on CSRF 403 fetch a new token + retry the mutation only once if the token changed. Send same token in request header and form field; server validates either with exact-match policy.
 - Added tests for C++ CSRF validation and for the **actual** portal JavaScript request code simulating reboot, retry bounds, invalid token and real application errors.
-- **Verification:** Pending CI firmware and host tests; then user can test on device without NVS erase.
+- **CI VERIFIED:** [run 42442460633](https://github.com/ggrant111/wled-applehome/actions/runs/42442460633): all host tests passed (including actual-browser-helper reboot simulation), firmware builds passed on D1 Mini and CYD, and 70KB minimum OTA space guard passed. Both full binaries are 1,956,928 bytes, with 74,688 bytes free in each OTA app slot. **Hardware test pending.**
+- **Merged to main:** [PR #3](https://github.com/ggrant111/wled-applehome/pull/3). No user HomeKit pairing/WLED NVS data changed.
 
 ## Next actions
 

@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.4.0-dev — **Phase 4A CI passed, hardware verification pending** ([CI run 42439628403](https://github.com/ggrant111/wled-applehome/actions/runs/42439628403)).
+**Current version:** v0.4.1 — **portal CSRF reboot-recovery fix** (CI passed, hardware validation pending). [CI and firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42442460633).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -22,6 +22,10 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 - Automated PlatformIO builds for D1 Mini/CYD and host-side brightness/registry policy tests.
 
 **Build verified:** v0.3 passed native tests, D1 Mini and CYD firmware builds ([CI run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722)). **Physical tests remain pending** for Phases 2, 3 and 4. **Not yet hardware-verified:** v0.2 discovery, 8-light operation, and paired Apple Home database refresh after adding/removing devices. No presets, web setup UI, or CYD touchscreen interface yet.
+
+## v0.4.1 — Preset add 403 correction
+
+If the ESP32 restarts while the management dashboard stays open, the browser tab may retain an expired per-boot CSRF token. In v0.4.0, clicking **Add to Home** for a preset can return `403 Missing or invalid CSRF token`. **Immediate workaround:** hard-refresh the portal tab after a bridge restart. Version 0.4.1 refreshes the token through authenticated status requests, sends it in a header as well as the form, and safely retries once if it changed. Digest login and CSRF checks remain enforced. **Update firmware without erasing NVS/HomeKit pairing.**
 
 ## Phase 4A first-run setup
 
