@@ -140,6 +140,15 @@
 - Added native tests for state semantics, migrations/reclassification and type preserved across group reorder; browser catalog/type contract. **CI passed:** [run 42505219721](https://github.com/ggrant111/wled-applehome/actions/runs/42505219721) — native playlist and preset-state tests, NVS persistence/reclassification/reorder and browser label validation, D1 Mini/CYD firmware + 70KB minimum OTA margin. D1 Mini image 1,576,656 bytes with 454,960 free; CYD 1,576,640 with 454,976 free.
 - **Merged to main:** [PR #10](https://github.com/ggrant111/wled-applehome/pull/10) at 71b0ebb. **Real playlist playback and iPhone controls not yet hardware verified.** See [Phase 9 playlist test checklist](PHASE9_PLAYLIST_TEST_PLAN.md).
 
+## 2026-11-08 — v0.9.2 local portal UX overhaul
+
+- User requested a cleaner, more intuitive UX/UI for the WLED Apple Home web management portal.
+- Reorganized the former two-column page into five distinct workflows with a responsive nav, overview and real-time WLED state, clear per-device presets/playlists management, standalone momentary switches, and bridge settings diagnostics.
+- The Effects view now shows the active preset/playlist for the selected WLED light, descriptive resource labels, direct Run controls, a real rename modal, and explicit warnings about changing a group's HomeKit ID on remove/reorder. The controls remain bound to existing HomeKit accessories and NVS identities.
+- Added a narrow, authenticated and CSRF-protected WLED Effects Run API that validates group/resource membership before queueing the existing saved preset/playlist. No changes to WLED presets or HomeSpan pairing.
+- Added client-side VM tests for view switching, status rendering, playlists, safe HTML labels, POST authentication semantics and pending restart; existing browser security tests remain. The page is still a static, gzip-compressed single HTML asset.
+- **CI/build/device validation pending.** [v0.9.2 checklist](PHASE9_PORTAL_UX_TEST_PLAN.md).
+
 ## Next actions
 
 1. **Done:** v0.4 host tests, migration regression, D1 Mini/CYD builds and OTA size guard passed.

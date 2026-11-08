@@ -107,7 +107,7 @@ void PortalServer::handleStatus() {
   http_.sendHeader("X-Bridge-Token", token_);
   JsonDocument doc;
   doc["ok"] = true;
-  doc["version"] = "0.9.1-dev";
+  doc["version"] = "0.9.2-dev";
   doc["wifi"] = WiFi.status() == WL_CONNECTED;
   doc["ip"] = WiFi.localIP().toString();
   doc["rssi"] = WiFi.RSSI();
@@ -419,6 +419,29 @@ void PortalServer::handleAddEffect() {
   sendJSON(response);
 }
 
+void PortalServer::handleRunEffect() {
+  if (!authorize(true)) return;
+  uint32_t controllerAid = 0, presetId = 0;
+  if (!parseRequestId(http_.arg("aid"), controllerAid)
+      || !parseRequestId(http_.arg("preset"), presetId)
+      || !bridge::validPresetId(presetId))
+    return respond(400, "Choose an existing Effects group and saved preset or playlist");
+  const int slot = effects_.indexByAid(controllerAid);
+  if (slot < 0) return respond(404, "Effects group not found");
+  const EffectsControllerRecord &group = effects_.at(slot);
+  if (effects_.indexByPreset(static_cast<unsigned>(slot),
+                             static_cast<uint8_t>(presetId)) < 0)
+    return respond(404, "Saved preset or playlist is not in this Effects group");
+  const int deviceIndex = devices_.indexByAid(group.deviceAid);
+  if (deviceIndex < 0) return respond(404, "WLED light no longer enrolled");
+  if (!clients_[deviceIndex].applyPreset(static_cast<uint8_t>(presetId)))
+    return respond(503, "Could not queue the WLED preset or playlist");
+  JsonDocument response;
+  response["ok"] = true;
+  response["message"] = "WLED preset/playlist queued for activation.";
+  sendJSON(response);
+}
+
 void PortalServer::handleRemoveEffectsController() {
   if (!authorize(true)) return;
   uint32_t aid = 0;
@@ -551,6 +574,7 @@ void PortalServer::routes() {
   http_.on("/api/presets/add", HTTP_POST, [this]() { handleAddPreset(); });
   http_.on("/api/presets/remove", HTTP_POST, [this]() { handleRemovePreset(); });
   http_.on("/api/effects/add", HTTP_POST, [this]() { handleAddEffect(); });
+  http_.on("/api/effects/run", HTTP_POST, [this]() { handleRunEffect(); });
   http_.on("/api/effects/remove", HTTP_POST, [this]() { handleRemoveEffectsController(); });
   http_.on("/api/effects/convert", HTTP_POST, [this]() { handleConvertEffects(); });
   http_.on("/api/effects/rename", HTTP_POST, [this]() { handleRenameEffect(); });

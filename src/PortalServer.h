@@ -49,6 +49,7 @@ private:
   void handleAddPreset();
   void handleRemovePreset();
   void handleAddEffect();
+  void handleRunEffect();
   void handleRemoveEffectsController();
   void handleConvertEffects();
   void handleRenameEffect();
