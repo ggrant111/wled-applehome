@@ -7,6 +7,7 @@ struct WledState {
   bool on = false;
   int brightness = 50;
   int presetId = -1;
+  int playlistId = -1;   // WLED pl: active playlist resource ID, not current step ps
   float hue = 0.0f;
   float saturation = 100.0f;
   bool colorValid = false;
@@ -46,6 +47,7 @@ public:
   bool printPresetCatalog();
   bool getPresetNames(JsonDocument &out) { return loadPresetNames(out, 0); }
   bool lookupPresetName(uint8_t presetId, String &name);
+  bool lookupPresetInfo(uint8_t presetId, String &name, bool &isPlaylist);
   bool inspectPresetSegments(uint8_t presetId, WledPresetSegments &out);
   uint32_t mutationRevision() const { return mutationRevision_; }
   uint32_t lastMutationMs() const { return lastMutationMs_; }

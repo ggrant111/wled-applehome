@@ -43,6 +43,23 @@ int main() {
   assert(fx.rename(4, 8, "Wednesday Revised"));
   assert(!fx.rename(4, 99, "Missing"));
 
+  // Playlist saved on the original v0.8 controller must not change AID/IIDs.
+  assert(fx.add(devices, 2, 37, "NHL Playlist", &existingAid, true)
+         == EffectsAddResult::Added);
+  assert(existingAid == 4);
+  assert(fx.at(0).inputs[2].presetId == 37);
+  assert(fx.at(0).inputs[2].isPlaylist);
+  assert(fx.add(devices, 2, 37, "NHL Playlist", &existingAid, true)
+         == EffectsAddResult::Exists);
+  // v0.9 catalog users who had added playlist as a preset can reclassify
+  // the SAME button without needing a new HomeKit AID.
+  assert(fx.add(devices, 2, 8, "Wednesday Revised", &existingAid, true)
+         == EffectsAddResult::Reclassified);
+  assert(fx.at(0).aid == 4 && fx.at(0).inputs[1].isPlaylist);
+  assert(fx.add(devices, 2, 8, "Wednesday Revised", &existingAid, false)
+         == EffectsAddResult::Reclassified);
+  assert(!fx.at(0).inputs[1].isPlaylist);
+
   uint32_t lightAids[7] = {};
   uint32_t effectAids[7] = {};
   for (unsigned i = 0; i < 7; ++i) {
@@ -68,12 +85,20 @@ int main() {
   assert(reboot.activeCount() == 8);
   assert(reboot.at(0).aid == 4);
   assert(reboot.at(0).inputs[1].name == "Wednesday Revised");
+  assert(reboot.at(0).inputs[2].isPlaylist);
+  assert(reboot.at(0).inputs[2].presetId == 37);
   for (unsigned i = 0; i < 7; ++i)
     assert(reboot.at(reboot.indexByDeviceAid(lightAids[i])).aid == effectAids[i]);
 
   // Adding a second favorite to one new group does NOT replace its AID/IIDs.
-  assert(reboot.add(devices, lightAids[0], 31, "Twinkle") == EffectsAddResult::Added);
+  assert(reboot.add(devices, lightAids[0], 31, "Twinkle", nullptr, true)
+         == EffectsAddResult::Added);
   assert(reboot.at(reboot.indexByDeviceAid(lightAids[0])).aid == effectAids[0]);
+  assert(reboot.at(reboot.indexByDeviceAid(lightAids[0])).inputs[1].isPlaylist);
+  EffectsControllerRegistry playlistRestart;
+  assert(playlistRestart.begin());
+  assert(playlistRestart.at(playlistRestart.indexByDeviceAid(lightAids[0]))
+         .inputs[1].isPlaylist);
 
   // Changing service order REQUIRES a new AID. No other group is disturbed.
   uint32_t reorderAid = 0;
@@ -82,6 +107,7 @@ int main() {
   assert(reorderAid > effectAids[6]);
   assert(reboot.at(reboot.indexByDeviceAid(lightAids[0])).aid == reorderAid);
   assert(reboot.at(reboot.indexByDeviceAid(lightAids[0])).inputs[0].presetId == 31);
+  assert(reboot.at(reboot.indexByDeviceAid(lightAids[0])).inputs[0].isPlaylist);
   assert(reboot.at(reboot.indexByDeviceAid(lightAids[0])).inputs[1].presetId == 10);
   assert(reboot.at(reboot.indexByDeviceAid(lightAids[1])).aid == otherGroupAid);
   assert(reboot.at(0).aid == 4); // v0.8 grouped controller survives unchanged.
@@ -148,5 +174,5 @@ int main() {
   assert(tvFx.at(0).aid == 4);
   assert(tvFx.at(0).mode == EffectsControllerMode::GroupedButtons);
 
-  std::puts("v0.9 eight controllers, legacy AIDs, independent group rebuilds and crash recovery passed");
+  std::puts("v0.9.1 playlists, legacy AIDs, independent groups, reordering and crash recovery passed");
 }

@@ -19,4 +19,10 @@ assert(html.includes('data-action="moveEffect"'));
 assert(html.includes('data-action="removeEffect"'));
 assert(html.includes('data-action="renameEffect"'));
 assert(html.includes('safe(x.name)'),"Effect labels must be escaped");
+assert(html.includes('p.kind==="playlist"'),"WLED playlist labeling missing");
+assert(html.includes('x.kind==="playlist"'),"Effects group playlist labeling missing");
+assert(server.includes('row["kind"] = playlist ? "playlist" : "preset"'),
+       "Catalog must label WLED playlists distinctly");
+assert(server.includes('item["kind"] = e.inputs[i].isPlaylist'),
+       "Controller status must expose persisted playlist type");
 console.log("Multi-device effects portal action contract and auth/CSRF passed");

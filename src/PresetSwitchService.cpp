@@ -5,9 +5,11 @@
 PresetSwitchService::PresetSwitchService(WledClient &client,
                                          uint32_t lightAid, uint8_t presetId,
                                          const char *serviceName,
-                                         WledLightService *trackedLight)
+                                         WledLightService *trackedLight,
+                                         bool isPlaylist)
     : Service::Switch(), client_(client), lightAid_(lightAid),
-      presetId_(presetId), trackedLight_(trackedLight) {
+      presetId_(presetId), trackedLight_(trackedLight),
+      isPlaylist_(isPlaylist) {
   on_ = new Characteristic::On(false);
   if (serviceName && *serviceName)
     new Characteristic::ConfiguredName(serviceName);
@@ -57,8 +59,9 @@ void PresetSwitchService::loop() {
         || trackedLight_->pendingCommands()
         || static_cast<uint32_t>(millis() - lastActionMs_) < 1400)
       return;
-    const bool active = bridge::presetPowerOn(
-        trackedLight_->observedOn(), trackedLight_->observedPresetId(), presetId_);
+    const bool active = bridge::presetOrPlaylistPowerOn(
+        trackedLight_->observedOn(), trackedLight_->observedPresetId(),
+        trackedLight_->observedPlaylistId(), presetId_, isPlaylist_);
     if (on_->getVal<bool>() != active) on_->setVal(active);
     return;
   }

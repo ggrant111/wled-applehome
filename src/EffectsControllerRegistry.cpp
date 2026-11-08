@@ -62,7 +62,8 @@ bool EffectsControllerRegistry::begin() {
       const uint32_t preset = legacy_.getUInt(inputKey(0, i, "ps").c_str(), 0);
       if (bridge::validPresetId(preset) && indexByPreset(0, preset) < 0) {
         r.inputs[i] = {static_cast<uint8_t>(preset),
-          legacy_.getString(inputKey(0, i, "nm").c_str(), "WLED Preset")};
+          legacy_.getString(inputKey(0, i, "nm").c_str(), "WLED Preset"),
+          legacy_.getUInt(inputKey(0, i, "pl").c_str(), 0) == 1};
       }
     }
     if (!r.count()) r = {};
@@ -80,7 +81,8 @@ bool EffectsControllerRegistry::begin() {
       const uint32_t preset = modern_.getUInt(inputKey(slot, i, "p").c_str(), 0);
       if (bridge::validPresetId(preset) && indexByPreset(slot, preset) < 0) {
         r.inputs[i] = {static_cast<uint8_t>(preset),
-          modern_.getString(inputKey(slot, i, "n").c_str(), "WLED Preset")};
+          modern_.getString(inputKey(slot, i, "n").c_str(), "WLED Preset"),
+          modern_.getUInt(inputKey(slot, i, "l").c_str(), 0) == 1};
       }
     }
     if (!r.count()) r = {};
@@ -108,15 +110,21 @@ bool EffectsControllerRegistry::begin() {
 }
 
 bool EffectsControllerRegistry::saveInput(unsigned slot, unsigned input,
-                                           uint8_t preset, const String &name) {
+                                           uint8_t preset, const String &name,
+                                           bool isPlaylist) {
   if (slot >= bridge::kEffectsSlots || input >= bridge::kMaxEffectsInputs
       || !bridge::validPresetId(preset)) return false;
   Preferences &prefs = slot == 0 ? legacy_ : modern_;
   const String nameKey = inputKey(slot, input, slot == 0 ? "nm" : "n");
+  const String typeKey = inputKey(slot, input, slot == 0 ? "pl" : "l");
   const String presetKey = inputKey(slot, input, slot == 0 ? "ps" : "p");
   prefs.putString(nameKey.c_str(), name);
   if (!prefs.isKey(nameKey.c_str()) || prefs.getString(nameKey.c_str()) != name)
     return false;
+  if (prefs.putUInt(typeKey.c_str(), isPlaylist ? 1 : 0) != sizeof(uint32_t)
+      || prefs.getUInt(typeKey.c_str(), 2) != (isPlaylist ? 1U : 0U))
+    return false;
+  // Preset ID remains the commit marker; protect against half-written input.
   return prefs.putUInt(presetKey.c_str(), preset) == sizeof(uint32_t);
 }
 
@@ -128,12 +136,14 @@ bool EffectsControllerRegistry::saveModern(unsigned slot,
   // rollback to the previously active group on partial NVS failure.
   if (modern_.getUInt(field(slot, "a").c_str(), 0)) return false;
   for (unsigned i = 0; i < r.count(); ++i)
-    if (!saveInput(slot, i, r.inputs[i].presetId, r.inputs[i].name))
+    if (!saveInput(slot, i, r.inputs[i].presetId, r.inputs[i].name,
+                   r.inputs[i].isPlaylist))
       return false;
   // Clear any stale tail entries from a previously retired/reused slot.
   for (unsigned i = r.count(); i < bridge::kMaxEffectsInputs; ++i) {
     modern_.remove(inputKey(slot, i, "p").c_str());
     modern_.remove(inputKey(slot, i, "n").c_str());
+    modern_.remove(inputKey(slot, i, "l").c_str());
   }
   if (modern_.putUInt(field(slot, "d").c_str(), r.deviceAid) != sizeof(uint32_t)
       || modern_.getUInt(field(slot, "d").c_str(), 0) != r.deviceAid)
@@ -153,6 +163,7 @@ bool EffectsControllerRegistry::retire(unsigned slot) {
     for (unsigned i = 0; i < bridge::kMaxEffectsInputs; ++i) {
       legacy_.remove(inputKey(0, i, "ps").c_str());
       legacy_.remove(inputKey(0, i, "nm").c_str());
+      legacy_.remove(inputKey(0, i, "pl").c_str());
     }
   } else {
     if (modern_.putUInt(field(slot, "a").c_str(), 0) != sizeof(uint32_t))
@@ -174,7 +185,8 @@ EffectsAddResult EffectsControllerRegistry::add(DeviceRegistry &devices,
                                                   uint32_t deviceAid,
                                                   uint8_t presetId,
                                                   const String &name,
-                                                  uint32_t *controllerAid) {
+                                                  uint32_t *controllerAid,
+                                                  bool isPlaylist) {
   if (devices.indexByAid(deviceAid) < 0 || !bridge::validPresetId(presetId))
     return EffectsAddResult::Invalid;
   const int existing = indexByDeviceAid(deviceAid);
@@ -182,12 +194,27 @@ EffectsAddResult EffectsControllerRegistry::add(DeviceRegistry &devices,
   if (existing >= 0) {
     auto &r = records_[existing];
     if (controllerAid) *controllerAid = r.aid;
-    if (indexByPreset(existing, presetId) >= 0) return EffectsAddResult::Exists;
+    const int present = indexByPreset(existing, presetId);
+    if (present >= 0) {
+      // Older firmware exposed playlists as plain presets with no pl metadata.
+      // Re-selecting that WLED entry explicitly upgrades its classification,
+      // without changing the existing HomeKit accessory/service IDs.
+      if (r.inputs[present].isPlaylist == isPlaylist)
+        return EffectsAddResult::Exists;
+      Preferences &prefs = existing == 0 ? legacy_ : modern_;
+      const String typeKey = inputKey(existing, static_cast<unsigned>(present),
+                                     existing == 0 ? "pl" : "l");
+      if (prefs.putUInt(typeKey.c_str(), isPlaylist ? 1 : 0) != sizeof(uint32_t)
+          || prefs.getUInt(typeKey.c_str(), 2) != (isPlaylist ? 1U : 0U))
+        return EffectsAddResult::PersistenceFailed;
+      r.inputs[present].isPlaylist = isPlaylist;
+      return EffectsAddResult::Reclassified;
+    }
     const unsigned input = r.count();
     if (input >= bridge::kMaxEffectsInputs) return EffectsAddResult::Full;
-    if (!saveInput(existing, input, presetId, clean))
+    if (!saveInput(existing, input, presetId, clean, isPlaylist))
       return EffectsAddResult::PersistenceFailed;
-    r.inputs[input] = {presetId, clean};
+    r.inputs[input] = {presetId, clean, isPlaylist};
     return EffectsAddResult::Added;
   }
   if (activeCount() >= bridge::kMaxEffectsControllers)
@@ -200,7 +227,7 @@ EffectsAddResult EffectsControllerRegistry::add(DeviceRegistry &devices,
   created.aid = newAid;
   created.deviceAid = deviceAid;
   created.mode = EffectsControllerMode::GroupedButtons;
-  created.inputs[0] = {presetId, clean};
+  created.inputs[0] = {presetId, clean, isPlaylist};
   if (!saveModern(slot, created)) return EffectsAddResult::PersistenceFailed;
   records_[slot] = created;
   if (controllerAid) *controllerAid = newAid;

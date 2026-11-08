@@ -18,7 +18,7 @@
 #include "WledLightService.h"
 
 #ifndef WLED_APP_VERSION
-#define WLED_APP_VERSION "0.9.0-dev"
+#define WLED_APP_VERSION "0.9.1-dev"
 #endif
 
 namespace {
@@ -307,7 +307,7 @@ void addEffectsControllers() {
         new PresetSwitchService(clients[index], record.deviceAid,
                                 record.inputs[i].presetId,
                                 record.inputs[i].name.c_str(),
-                                lightServices[index]);
+                                lightServices[index], record.inputs[i].isPlaylist);
     } else {
       WledEffectsTV *tv = new WledEffectsTV(clients[index], *lightServices[index],
                                             record, name.c_str());

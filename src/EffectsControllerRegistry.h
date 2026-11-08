@@ -17,6 +17,7 @@ constexpr unsigned kEffectsSlots = kMaxEffectsControllers + 2;
 struct EffectsInput {
   uint8_t presetId = 0;
   String name;
+  bool isPlaylist = false; // WLED pl tracks playlist; ps may advance within it.
 };
 
 enum class EffectsControllerMode : uint8_t { Television = 0, GroupedButtons = 1 };
@@ -34,7 +35,7 @@ struct EffectsControllerRecord {
 };
 
 enum class EffectsAddResult {
-  Created, Added, Exists, Full, ControllerLimit,
+  Created, Added, Exists, Reclassified, Full, ControllerLimit,
   AssignedToAnotherLight, Invalid, PersistenceFailed
 };
 
@@ -57,7 +58,7 @@ public:
   int indexByPreset(uint8_t preset) const { return indexByPreset(0, preset); }
   EffectsAddResult add(DeviceRegistry &devices, uint32_t deviceAid,
                        uint8_t presetId, const String &name,
-                       uint32_t *controllerAid = nullptr);
+                       uint32_t *controllerAid = nullptr, bool isPlaylist = false);
   // Renaming changes only ConfiguredName, not HomeKit service topology.
   bool rename(uint32_t controllerAid, uint8_t preset, const String &name);
   // Removal or changing the order changes service IIDs. Explicitly rebuild
@@ -77,7 +78,8 @@ private:
   EffectsControllerRecord records_[bridge::kEffectsSlots];
   String field(unsigned slot, const char *prefix) const;
   String inputKey(unsigned slot, unsigned input, const char *prefix) const;
-  bool saveInput(unsigned slot, unsigned input, uint8_t preset, const String &name);
+  bool saveInput(unsigned slot, unsigned input, uint8_t preset, const String &name,
+                 bool isPlaylist);
   bool saveModern(unsigned slot, const EffectsControllerRecord &record);
   bool retire(unsigned slot);
   int emptyModernSlot() const;
