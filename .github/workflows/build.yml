@@ -30,6 +30,11 @@ jobs:
           g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_portal_validation.cpp -o /tmp/bridge-portal-tests
           /tmp/bridge-portal-tests
 
+      - name: Compile and run DeviceRegistry NVS migration tests
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -Itests/stubs -Isrc -Iinclude tests/test_device_registry.cpp src/DeviceRegistry.cpp -o /tmp/bridge-registry-migration
+          /tmp/bridge-registry-migration
+
   firmware:
     runs-on: ubuntu-latest
     strategy:
