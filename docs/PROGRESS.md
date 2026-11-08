@@ -46,10 +46,17 @@
 - **Migration bug corrected and regression-tested:** ESP32 Preferences::putString returns 0 for successfully stored empty strings; Phase 2's original AID=2 migration saved a blank MAC and could falsely halt startup. Fixed by readback validation and added a mock-Preferences integration test for initial migration, AID stability and reboot.
 - **Merged to main:** [Phase 4 PR #2](https://github.com/ggrant111/wled-applehome/pull/2). Phase 1 on/off/reboot, Phase 2 multi-device, Phase 3 preset behavior and Phase 4 portal/OTA acceptance tests remain pending.
 
+## 2026-11-07 — User hardware verification: web portal and Apple Home enrollment
+
+- **User-confirmed:** v0.4 web portal is working on their ESP32, WLED controllers were discovered from the portal and new lights were successfully added to Apple Home.
+- This is real hardware validation of the portal discovery/enrollment path, not proof that all eight lights, independent power/brightness, WLED preset switches, remote OTA, reboot recovery, credential controls or 24-hour uptime have passed.
+- Phase 4B priority order: preset switch end-to-end test; safe OTA and pairing/NVS retention; nonblocking WLED traffic and offline recovery; flash-size optimization; extended stability tests.
+- Existing v0.4 build uses about 96.2% OTA app slot; substantial code/UI expansion on this 4 MB board should be avoided until footprint is reduced or hardware capacity increased.
+
 ## Next actions
 
 1. **Done:** v0.4 host tests, migration regression, D1 Mini/CYD builds and OTA size guard passed.
-2. Preserve existing NVS/HomeSpan pairing: upload on the **same paired ESP32** without erase when home.
-3. Verify pending Phase 2 identity/discovery/multi-device acceptance tests before relying on preset switches.
-4. Test a named preset: `@c2` -> `@p2:5` (use actual saved preset ID) -> `R` -> trigger in Apple Home -> verify switch resets and WLED responds.
-5. Record observations in progress log, update phase checkboxes, and plan asynchronous networking / Phase 4 portal.
+2. **Done (user verified):** v0.4 web portal works and discovers/enrolls WLED controllers in Apple Home.
+3. **Next user test:** Add one saved preset using the web portal, restart bridge, trigger it from Apple Home, confirm momentary switch reset and WLED power/brightness sync.
+4. Test independent on/off/brightness on multiple devices and restart/power-cycle retention of all existing pairing/IDs.
+5. Validate OTA safely, then prioritize nonblocking WLED networking, monitoring, flash-budget optimization and 24h soak.

@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.4 / Phase 4A (CI passed; physical verification for Phases 1–4 remains open) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.4 / Phase 4B (portal discovery and Apple Home enrollment user-verified; preset, OTA and long-run tests pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -37,9 +37,9 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 
 **Acceptance gate:** P1.1–P1.9 passed, with actual device evidence. Compiling is not sufficient.
 
-### Phase 2 — v0.2: Discovery and stable multi-device bridge — **CI PASSED / HARDWARE VERIFICATION PENDING**
+### Phase 2 — v0.2: Discovery and stable multi-device bridge — **PORTAL DISCOVERY / ADD-TO-HOME HARDWARE-VERIFIED; FULL TESTS PENDING**
 
-- [x] **Code delivered:** On-demand mDNS scan of `_wled._tcp` and HTTP `/json/info` verification. **Physical discovery test pending.**
+- [x] **Code delivered:** On-demand mDNS scan of `_wled._tcp` and HTTP `/json/info` verification. **Web portal discovery user-verified (2026-11-07); serial CLI scan remains unverified.**
 - [x] **Code delivered:** CLI manual add/remove and de-duplicate by normalized hardware MAC; rename remains planned.
 - [ ] Device renaming (separate from WLED's own name) and polished web configuration.
 - [x] **Code delivered:** NVS-backed monotonic HomeKit AIDs; original light retains AID=2, without reallocating removed AIDs.
@@ -47,7 +47,7 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 - [ ] Nonblocking WLED networking, exposed device-health UI, and advanced reconnection behavior.
 - [x] **Code delivered:** Eight WLED registry slots and bridged accessory creation.
 - [ ] Hardware test with eight WLED devices and evaluate memory/latency.
-- [ ] Hardware verify that add/remove + reboot refreshes Apple Home without accidental re-pairing.
+- [ ] Hardware verify both add **and removal**, reboot, and HomeKit pairing continuity. **User confirmed adding new WLED devices via portal into Apple Home (2026-11-07); removal and identity persistence not yet reported.**
 - [ ] Test reboot, IP changes, reordering, and missing devices.
 
 ### Phase 3 — v0.3: Presets and state sync — **CI PASSED / HARDWARE TESTS PENDING**
@@ -58,9 +58,9 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 - [ ] Hardware verify observation of WLED/GlowDeck/external state and selected preset changes on multiple lights; polling-based sync code is in place.
 - [ ] WebSocket-assisted live updates / fully nonblocking transport (deferred; 8s periodic polling retained as fallback).
 
-### Phase 4 — v0.4/1.0: Web setup, OTA, reliability and release — **CI PASSED / HARDWARE VERIFICATION OPEN**
+### Phase 4 — v0.4/1.0: Web setup, OTA, reliability and release — **WEB DISCOVERY / HOME ENROLLMENT VERIFIED; REMAINING GATES OPEN**
 
-- [x] **Code delivered:** Password-gated local web manager on port 8080 (device list, status, 8-light discovery/add/remove, preset selection, controls, diagnostics and reboot). **Network/hardware verification pending.**
+- [x] **Code delivered:** Password-gated local web manager on port 8080 (device list, status, 8-light discovery/add/remove, preset selection, controls, diagnostics and reboot). **Portal loads and discovers/enrolls WLED devices into Apple Home on user hardware (2026-11-07); the rest of its functions remain unverified.**
 - [ ] Test real browser Digest login, CSRF protections, reconnection and Apple Home coexistence; optimize any WebServer-induced HomeKit latency.
 - [x] **Code delivered:** HomeSpan built-in password-protected ArduinoOTA enabled only after serial-set administrator password (no default OTA password); OTA partition validation delayed 60s with `SpanRollback.h`. **OTA hardware recovery/pairing test pending.**
 - [ ] Validate OTA with firmware image and ensure pairing, Wi-Fi and WLED registry survive; test rollback after invalid/new image.
@@ -71,6 +71,16 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 - [x] **Code delivered:** Release documentation, web/OTA setup guide, GitHub CI firmware artifacts and binary OTA-partition headroom check.
 - [ ] Configuration export/import with secret redaction, release changelog and versioned release tagging.
 - [ ] Final **8-device and 24-hour run verification**; phase must remain open until real hardware evidence.
+
+### Phase 4B — next release priorities (acceptance gated)
+
+1. **Preset controls / end-to-end state:** User selects a real saved WLED preset in the portal; it appears in Apple Home after bridge restart, activates the correct WLED preset, resets for another trigger, and power/brightness stay synchronized. Confirm independent power/brightness changes for at least two enrolled lights.
+2. **Safe OTA:** Upload a compatible OTA image using HomeSpan's authenticated OTA service; demonstrate that HomeKit pairing, device identities (including AID=2), WLED IPs, preset switches and admin settings survive. Confirm the delayed sketch-valid marker and test rollback only on a safe spare/test device.
+3. **Networking and stability:** Replace/limit synchronous WLED HTTP calls so an offline light cannot impair all Apple Home lights; test missing Wi-Fi, disconnected WLED, state-update conflicts, discovery latency and 24-hour continuous uptime.
+4. **Capacity management:** Optimize firmware footprint and quantify RAM/flash at 1, 3, and 8 WLED devices; preserve a substantial safety margin for OTA. On classic ESP32 4MB the current 76KB spare is a blocker for major added features.
+5. **Production polish:** Security review, diagnostic logs, backup/export with sensitive data redacted, versioned release, and documented recovery instructions.
+
+**User-verified hardware evidence:** Web manager operational; discovered WLED controllers using portal and successfully added lights to Apple Home. Do not infer tests of every light's independent power/brightness, pairing across reboot, preset activation, removal, or OTA.
 
 ## After MVP
 
@@ -89,12 +99,12 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 - The bridge does **not** create or edit any WLED presets; `@c<AID>` reads names and `@p<AID>:<ID>` exposes a selected saved preset as a HomeKit switch. Only `{"ps":<ID>}` is sent when invoked.
 - Up to **12 selected preset switches total**, independent of the 8 WLED-light limit; no preset tiles are added automatically.
 - Existing light AIDs, HomeKit pairing, and WLED NVS registry are preserved; **new switches get fresh AIDs from the same allocator used for lights**.
-- Full URL/local web portal and instant WebSocket state sync are **still open**. Large WLED catalog reads are on-demand and may temporarily block HomeKit while the request finishes.
-- No hardware verification yet for v0.2 or v0.3. Do not mark those phases released merely because CI passes.
+- Instant WebSocket state sync is **still open** (a local portal now exists in Phase 4A). Large WLED catalog reads are on-demand and may temporarily block HomeKit while the request finishes.
+- Portal-based WLED discovery and Apple Home enrollment are user-verified; other v0.2 and v0.3 tests remain open. Do not mark those phases released solely from CI.
 
 ## Phase 4 safety & deployment notes
 
-- This is **v0.4.0-dev Phase 4A**, not a finished v1.0 release. Leave Phase 1–3 unverified hardware gates open until tested.
+- This is **v0.4.0-dev with Phase 4B next**, not a finished v1.0 release. Preserve outstanding Phase 1–4 hardware gates.
 - **The portal is OFF by default**. On USB serial console, enter `@k <strong-unique-password>` (14–64 printable non-space ASCII characters) and reboot with `R`; then visit `http://<bridge-ip>:8080/`, sign in with username `admin`.
 - The administrator password is stored in local ESP32 NVS for web Digest login and reused to activate HomeSpan's password-protected ArduinoOTA. It is **not hardcoded in firmware or written to git**, but plaintext NVS is not encryption-at-rest—physical flash access remains a security boundary.
 - Disable portal + OTA via `@k -` followed by `R`; HomeKit/WLED configuration must remain unchanged.
@@ -134,13 +144,15 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 | D1 Mini physical on/off and reboot persistence | Not yet reported | Requires physical test |
 | CYD physical pairing / WLED actuation | Not tested | User hardware |
 | v0.2 D1 Mini firmware, CYD firmware, host tests | **Passed** | [CI run 42430738405](https://github.com/ggrant111/wled-applehome/actions/runs/42430738405) |
-| v0.2 mDNS discovery, multi-light behavior | Pending hardware | [Phase 2 test plan](PHASE2_TEST_PLAN.md) |
+| v0.2/v0.4 portal discovery and Apple Home enrollment | **User-verified (2026-11-07)** | Portal discovers devices and adds lights in Apple Home; other Phase 2 checks pending |
+| v0.2 full 8-light / remove-reboot / identity recovery | Pending hardware | [Phase 2 test plan](PHASE2_TEST_PLAN.md) |
 
 | v0.3 D1 Mini firmware, CYD firmware and host tests | **Passed** | [Phase 3 CI run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722) |
 | v0.3 preset control / switch-reset / state reconciliation | Pending hardware | [Phase 3 test plan](PHASE3_TEST_PLAN.md) |
 
 | v0.4 D1 Mini, CYD firmware builds + host/NVS migration tests | **Passed** | [CI run 42439628403](https://github.com/ggrant111/wled-applehome/actions/runs/42439628403) |
-| v0.4 authenticated portal / OTA recovery on physical hardware | **Not yet verified** | [Phase 4 test plan](PHASE4_TEST_PLAN.md) |
+| v0.4 portal load / discovery / add to Home | **User-verified (2026-11-07)** | Web portal works; WLED devices discovered and added to Apple Home |
+| v0.4 web authentication hardening / OTA recovery | **Not yet verified** | [Phase 4 test plan](PHASE4_TEST_PLAN.md) |
 
 ## Engineering risk / budget
 
