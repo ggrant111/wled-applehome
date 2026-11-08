@@ -59,3 +59,19 @@ GitHub Actions must compile both targets and run host validation tests. A dedica
 ## ADR-016 — Empty-string NVS migration must validate stored value, not putString count (2026-11-07)
 
 The ESP32 Preferences API returns `strlen(value)` for `putString` (including a **successful zero** on `""`). The Phase 2 original-light migration intentionally writes an empty WLED MAC and sometimes an empty IP; treating a return of zero as failure could halt startup and leave the paired HomeKit bridge unreachable. `DeviceRegistry::save` now writes each string and verifies it via `isKey()` + `getString()` before persisting the AID. A native mock-Preferences integration test validates v0.1-to-v0.4 registry migration, stable original AID=2, IP/MAC updates, and never-reused IDs across reboot. Verified by CI run 42439628403. This fix has **not yet been validated on real hardware**.
+
+## ADR-017 — Offload routine WLED HTTP from HomeSpan callbacks (2026-11-07)
+
+HomeSpan callback methods must not block for slow/offline WLED controllers. Start a **single** FreeRTOS HTTP worker pinned to core 0, with a fixed-capacity 24-command queue covering all eight lights. HTTP polling and WLED JSON POST use an independent worker-owned `WledClient`; no network I/O or HomeKit characteristic writes occur across threads. The main loop enqueues commands immediately and consumes copies of worker snapshots through a short ESP32 critical section.
+
+Use staggered polling, 8-second healthy poll cycles, ~30-second offline retry and a ~450ms reconciliation read after POST. Each queued command increments the slot's mutation epoch; an in-flight GET can publish only when its epoch and host generation remain unchanged and no commands are pending. Host changes invalidate stale snapshots. Keep queue insertion nonblocking; reject operations if full rather than freeze HomeSpan.
+
+**Semantics:** A HomeKit write acknowledged by this asynchronous bridge is **queued, not confirmed by WLED**. Background HTTP errors are recorded and eventually corrected by state reconciliation. HomeKit cannot receive a deferred per-command error from this implementation; future versions may provide more explicit pending/failure notifications. Preset trigger switch still resets after activation attempt is queued.
+
+User-initiated discovery, manual WLED probe and large saved-preset catalogs remain blocking on the main portal/serial path; this phase removes blocking from *routine* polling and light/preset commands rather than claiming full async networking.
+
+## ADR-018 — Pre-gzip HTML to preserve 4MB dual OTA budget (2026-11-07)
+
+The Phase 4 dashboard embedded ~13KB raw HTML in firmware and made a heap-allocating String copy for every request to interpolate a boot CSRF token. Move the editable page to `web/portal.html`; the PlatformIO `pre:tools/prepare_portal.py` script produces a gzip-compressed `include/PortalGzip.generated.h` at build time. Serve the bytes with `Content-Encoding: gzip` straight from PROGMEM, no runtime decompression or HTML String allocation.
+
+The boot CSRF token is now obtained from the existing **Digest-authenticated, no-store, same-origin** `/api/status` header, rather than rendered into HTML. All state-changing requests still require exact CSRF validation. Browser regression tests are updated to read the editable HTML source.

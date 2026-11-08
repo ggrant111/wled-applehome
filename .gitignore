@@ -6,3 +6,6 @@
 .env
 secrets.*
 local_config.h
+
+# Rebuilt from web/portal.html by PlatformIO pre-build
+include/PortalGzip.generated.h

@@ -16,9 +16,13 @@ struct WledInfo {
 };
 
 
+class WledNetworkWorker;
+
 class WledClient {
 public:
   void setHost(const String &host);
+  void attachWorker(WledNetworkWorker *worker, unsigned slot);
+  bool backgroundActive() const { return worker_ != nullptr; }
   const String &host() const;
   bool configured() const;
   bool readState(WledState &out);
@@ -33,6 +37,8 @@ public:
   static String normalizeMac(const String &input);
 private:
   String host_;
+  WledNetworkWorker *worker_ = nullptr;
+  unsigned workerSlot_ = 0;
   uint32_t mutationRevision_ = 0;
   uint32_t lastMutationMs_ = 0;
   String url() const;

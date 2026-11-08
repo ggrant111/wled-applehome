@@ -16,12 +16,13 @@ boolean PresetSwitchService::update() {
     Serial.printf("[Preset] FAILED light AID=%lu preset=%u\n",
                   static_cast<unsigned long>(lightAid_),
                   static_cast<unsigned>(presetId_));
-    return false; // HomeKit write fails rather than falsely reporting success.
+    return false; // Rejected by the local queue or failed synchronously.
   }
 
   triggeredAtMs_ = millis();
   resetPending_ = true;
-  Serial.printf("[Preset] Triggered light AID=%lu preset=%u\n",
+  Serial.printf("[Preset] %s light AID=%lu preset=%u\n",
+                client_.backgroundActive() ? "Queued" : "Triggered",
                 static_cast<unsigned long>(lightAid_),
                 static_cast<unsigned>(presetId_));
   return true;

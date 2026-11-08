@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.4.1 — **portal CSRF reboot-recovery fix** (CI passed, hardware validation pending). [CI and firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42442460633).
+**Current version:** v0.5.0-dev — background WLED network worker + compressed portal (**code candidate; CI and physical testing pending**).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -19,9 +19,14 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 - v0.3: Stable shared AID allocator for lights and preset switches, and prompt state reconciliation following accepted WLED commands.
 - v0.4: Local **password-gated web portal** (TCP 8080) with live health, light management/controls, opt-in preset switches, manual/restart operations and diagnostics.
 - v0.4: **Native HomeSpan OTA** (no browser uploader) with user-provisioned admin password and 60-second deferred firmware validation/rollback safety, plus binary-size CI guard.
+- v0.5: Background FreeRTOS worker moves routine WLED polling and light/preset POSTs off the HomeKit loop; queue depth and HTTP failure diagnostics, stale-response protection, backoff, and gzip-compressed dashboard stored in flash.
 - Automated PlatformIO builds for D1 Mini/CYD and host-side brightness/registry policy tests.
 
 **Build verified:** v0.3 passed native tests, D1 Mini and CYD firmware builds ([CI run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722)). **Physical tests remain pending** for Phases 2, 3 and 4. **Not yet hardware-verified:** v0.2 discovery, 8-light operation, and paired Apple Home database refresh after adding/removing devices. No presets, web setup UI, or CYD touchscreen interface yet.
+
+## v0.5 — Network reliability and flash budget
+
+Routine WLED network operations are now queued to a background ESP32 task; HomeKit remains responsive while one WLED controller is offline. **Accepted commands mean queued, not guaranteed applied**. Check the dashboard's pending/failure counters, and verify WLED response on real hardware. `web/portal.html` is compressed before the firmware build. See [v0.5 test plan](docs/PHASE5_TEST_PLAN.md).
 
 ## v0.4.1 — Preset add 403 correction
 
