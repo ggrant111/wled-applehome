@@ -7,7 +7,9 @@ String EffectsControllerRegistry::key(unsigned position, const char *prefix) con
 bool EffectsControllerRegistry::begin() {
   if (!prefs_.begin("wled-fx", false)) return false;
   record_ = {};
-  const uint32_t aid = prefs_.getUInt("aid", 0);
+  const uint32_t originalAid = prefs_.getUInt("aid", 0);
+  const bool grouped = prefs_.getUInt("mode", 0) == 1;
+  const uint32_t aid = grouped ? prefs_.getUInt("switchAid", 0) : originalAid;
   const uint32_t deviceAid = prefs_.getUInt("dev", 0);
   if (!aid) return true;  // Opt-in: no new HomeKit accessory by default.
   if (!bridge::validAid(aid) || aid <= 2 || !bridge::validAid(deviceAid)) {
@@ -15,6 +17,8 @@ bool EffectsControllerRegistry::begin() {
     return true;
   }
   record_.aid = aid;
+  record_.mode = grouped ? EffectsControllerMode::GroupedButtons
+                         : EffectsControllerMode::Television;
   record_.deviceAid = deviceAid;
   for (unsigned i = 0; i < bridge::kMaxEffectsInputs; ++i) {
     const uint32_t preset = prefs_.getUInt(key(i, "ps").c_str(), 0);
@@ -93,11 +97,40 @@ EffectsAddResult EffectsControllerRegistry::add(DeviceRegistry &devices,
   return creating ? EffectsAddResult::Created : EffectsAddResult::Added;
 }
 
+uint32_t EffectsControllerRegistry::convertToGroupedButtons(DeviceRegistry &devices) {
+  if (!configured() || record_.mode == EffectsControllerMode::GroupedButtons)
+    return 0;
+  // A fresh AID is essential: HAP and the Home app cache service identity
+  // and must not see a Television replaced by unrelated Switch services.
+  const uint32_t newAid = devices.allocateAid();
+  if (!newAid) return 0;
+  // Commit the new AID first; mode is the final switch on next boot.
+  if (prefs_.putUInt("switchAid", newAid) != sizeof(uint32_t)
+      || prefs_.getUInt("switchAid", 0) != newAid
+      || prefs_.putUInt("mode", 1) != sizeof(uint32_t)
+      || prefs_.getUInt("mode", 0) != 1) {
+    Serial.println("[Effects] Cannot persist grouped-button conversion");
+    return 0;
+  }
+  record_.aid = newAid;
+  record_.mode = EffectsControllerMode::GroupedButtons;
+  Serial.printf("[Effects] Converted TV selector to grouped switches AID=%lu; restart required\n",
+                static_cast<unsigned long>(newAid));
+  return newAid;
+}
+
 bool EffectsControllerRegistry::remove(uint32_t aid) {
   if (!configured() || record_.aid != aid) return false;
-  // Deactivate AID first; reboot cannot revive a half-deleted controller.
-  if (prefs_.putUInt("aid", 0) != sizeof(uint32_t)) return false;
+  // The active identity is committed to zero first so an interrupted
+  // removal never brings back an orphaned grouped accessory.
+  const char *identityKey = record_.mode == EffectsControllerMode::GroupedButtons
+      ? "switchAid" : "aid";
+  if (prefs_.putUInt(identityKey, 0) != sizeof(uint32_t)) return false;
+  if (record_.mode == EffectsControllerMode::GroupedButtons)
+    prefs_.putUInt("aid", 0);
   record_ = {};
+  prefs_.remove("mode");
+  prefs_.remove("switchAid");
   prefs_.remove("dev");
   for (unsigned i = 0; i < bridge::kMaxEffectsInputs; ++i) {
     prefs_.remove(key(i, "ps").c_str());
@@ -108,10 +141,11 @@ bool EffectsControllerRegistry::remove(uint32_t aid) {
 
 void EffectsControllerRegistry::list() const {
   if (!configured()) {
-    Serial.println("[Effects] No experimental TV controller enrolled");
+    Serial.println("[Effects] No experimental effects controller enrolled");
     return;
   }
-  Serial.printf("[Effects] TV AID=%lu for light AID=%lu: %u preset inputs\n",
+  Serial.printf("[Effects] %s AID=%lu for light AID=%lu: %u presets\n",
+                record_.mode == EffectsControllerMode::GroupedButtons ? "Grouped" : "TV",
                 static_cast<unsigned long>(record_.aid),
                 static_cast<unsigned long>(record_.deviceAid), record_.count());
   for (unsigned i = 0; i < bridge::kMaxEffectsInputs; ++i) {

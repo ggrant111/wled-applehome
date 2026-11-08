@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.7.0-dev — experimental opt-in TV-style effects selector (**CI passed; Apple Home UI/hardware validation pending**). [Download firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42448093812).
+**Current version:** v0.7.1-dev — optional grouped effects buttons after bridged TV input UI failed on iPhone (**CI and grouped-button hardware test pending**).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -23,6 +23,10 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 - Automated PlatformIO builds for D1 Mini/CYD and host-side brightness/registry policy tests.
 
 **Build verified:** v0.3 passed native tests, D1 Mini and CYD firmware builds ([CI run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722)). **Physical tests remain pending** for Phases 2, 3 and 4. **Not yet hardware-verified:** v0.2 discovery, 8-light operation, and paired Apple Home database refresh after adding/removing devices. No presets, web setup UI, or CYD touchscreen interface yet.
+
+## v0.7.1 — Grouped effect buttons (alternative)
+
+**Confirmed user feedback:** v0.7's bridged Television shows its four preset names in Settings, but **does not display a selectable input menu**. Update to v0.7.1, open the portal's Effects Controller, select **Convert to grouped buttons**, then reboot. This produces a new HomeKit accessory with multiple named **Switch** services, preserving the selected WLED presets, normal RGB light, Siri color commands, and any other preset switches. Converting is opt-in and uses a fresh stable accessory ID, never recycling the TV ID. Actual group appearance and actions still require a device test. [Phase 7B checklist](docs/PHASE7B_TEST_PLAN.md).
 
 ## v0.7 — Experimental effects selector
 

@@ -98,6 +98,12 @@
 - **CI passed:** [run 42448093812](https://github.com/ggrant111/wled-applehome/actions/runs/42448093812) — new NVS/AID persistence test, existing host regressions, D1 Mini/CYD firmware builds, and OTA margin. Both `firmware.bin` files: 1,557,792/2,031,616 bytes (**473,824 bytes free**). **No physical Apple Home TV input UI or preset actions verified.** See [Phase 7 test plan](PHASE7_TEST_PLAN.md).
 - **Merged into main:** [PR #6](https://github.com/ggrant111/wled-applehome/pull/6). Feature is still disabled until user adds a saved preset to an Effects Controller in the portal.
 
+## 2026-11-07 — v0.7 hardware result and grouped-buttons alternative
+
+- The user's iPhone screenshots confirm the experimental v0.7 TV-style accessory registered, and all four saved WLED names (Mammoth, Wednesday, Dodger Celebrate, Rainbow by Shelf) appear under Settings → Inputs. There is **no selectable input control** in the accessory detail view—only power. This fails the user-facing feature requirement.
+- Added an opt-in **Convert to grouped buttons** alternative: one new HomeKit accessory with 1–5 named momentary Switch services, populated from the same previously selected preset names/IDs. Keep the old TV until the user explicitly converts. New AID avoids caching a different service under the TV AID. Existing RGB light, Siri color, and preset-switch AIDs unchanged.
+- **CI and physical grouped-control test pending.** [Phase 7B test plan](PHASE7B_TEST_PLAN.md).
+
 ## Next actions
 
 1. **Done:** v0.4 host tests, migration regression, D1 Mini/CYD builds and OTA size guard passed.
