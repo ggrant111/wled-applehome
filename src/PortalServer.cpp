@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include "PortalPage.h"
 #include "PresetPolicy.h"
+#include "CsrfPolicy.h"
 
 namespace {
 constexpr const char *kRealm = "WLED Apple Home";
@@ -48,7 +49,13 @@ bool PortalServer::authorize(bool mutation) {
     http_.requestAuthentication(DIGEST_AUTH, kRealm);
     return false;
   }
-  if (mutation && http_.arg("token") != token_) {
+  // Accept the same boot-scoped token in a custom header or legacy form field.
+  // Never permit an unauthenticated/CSRF-less POST.
+  if (mutation &&
+      !bridge::authorizedCsrf(token_.c_str(),
+                              http_.header("X-Bridge-Token").c_str(),
+                              http_.arg("token").c_str())) {
+    Serial.println("[Portal] Rejected stale or missing CSRF token");
     respond(403, "Missing or invalid CSRF token");
     return false;
   }
@@ -88,9 +95,12 @@ void PortalServer::handleIndex() {
 
 void PortalServer::handleStatus() {
   if (!authorize()) return;
+  // Same-origin authenticated status GET allows a stale tab to re-sync
+  // after an ESP32 reboot; no CORS access or cache is permitted.
+  http_.sendHeader("X-Bridge-Token", token_);
   JsonDocument doc;
   doc["ok"] = true;
-  doc["version"] = "0.4.0";
+  doc["version"] = "0.4.1";
   doc["wifi"] = WiFi.status() == WL_CONNECTED;
   doc["ip"] = WiFi.localIP().toString();
   doc["rssi"] = WiFi.RSSI();
