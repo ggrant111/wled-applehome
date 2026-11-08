@@ -31,7 +31,8 @@ PortalServer::PortalServer(DeviceRegistry &devices, PresetRegistry &presets,
 
 void PortalServer::configure(const String &adminPassword) {
   password_ = adminPassword;
-  bootEffectsAid_ = effects_.record().aid;
+  for (unsigned i = 0; i < bridge::kEffectsSlots; ++i)
+    bootEffectsAids_[i] = effects_.at(i).aid;
   for (unsigned i = 0; i < bridge::kMaxDevices; ++i)
     bootAids_[i] = devices_.at(i).aid;
 
@@ -106,7 +107,7 @@ void PortalServer::handleStatus() {
   http_.sendHeader("X-Bridge-Token", token_);
   JsonDocument doc;
   doc["ok"] = true;
-  doc["version"] = "0.8.0-dev";
+  doc["version"] = "0.9.0-dev";
   doc["wifi"] = WiFi.status() == WL_CONNECTED;
   doc["ip"] = WiFi.localIP().toString();
   doc["rssi"] = WiFi.RSSI();
@@ -150,13 +151,16 @@ void PortalServer::handleStatus() {
     row["name"] = p.name;
   }
   JsonArray controllers = doc["effectControllers"].to<JsonArray>();
-  if (effects_.configured()) {
-    const EffectsControllerRecord &e = effects_.record();
+  for (unsigned slot = 0; slot < bridge::kEffectsSlots; ++slot) {
+    const EffectsControllerRecord &e = effects_.at(slot);
+    if (!e.aid) continue;
     JsonObject controller = controllers.add<JsonObject>();
     controller["aid"] = e.aid;
     controller["mode"] = e.mode == EffectsControllerMode::GroupedButtons ? "grouped" : "tv";
     controller["deviceAid"] = e.deviceAid;
-    controller["pending"] = e.aid != bootEffectsAid_;
+    const int lightIndex = devices_.indexByAid(e.deviceAid);
+    controller["lightName"] = lightIndex >= 0 ? devices_.at(lightIndex).name : String("Missing light");
+    controller["pending"] = e.aid != bootEffectsAids_[slot];
     JsonArray inputs = controller["inputs"].to<JsonArray>();
     for (unsigned i = 0; i < e.count(); ++i) {
       JsonObject item = inputs.add<JsonObject>();
@@ -313,15 +317,12 @@ void PortalServer::handleRemoveDevice() {
     return respond(500, "Could not persist removal");
   clients_[index].setHost("");
   const unsigned removed = presets_.removeForDevice(aid);
-  const bool attached = effects_.configured() && effects_.record().deviceAid == aid;
-  const bool removedEffects = attached && effects_.remove(effects_.record().aid);
-  if (attached && !removedEffects)
-    Serial.println("[Effects] WARNING unable to remove orphaned controller; boot will suppress it");
+  const unsigned removedEffects = effects_.removeForDevice(aid);
   JsonDocument response;
   response["ok"] = true;
   response["requiresReboot"] = true;
   response["removedPresetSwitches"] = removed;
-  response["removedEffectsController"] = removedEffects;
+  response["removedEffectsControllers"] = removedEffects;
   response["message"] = "Light removed from registry. Restart bridge to update Apple Home.";
   sendJSON(response);
 }
@@ -379,8 +380,6 @@ void PortalServer::handleAddEffect() {
     return respond(400, "Select a WLED light and saved preset (1-250)");
   const int index = devices_.indexByAid(aid);
   if (index < 0) return respond(404, "Light not registered");
-  if (effects_.configured() && effects_.record().deviceAid != aid)
-    return respond(409, "Prototype supports one Effects Controller; remove it first");
 
   String name;
   if (!clients_[index].lookupPresetName(static_cast<uint8_t>(id), name))
@@ -390,9 +389,11 @@ void PortalServer::handleAddEffect() {
   const EffectsAddResult result =
       effects_.add(devices_, aid, static_cast<uint8_t>(id), name, &tvAid);
   if (result == EffectsAddResult::Invalid) return respond(400, "Invalid WLED light/preset");
-  if (result == EffectsAddResult::Full) return respond(409, "Five effects maximum in prototype");
+  if (result == EffectsAddResult::Full) return respond(409, "Five effects maximum per WLED light");
+  if (result == EffectsAddResult::ControllerLimit)
+    return respond(409, "Eight WLED effects groups maximum");
   if (result == EffectsAddResult::AssignedToAnotherLight)
-    return respond(409, "Only one experimental controller supported");
+    return respond(409, "Controller belongs to another light");
   if (result == EffectsAddResult::PersistenceFailed)
     return respond(500, "Unable to save effects controller");
 
@@ -401,8 +402,8 @@ void PortalServer::handleAddEffect() {
   response["aid"] = tvAid;
   response["requiresReboot"] = result != EffectsAddResult::Exists;
   response["message"] = result == EffectsAddResult::Exists
-      ? "Preset already listed in Effects Controller."
-      : "Saved to TV-style effects selector. Restart bridge to update Apple Home.";
+      ? "Preset already listed for this WLED light."
+      : "Saved to this WLED light's Effects group. Restart bridge to update Apple Home.";
   sendJSON(response);
 }
 
@@ -420,19 +421,97 @@ void PortalServer::handleRemoveEffectsController() {
 
 void PortalServer::handleConvertEffects() {
   if (!authorize(true)) return;
-  if (!effects_.configured())
-    return respond(404, "No Effects Controller has been configured");
-  if (effects_.record().mode != EffectsControllerMode::Television)
+  uint32_t sourceAid = 0;
+  if (!parseRequestId(http_.arg("aid"), sourceAid))
+    return respond(400, "Specify the legacy TV controller AID");
+  const int slot = effects_.indexByAid(sourceAid);
+  if (slot < 0) return respond(404, "Effects Controller not found");
+  if (effects_.at(slot).mode != EffectsControllerMode::Television)
     return respond(409, "Effects Controller already uses grouped buttons");
   if (http_.arg("confirm") != "GROUP")
     return respond(400, "Explicit confirmation required");
-  const uint32_t aid = effects_.convertToGroupedButtons(devices_);
+  const uint32_t aid = effects_.convertToGroupedButtons(devices_, sourceAid);
   if (!aid) return respond(500, "Could not persist grouped button conversion");
   JsonDocument response;
   response["ok"] = true;
   response["aid"] = aid;
   response["requiresReboot"] = true;
   response["message"] = "Converted to one Home accessory with named effect buttons. Restart bridge to publish.";
+  sendJSON(response);
+}
+
+void PortalServer::handleRenameEffect() {
+  if (!authorize(true)) return;
+  uint32_t aid = 0, preset = 0;
+  if (!parseRequestId(http_.arg("aid"), aid)
+      || !parseRequestId(http_.arg("preset"), preset)
+      || !bridge::validPresetId(preset))
+    return respond(400, "Valid effects group and saved preset required");
+  String name = http_.arg("name");
+  name.trim();
+  if (name.isEmpty() || name.length() > 30)
+    return respond(400, "Effect name must contain 1-30 characters");
+  if (!effects_.rename(aid, static_cast<uint8_t>(preset), name))
+    return respond(404, "Effect not found or name could not be saved");
+  JsonDocument response;
+  response["ok"] = true;
+  response["requiresReboot"] = true;
+  response["message"] = "Effect renamed. Restart bridge to refresh the HomeKit service name.";
+  sendJSON(response);
+}
+
+void PortalServer::handleRemoveEffectInput() {
+  if (!authorize(true)) return;
+  if (http_.arg("confirm") != "REBUILD")
+    return respond(400, "Explicit confirmation required: effect group will get a new HomeKit accessory ID");
+  uint32_t aid = 0, preset = 0;
+  if (!parseRequestId(http_.arg("aid"), aid)
+      || !parseRequestId(http_.arg("preset"), preset)
+      || !bridge::validPresetId(preset))
+    return respond(400, "Valid effects group and preset required");
+  uint32_t nextAid = 0;
+  const auto result = effects_.editStructure(devices_, aid,
+                                            static_cast<uint8_t>(preset), 0, &nextAid);
+  if (result == EffectsEditResult::NotFound)
+    return respond(404, "Effect not found");
+  if (result != EffectsEditResult::Rebuilt && result != EffectsEditResult::RemovedController)
+    return respond(500, "Could not safely rebuild effects group");
+  JsonDocument response;
+  response["ok"] = true;
+  response["aid"] = nextAid;
+  response["requiresReboot"] = true;
+  response["message"] = result == EffectsEditResult::RemovedController
+      ? "Last preset removed; Effects group deleted. Restart bridge."
+      : "Preset removed. Group recreated under a NEW HomeKit AID; restart bridge.";
+  sendJSON(response);
+}
+
+void PortalServer::handleMoveEffectInput() {
+  if (!authorize(true)) return;
+  if (http_.arg("confirm") != "REBUILD")
+    return respond(400, "Explicit confirmation required: reordering changes HomeKit accessory ID");
+  uint32_t aid = 0, preset = 0;
+  if (!parseRequestId(http_.arg("aid"), aid)
+      || !parseRequestId(http_.arg("preset"), preset)
+      || !bridge::validPresetId(preset))
+    return respond(400, "Valid effects group and preset required");
+  const String direction = http_.arg("direction");
+  if (direction != "up" && direction != "down")
+    return respond(400, "Move direction must be up or down");
+  uint32_t nextAid = 0;
+  const auto result = effects_.editStructure(devices_, aid,
+      static_cast<uint8_t>(preset), direction == "up" ? -1 : 1, &nextAid);
+  if (result == EffectsEditResult::NotFound)
+    return respond(404, "Effect not found");
+  if (result == EffectsEditResult::NoChange)
+    return respond(409, "Effect already at that edge");
+  if (result != EffectsEditResult::Rebuilt)
+    return respond(500, "Could not safely reorder effects group");
+  JsonDocument response;
+  response["ok"] = true;
+  response["aid"] = nextAid;
+  response["requiresReboot"] = true;
+  response["message"] = "Effect order changed. New HomeKit group ID assigned; restart bridge.";
   sendJSON(response);
 }
 
@@ -462,6 +541,9 @@ void PortalServer::routes() {
   http_.on("/api/effects/add", HTTP_POST, [this]() { handleAddEffect(); });
   http_.on("/api/effects/remove", HTTP_POST, [this]() { handleRemoveEffectsController(); });
   http_.on("/api/effects/convert", HTTP_POST, [this]() { handleConvertEffects(); });
+  http_.on("/api/effects/rename", HTTP_POST, [this]() { handleRenameEffect(); });
+  http_.on("/api/effects/remove-preset", HTTP_POST, [this]() { handleRemoveEffectInput(); });
+  http_.on("/api/effects/move", HTTP_POST, [this]() { handleMoveEffectInput(); });
   http_.on("/api/restart", HTTP_POST, [this]() { handleRestart(); });
   http_.onNotFound([this]() {
     if (authorize()) respond(404, "Endpoint not found");

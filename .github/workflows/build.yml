@@ -54,7 +54,7 @@ jobs:
           g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_color_math.cpp -o /tmp/bridge-color-math
           /tmp/bridge-color-math
 
-      - name: Test opt-in Effects Controller NVS registry and stable AIDs
+      - name: Test v0.9 eight-device effects registry, v0.8 migration and AID safety
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror -Itests/stubs -Isrc -Iinclude \
             tests/test_effects_controller.cpp src/DeviceRegistry.cpp \
@@ -65,6 +65,9 @@ jobs:
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_preset_power_policy.cpp -o /tmp/bridge-preset-power
           /tmp/bridge-preset-power
+
+      - name: Check multi-WLED effects portal and CSRF contract
+        run: node tests/test_effects_portal.mjs
 
   firmware:
     runs-on: ubuntu-latest

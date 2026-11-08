@@ -121,6 +121,15 @@
 - Proposed Phase 9 / v0.9: expand the currently single grouped Effects Controller to separate, explicitly enrolled controllers for up to eight WLED lights, each tracking its own WLED `ps`/power and managing up to five named saved presets. Priority: migration without changes to live HomeKit accessory IDs or pairing; per-device admin portal; true isolation; host tests and real multi-device physical test.
 - **No v0.9 firmware changes yet.** See [roadmap](ROADMAP.md).
 
+## 2026-11-07 — v0.9 per-WLED grouped effects candidate
+
+- Began v0.9 on explicit user request. Existing v0.8 On/Off stateful presets and WLED-to-Home preset sync were physically confirmed in preceding messages.
+- Changed the single-controller registry into eight opt-in groups, indexed by the stable WLED light AID. **Legacy v0.7/v0.8 `wled-fx` storage is used in place, not migrated/reallocated**: the user's existing grouped Effects accessory keeps its same HomeKit identity, preset IDs, names and service order after OTA.
+- New groups use a separate NVS namespace `wled-fx9` with a spare slot for crash-resilient structural edits. All new groups use named grouped Switch controls, not Television Inputs. WLED state polling and queued `{"ps":id}` commands remain isolated per WLED device.
+- Portal supports adding presets to the selected WLED, renaming a control without changing identity, safely removing/reordering individual preset controls by explicitly rebuilding **only that group** under a new AID, removing a complete group, and loading independent saved preset catalogs.
+- Tests added for eight-group capacity, NVS AID preservation across reboot, physical group isolation mapping, rename, remove/reorder AID change, interrupted rebuild recovery and legacy TV conversion. New endpoints keep Digest+CSRF protection and user-entered labels use HTML escaping.
+- **CI / actual multi-device hardware validation pending.** See [Phase 9 test plan](PHASE9_TEST_PLAN.md).
+
 ## Next actions
 
 1. **Done:** v0.4 host tests, migration regression, D1 Mini/CYD builds and OTA size guard passed.
