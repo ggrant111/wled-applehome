@@ -9,6 +9,8 @@
 
 #include "DeviceRegistry.h"
 #include "PresetRegistry.h"
+#include "EffectsControllerRegistry.h"
+#include "WledEffectsTV.h"
 #include "PresetSwitchService.h"
 #include "WledClient.h"
 #include "WledNetworkWorker.h"
@@ -16,18 +18,19 @@
 #include "WledLightService.h"
 
 #ifndef WLED_APP_VERSION
-#define WLED_APP_VERSION "0.6.0-dev"
+#define WLED_APP_VERSION "0.7.0-dev"
 #endif
 
 namespace {
 DeviceRegistry registry;
 PresetRegistry presets;
+EffectsControllerRegistry effects;
 WledDiscovery discovery;
 WledClient clients[bridge::kMaxDevices];
 WledNetworkWorker networkWorker;
 WledLightService *lightServices[bridge::kMaxDevices] = {};
 AdminCredentials admin;
-PortalServer portal(registry, presets, discovery, clients, lightServices);
+PortalServer portal(registry, presets, effects, discovery, clients, lightServices);
 bool sketchValidated_ = false;
 
 const char *args(const char *command, char commandLetter) {
@@ -132,6 +135,10 @@ void removeCommand(const char *command) {
   if (registry.removeByAid(aid)) {
     clients[index].setHost("");
     const unsigned removed = presets.removeForDevice(aid);
+    if (effects.configured() && effects.record().deviceAid == aid) {
+      effects.remove(effects.record().aid);
+      Serial.println("[Effects] Linked selector removed alongside WLED light.");
+    }
     Serial.printf("[Registry] Removed light AID=%lu, %u preset switch(es).\n",
                   static_cast<unsigned long>(aid), removed);
     Serial.println("[Registry] Type R to reboot and update Apple Home.");
@@ -280,6 +287,32 @@ void addDevices() {
   }
 }
 
+void addEffectsController() {
+  if (!effects.configured()) return;
+  const EffectsControllerRecord &record = effects.record();
+  const int index = registry.indexByAid(record.deviceAid);
+  if (index < 0 || !lightServices[index]) {
+    Serial.println("[Effects] Controller ignored because its light is missing");
+    return;
+  }
+  String name = registry.at(index).name + " Effects";
+  if (name.length() > 35) name = name.substring(0, 35);
+  new SpanAccessory(record.aid);
+    addBridgeInformation(name.c_str(), "WLED Effects Input Selector");
+    WledEffectsTV *tv = new WledEffectsTV(clients[index], *lightServices[index],
+                                          record, name.c_str());
+    for (unsigned i = 0; i < record.count(); ++i) {
+      SpanService *input = new Service::InputSource();
+        new Characteristic::ConfiguredName(record.inputs[i].name.c_str());
+        new Characteristic::Identifier(i + 1);
+        new Characteristic::IsConfigured(1);
+      tv->addLink(input);
+    }
+  Serial.printf("[Effects] Added HomeKit TV-style selector AID=%lu for WLED AID=%lu\n",
+                static_cast<unsigned long>(record.aid),
+                static_cast<unsigned long>(record.deviceAid));
+}
+
 void addPresetSwitches() {
   for (unsigned i = 0; i < bridge::kMaxExposedPresets; ++i) {
     const PresetRecord &p = presets.at(i);
@@ -301,7 +334,7 @@ void setup() {
   Serial.begin(115200);
   delay(200);
   Serial.println("\n[Boot] WLED Apple Home Bridge v" WLED_APP_VERSION);
-  if (!registry.begin() || !presets.begin() || !admin.begin()) {
+  if (!registry.begin() || !presets.begin() || !effects.begin() || !admin.begin()) {
     Serial.println("[Boot] NVS registry failed; startup halted to prevent identity loss.");
     while (true) delay(1000);
   }
@@ -315,6 +348,7 @@ void setup() {
     addBridgeInformation("WLED Apple Home Bridge", "ESP32 HomeKit Bridge");
   addDevices();
   addPresetSwitches();
+  addEffectsController();
   if (!networkWorker.start()) {
     Serial.println("[Boot] Background WLED HTTP worker failed; stopping to protect HomeKit responsiveness.");
     while (true) delay(1000);
@@ -340,6 +374,7 @@ void setup() {
 
   Serial.println("[Setup] WLED: @l list, @d discover, @a1 add, @m<IP> manual add.");
   Serial.println("[Setup] Presets: @c2 catalog, @p2:5 add preset #5, @s list, @q<switch-AID> remove.");
+  Serial.println("[Setup] Effects: add up to 5 saved WLED presets in the web portal; R exposes selector.");
   Serial.println("[Setup] Reboot with R after add/remove; keep original AID=2.");
   Serial.println("[Setup] HomeSpan commands: ? help, W Wi-Fi, S pairing code, R reboot.");
 }

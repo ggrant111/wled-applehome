@@ -4,6 +4,7 @@
 #include <WebServer.h>
 #include "DeviceRegistry.h"
 #include "PresetRegistry.h"
+#include "EffectsControllerRegistry.h"
 #include "WledDiscovery.h"
 #include "WledLightService.h"
 #include "PortalValidation.h"
@@ -11,6 +12,7 @@
 class PortalServer {
 public:
   PortalServer(DeviceRegistry &devices, PresetRegistry &presets,
+               EffectsControllerRegistry &effects,
                WledDiscovery &discovery, WledClient *clients,
                WledLightService **services);
   void configure(const String &adminPassword);
@@ -19,6 +21,8 @@ public:
 private:
   DeviceRegistry &devices_;
   PresetRegistry &presets_;
+  EffectsControllerRegistry &effects_;
+  uint32_t bootEffectsAid_ = 0;
   WledDiscovery &discovery_;
   WledClient *clients_;
   WledLightService **services_;
@@ -43,5 +47,7 @@ private:
   void handleRemoveDevice();
   void handleAddPreset();
   void handleRemovePreset();
+  void handleAddEffect();
+  void handleRemoveEffectsController();
   void handleRestart();
 };
