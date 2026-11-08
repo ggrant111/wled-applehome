@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.2 / Phase 2 (in progress; Phase 1 reboot and on/off gate pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.3 / Phase 3 (firmware development; Phase 1/2 hardware gates remain open) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -50,13 +50,13 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 - [ ] Hardware verify that add/remove + reboot refreshes Apple Home without accidental re-pairing.
 - [ ] Test reboot, IP changes, reordering, and missing devices.
 
-### Phase 3 — v0.3: Presets and state sync — **PLANNED**
+### Phase 3 — v0.3: Presets and state sync — **CODE CANDIDATE / CI + HARDWARE TESTS PENDING**
 
-- [ ] Discover saved presets from each WLED controller.
-- [ ] User-selected presets as momentary trigger switches or HomeKit scene helpers.
-- [ ] Add bidirectional state sync with conflict protection and command acknowledgement.
-- [ ] Observe changes made via WLED, GlowDeck, automation, or other controllers.
-- [ ] Optional polling/WebSocket transport where supported.
+- [x] **Code implemented:** On-demand read of `/presets.json` by light AID; streaming filtered JSON retains only names (avoids allocating full WLED preset configurations). Hardware discovery test pending.
+- [x] **Code implemented:** Explicitly enroll up to 12 preset triggers (`@p<lightAID>:<presetId>`) as HomeKit momentary Switch accessories with stable, never-reused AIDs. Reboot to advertise. Hardware behavior pending.
+- [x] **Code implemented:** After successful HTTP POST, refresh WLED power/brightness after a 450ms settle delay; no state overwrite during that delay, and normal periodic external-change polling retained. Hardware timing/recovery pending.
+- [ ] Hardware verify observation of WLED/GlowDeck/external state and selected preset changes on multiple lights; polling-based sync code is in place.
+- [ ] WebSocket-assisted live updates / fully nonblocking transport (deferred; 8s periodic polling retained as fallback).
 
 ### Phase 4 — v1.0 MVP: Web setup, reliability, and release — **PLANNED**
 
@@ -78,6 +78,14 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 | v1.5 | WebSocket-led event sync and reliability/performance improvements | Planned |
 | v1.6 | Health monitoring, configuration backup and safe rollback | Planned |
 | v2.0 | Research Matter bridge for Apple Home/Google Home/Alexa | Research |
+
+### Phase 3 feature boundaries
+
+- The bridge does **not** create or edit any WLED presets; `@c<AID>` reads names and `@p<AID>:<ID>` exposes a selected saved preset as a HomeKit switch. Only `{"ps":<ID>}` is sent when invoked.
+- Up to **12 selected preset switches total**, independent of the 8 WLED-light limit; no preset tiles are added automatically.
+- Existing light AIDs, HomeKit pairing, and WLED NVS registry are preserved; **new switches get fresh AIDs from the same allocator used for lights**.
+- Full URL/local web portal and instant WebSocket state sync are **still open**. Large WLED catalog reads are on-demand and may temporarily block HomeKit while the request finishes.
+- No hardware verification yet for v0.2 or v0.3. Do not mark those phases released merely because CI passes.
 
 ## Non-goals / guardrails
 

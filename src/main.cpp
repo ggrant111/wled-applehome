@@ -1,19 +1,23 @@
 #include <Arduino.h>
 #include <Preferences.h>
 #include <WiFi.h>
+#include <cstring>
 #include "HomeSpan.h"
 
 #include "DeviceRegistry.h"
+#include "PresetRegistry.h"
+#include "PresetSwitchService.h"
 #include "WledClient.h"
 #include "WledDiscovery.h"
 #include "WledLightService.h"
 
 #ifndef WLED_APP_VERSION
-#define WLED_APP_VERSION "0.2.0-dev"
+#define WLED_APP_VERSION "0.3.0"
 #endif
 
 namespace {
 DeviceRegistry registry;
+PresetRegistry presets;
 WledDiscovery discovery;
 WledClient clients[bridge::kMaxDevices];
 
@@ -44,6 +48,7 @@ uint32_t parseAid(const char *text) {
 }
 
 void listCommand(const char *) { registry.list(); }
+void listPresetsCommand(const char *) { presets.list(); }
 
 void discoverCommand(const char *) {
   discovery.scan();
@@ -102,7 +107,7 @@ void manualCommand(const char *command) {
     return;
   }
   if (info.mac.isEmpty()) {
-    Serial.println("[Registry] Device MAC not provided by WLED; can't safely assign stable identity.");
+    Serial.println("[Registry] Device MAC unavailable; stable identity required.");
     return;
   }
   enrollInfo(info);
@@ -112,15 +117,15 @@ void removeCommand(const char *command) {
   const uint32_t aid = parseAid(args(command, 'r'));
   const int index = registry.indexByAid(aid);
   if (index < 0) {
-    Serial.println("[Registry] Usage: @r<accessory-id> from @l; e.g. @r3");
+    Serial.println("[Registry] Usage: @r<light-AID> from @l; e.g. @r3");
     return;
   }
-  Serial.printf("[Registry] Removing AID=%lu (user requested).\n",
-                static_cast<unsigned long>(aid));
   if (registry.removeByAid(aid)) {
-    clients[index].setHost(""); // stop writes until reboot
-    Serial.println("[Registry] Stored. Type R to reboot and update Apple Home.");
-    Serial.println("[Registry] Removed AIDs are NEVER reused for other WLED devices.");
+    clients[index].setHost("");
+    const unsigned removed = presets.removeForDevice(aid);
+    Serial.printf("[Registry] Removed light AID=%lu, %u preset switch(es).\n",
+                  static_cast<unsigned long>(aid), removed);
+    Serial.println("[Registry] Type R to reboot and update Apple Home.");
   } else {
     Serial.println("[Registry] NVS removal failed.");
   }
@@ -154,6 +159,71 @@ void wledCommand(const char *command) {
                 probed ? "" : " (not verified online)");
 }
 
+void catalogCommand(const char *command) {
+  const uint32_t aid = parseAid(args(command, 'c'));
+  const int idx = registry.indexByAid(aid);
+  if (idx < 0) {
+    Serial.println("[Presets] Usage: @c<light-AID>, e.g. @c2");
+    return;
+  }
+  if (!clients[idx].printPresetCatalog())
+    Serial.printf("[Presets] Cannot load catalog for light AID=%lu\n",
+                  static_cast<unsigned long>(aid));
+}
+
+void presetCommand(const char *command) {
+  const char *value = args(command, 'p');
+  const char *separator = strchr(value, ':');
+  if (!separator) {
+    Serial.println("[Presets] Usage: @p<light-AID>:<preset-id>, e.g. @p2:5");
+    return;
+  }
+  String left(value);
+  left = left.substring(0, separator - value);
+  const uint32_t lightAid = parseAid(left.c_str());
+  const uint32_t preset = parseAid(separator + 1);
+  const int idx = registry.indexByAid(lightAid);
+  if (idx < 0 || !bridge::validPresetId(preset)) {
+    Serial.println("[Presets] Unknown light AID or invalid preset ID (1..250).");
+    return;
+  }
+  String name;
+  if (!clients[idx].lookupPresetName(static_cast<uint8_t>(preset), name)) {
+    Serial.println("[Presets] Saved preset not found; no switch created.");
+    return;
+  }
+  String title = registry.at(idx).name + String(" ") + name;
+  if (title.length() > 35) title = title.substring(0, 35);
+  uint32_t switchAid = 0;
+  const auto outcome = presets.add(registry, lightAid,
+                                   static_cast<uint8_t>(preset),
+                                   title, &switchAid);
+  switch (outcome) {
+    case PresetEnrollResult::Added:
+      Serial.printf("[Presets] Switch AID=%lu created; type R to expose in Apple Home.\n",
+                    static_cast<unsigned long>(switchAid)); break;
+    case PresetEnrollResult::Exists:
+      Serial.printf("[Presets] Already exposed as switch AID=%lu\n",
+                    static_cast<unsigned long>(switchAid)); break;
+    case PresetEnrollResult::Full:
+      Serial.println("[Presets] Limit of 12 exposed preset switches reached."); break;
+    case PresetEnrollResult::Invalid:
+      Serial.println("[Presets] Invalid light or preset."); break;
+    case PresetEnrollResult::PersistenceFailed:
+      Serial.println("[Presets] Could not save switch to NVS."); break;
+  }
+}
+
+void removePresetCommand(const char *command) {
+  const uint32_t aid = parseAid(args(command, 'q'));
+  if (!presets.remove(aid)) {
+    Serial.println("[Presets] Usage: @q<switch-AID> from @s, e.g. @q9");
+    return;
+  }
+  Serial.printf("[Presets] Removed switch AID=%lu; reboot with R to update Apple Home.\n",
+                static_cast<unsigned long>(aid));
+}
+
 void addBridgeInformation(const char *name, const char *model) {
   new Service::AccessoryInformation();
     new Characteristic::Identify();
@@ -164,15 +234,30 @@ void addBridgeInformation(const char *name, const char *model) {
 }
 
 void addDevices() {
-  // Stable AID=2 for the original paired light; new AIDs allocated monotonically.
   for (unsigned i = 0; i < bridge::kMaxDevices; ++i) {
     const DeviceRecord &record = registry.at(i);
     if (!record.aid) continue;
     clients[i].setHost(record.ip);
     new SpanAccessory(record.aid);
       addBridgeInformation(record.aid == 2 ? "WLED Light" : record.name.c_str(),
-                           record.aid == 2 ? "WLED JSON Light" : "WLED JSON Light");
+                           "WLED JSON Light");
       new WledLightService(clients[i], i);
+  }
+}
+
+void addPresetSwitches() {
+  for (unsigned i = 0; i < bridge::kMaxExposedPresets; ++i) {
+    const PresetRecord &p = presets.at(i);
+    if (!p.aid) continue;
+    const int lightIndex = registry.indexByAid(p.deviceAid);
+    if (lightIndex < 0) {
+      Serial.printf("[Presets] Orphan switch AID=%lu skipped; light missing.\n",
+                    static_cast<unsigned long>(p.aid));
+      continue;
+    }
+    new SpanAccessory(p.aid);
+      addBridgeInformation(p.name.c_str(), "WLED Preset Switch");
+      new PresetSwitchService(clients[lightIndex], p.deviceAid, p.presetId);
   }
 }
 }
@@ -181,7 +266,7 @@ void setup() {
   Serial.begin(115200);
   delay(200);
   Serial.println("\n[Boot] WLED Apple Home Bridge v" WLED_APP_VERSION);
-  if (!registry.begin()) {
+  if (!registry.begin() || !presets.begin()) {
     Serial.println("[Boot] NVS registry failed; startup halted to prevent identity loss.");
     while (true) delay(1000);
   }
@@ -192,16 +277,22 @@ void setup() {
   new SpanAccessory(1);
     addBridgeInformation("WLED Apple Home Bridge", "ESP32 HomeKit Bridge");
   addDevices();
+  addPresetSwitches();
 
   new SpanUserCommand('w', " <IPv4> set existing AID=2 IP", wledCommand);
   new SpanUserCommand('l', " list registered WLED lights", listCommand);
   new SpanUserCommand('d', " discover WLED controllers by mDNS", discoverCommand);
   new SpanUserCommand('a', " <number> enroll a discovered WLED light", addCommand);
-  new SpanUserCommand('m', " <IPv4> manually enroll a verified WLED light", manualCommand);
+  new SpanUserCommand('m', " <IPv4> manually enroll verified WLED light", manualCommand);
   new SpanUserCommand('r', " <AID> remove a registered light", removeCommand);
+  new SpanUserCommand('c', " <light-AID> list WLED saved presets", catalogCommand);
+  new SpanUserCommand('p', " <light-AID>:<preset-ID> expose preset as switch", presetCommand);
+  new SpanUserCommand('s', " list exposed HomeKit preset switches", listPresetsCommand);
+  new SpanUserCommand('q', " <switch-AID> remove HomeKit preset switch", removePresetCommand);
 
-  Serial.println("[Setup] @l list, @d discover, @a1 add, @m<IP> manual add, @r<AID> remove.");
-  Serial.println("[Setup] @w<IP> retains the original light. Reboot with R after add/remove.");
+  Serial.println("[Setup] WLED: @l list, @d discover, @a1 add, @m<IP> manual add.");
+  Serial.println("[Setup] Presets: @c2 catalog, @p2:5 add preset #5, @s list, @q<switch-AID> remove.");
+  Serial.println("[Setup] Reboot with R after add/remove; keep original AID=2.");
   Serial.println("[Setup] HomeSpan commands: ? help, W Wi-Fi, S pairing code, R reboot.");
 }
 

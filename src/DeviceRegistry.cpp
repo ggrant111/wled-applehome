@@ -136,15 +136,14 @@ EnrollResult DeviceRegistry::enroll(const String &ip, const String &mac,
   if (activeCount() >= bridge::kMaxDevices) return EnrollResult::Full;
   for (unsigned i = 0; i < bridge::kMaxDevices; ++i) {
     if (records_[i].aid) continue;
-    const uint32_t aid = nextAid_;
+    const uint32_t aid = allocateAid();
+    if (!aid) return EnrollResult::PersistenceFailed;
     const DeviceRecord newRecord = {aid, ip, mac, cleanName(name)};
     records_[i] = newRecord;
     if (!save(i)) {
       records_[i] = {};
       return EnrollResult::PersistenceFailed;
     }
-    ++nextAid_;
-    prefs_.putUInt("nextAid", nextAid_);
     if (outAid) *outAid = aid;
     return EnrollResult::Added;
   }
@@ -192,4 +191,13 @@ void DeviceRegistry::list() const {
                   r.mac.isEmpty() ? "(unverified)" : r.mac.c_str(),
                   r.name.c_str(), r.aid == 2 ? " [original light]" : "");
   }
+}
+
+uint32_t DeviceRegistry::allocateAid() {
+  if (nextAid_ < 3 || nextAid_ >= 0xFFFFFFEFUL) return 0;
+  const uint32_t reserved = nextAid_;
+  // Reserve the next ID BEFORE exposing this ID, never recycle an allocated AID.
+  if (prefs_.putUInt("nextAid", reserved + 1) != sizeof(uint32_t)) return 0;
+  nextAid_ = reserved + 1;
+  return reserved;
 }

@@ -1,12 +1,12 @@
 #include "WledLightService.h"
 #include <Arduino.h>
 #include "RegistryPolicy.h"
+#include "PresetPolicy.h"
 
 WledLightService::WledLightService(WledClient &wled, unsigned position)
     : Service::LightBulb(), wled_(wled) {
   power_ = new Characteristic::On(false);
   brightness_ = new Characteristic::Brightness(50);
-  // Spread GETs across the interval so 8 accessories do not poll at once.
   const uint32_t delayMs = 450 + (position % bridge::kMaxDevices) * 850;
   lastPollMs_ = millis() - (kPollEveryMs - delayMs);
 }
@@ -38,8 +38,23 @@ boolean WledLightService::update() {
 }
 
 void WledLightService::loop() {
-  if (static_cast<uint32_t>(millis() - lastPollMs_) < retryIntervalMs_) return;
-  lastPollMs_ = millis();
+  const uint32_t now = millis();
+  const uint32_t elapsed = now - lastPollMs_;
+  const uint32_t currentRevision = wled_.mutationRevision();
+  const uint32_t mutationAge = now - wled_.lastMutationMs();
+  const bool needsAck = bridge::needsStateReconcile(
+      acknowledgedRevision_, currentRevision, mutationAge);
+
+  // Never fetch stale state immediately after an accepted Home command.
+  if (currentRevision != acknowledgedRevision_ && mutationAge < 450) return;
+
+  // Reconcile after local WLED POST; otherwise poll for external changes.
+  const uint32_t minDelay =
+      retryIntervalMs_ == kOfflineBackoffMs ? kOfflineBackoffMs : 450;
+  if (!needsAck && elapsed < retryIntervalMs_) return;
+  if (needsAck && elapsed < minDelay) return;
+
+  lastPollMs_ = now;
   if (!wled_.configured()) return;
   WledState state;
   if (!wled_.readState(state)) {
@@ -48,12 +63,20 @@ void WledLightService::loop() {
   }
 
   retryIntervalMs_ = kPollEveryMs;
+  acknowledgedRevision_ = currentRevision;
+
   const bool previousPower = power_->getVal<bool>();
   const int previousBrightness = brightness_->getVal<int>();
   if (previousPower != state.on) power_->setVal(state.on);
   if (previousBrightness != state.brightness)
     brightness_->setVal(state.brightness);
+
   if (previousPower != state.on || previousBrightness != state.brightness)
     Serial.printf("[WLED] %s state sync on=%d brightness=%d\n",
                   wled_.host().c_str(), state.on, state.brightness);
+  if (lastObservedPresetId_ != state.presetId) {
+    lastObservedPresetId_ = state.presetId;
+    Serial.printf("[WLED] %s active preset=%d\n",
+                  wled_.host().c_str(), state.presetId);
+  }
 }

@@ -1,4 +1,31 @@
-# v0.2 setup and hardware test guide
+# WLED Apple Home Bridge — setup and hardware validation
+
+## Phase 3 — v0.3 firmware (CI + physical testing required)
+
+Phase 3 adds **on-demand** saved-preset discovery and **opt-in** Apple Home preset switches. You do not need to upload it until you return home. Phase 2 hardware testing is still pending.
+
+**Important:** Keep the ESP32's NVS and partition layout intact. Flash onto the same paired device as before, without an erase command.
+
+After updating, open the 115200 baud HomeSpan serial CLI:
+
+| Command | Meaning |
+| --- | --- |
+| `@l` | List WLED lights and their stable light AIDs |
+| `@c2` | Show saved presets for WLED light AID 2; names are read from WLED's `/presets.json` |
+| `@p2:5` | Expose WLED light AID 2, preset ID 5 as a **new** Apple Home switch (use an actual saved ID) |
+| `@s` | List exposed preset switches and their own HomeKit AIDs |
+| `@q9` | Remove preset switch AID 9 (replace 9 with the value in `@s`) |
+| `R` | Reboot so HomeSpan publishes changed bridged accessories |
+
+Adding a preset to Home changes **only the bridge's NVS**. Triggering the switch sends `{"ps":5}` to the target WLED device. The switch should reset Off after ~250ms so it can be used repeatedly. WLED may change brightness/power when a preset runs, so the light's On/Brightness characteristics are reconciled after a ~450ms settle delay.
+
+**Capacity:** 8 WLED lights + up to 12 **selected** HomeKit preset switches across all lights. WLED may store up to 250 presets per controller; only the ones you enroll appear in Home.
+
+This does not introduce WLED preset editing, custom scene creation, advanced per-segment controls, WebSockets, OTA web uploads, or a web dashboard.
+
+See [Phase 3 test plan](PHASE3_TEST_PLAN.md). **Do not reset or re-pair the bridge just to make a switch show up.** Gather serial/Home logs first; HomeKit sometimes caches accessory lists.
+
+## Phase 2 — v0.2 discovery and multi-device setup
 
 **v0.2 is a development build:** The first release paired successfully with Apple Home and controlled real WLED brightness (user confirmed 2026-11-07). The discovery/multi-WLED changes need real hardware testing. Preserve your Apple Home bridge pairing.
 

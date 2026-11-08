@@ -32,6 +32,7 @@ public:
                       uint32_t *outAid = nullptr);
   bool updateLegacyIp(const String &ip, const String &mac = "");
   bool removeByAid(uint32_t aid);
+  uint32_t allocateAid(); // Shared monotonic ID allocator for lights and preset switches.
   void list() const;
 
 private:
