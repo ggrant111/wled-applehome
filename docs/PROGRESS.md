@@ -147,7 +147,8 @@
 - The Effects view now shows the active preset/playlist for the selected WLED light, descriptive resource labels, direct Run controls, a real rename modal, and explicit warnings about changing a group's HomeKit ID on remove/reorder. The controls remain bound to existing HomeKit accessories and NVS identities.
 - Added a narrow, authenticated and CSRF-protected WLED Effects Run API that validates group/resource membership before queueing the existing saved preset/playlist. No changes to WLED presets or HomeSpan pairing.
 - Added client-side VM tests for view switching, status rendering, playlists, safe HTML labels, POST authentication semantics and pending restart; existing browser security tests remain. The page is still a static, gzip-compressed single HTML asset.
-- **CI/build/device validation pending.** [v0.9.2 checklist](PHASE9_PORTAL_UX_TEST_PLAN.md).
+- **CI passed:** [run 42506904065](https://github.com/ggrant111/wled-applehome/actions/runs/42506904065) — five-view browser VM smoke test, HTML escaping, CSRF stale tab recovery, existing host tests, compressed portal and D1 Mini/CYD firmware builds/OTA guard. Both firmware images 1,584,544 bytes with 447,072 bytes free. **Real phone/desktop visual checks and WLED Run action remain user hardware pending.**
+- **Merged to main:** [PR #11](https://github.com/ggrant111/wled-applehome/pull/11) at ab70493. [v0.9.2 checklist](PHASE9_PORTAL_UX_TEST_PLAN.md).
 
 ## Next actions
 

@@ -1,5 +1,7 @@
 # v0.9.2 — Local bridge dashboard UX hardware checklist
 
+**CI:** [run 42506904065](https://github.com/ggrant111/wled-applehome/actions/runs/42506904065) passed all host/browser/CSRF/gzip checks and both ESP32 firmware builds; OTA free space 447,072 bytes per image. This does **not** verify actual iPhone/desktop UI behavior.
+
 ## Upgrade safely
 - [ ] Record current paired HomeKit light AIDs, existing Effects group names/preset assignments, and last-good v0.9.1 OTA firmware.
 - [ ] OTA-install the correct **v0.9.2** D1 Mini or CYD firmware, retaining NVS, existing pairing and partition table.
