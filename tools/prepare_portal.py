@@ -6,6 +6,9 @@ from pathlib import Path
 import gzip
 
 Import("env")  # SCons injected PlatformIO environment
+# ESP32 GCC requires -flto at BOTH compile and final link; build_flags alone
+# does not append it to LINKFLAGS with this PlatformIO platform version.
+env.Append(LINKFLAGS=["-flto"])
 root = Path(env["PROJECT_DIR"])
 source = root / "web" / "portal.html"
 target = root / "include" / "PortalGzip.generated.h"
