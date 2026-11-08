@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.7.1-dev — optional grouped effects buttons after bridged TV input UI failed on iPhone (**CI passed; grouped-button hardware test pending**). [Firmware artifacts / CI](https://github.com/ggrant111/wled-applehome/actions/runs/42449994004).
+**Current version:** v0.8.0-dev — grouped effects as power-select controls and read-only saved segment inspection (**CI and physical testing pending**).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -23,6 +23,12 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 - Automated PlatformIO builds for D1 Mini/CYD and host-side brightness/registry policy tests.
 
 **Build verified:** v0.3 passed native tests, D1 Mini and CYD firmware builds ([CI run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722)). **Physical tests remain pending** for Phases 2, 3 and 4. **Not yet hardware-verified:** v0.2 discovery, 8-light operation, and paired Apple Home database refresh after adding/removing devices. No presets, web setup UI, or CYD touchscreen interface yet.
+
+## v0.8 — Stateful preset power and segment inspection
+
+Grouped WLED Effects accessory switches now act like persistent **power/selection controls** rather than 250ms momentary triggers: switch On activates that saved preset; another preset selected makes the first show Off after WLED state reconciliation; switch the active preset Off to turn WLED off. HomeKit's actual button appearance remains controlled by the Home app; standard standalone preset switches stay momentary, and existing LightBulb/pairing identities are unchanged.
+
+The management portal gains a **read-only** "Inspect saved segments" action for a selected WLED preset. It reads only that preset's segment start/stop geometry from WLED's existing `/presets.json` with a filtered JSON stream, reports whether bounds were stored, and explains how to save them in WLED if absent. **The bridge continues using WLED's standard `{"ps":id}` API for full preset application and never writes segment geometry or overwrites user presets.** [Phase 8 test plan](docs/PHASE8_TEST_PLAN.md).
 
 ## v0.7.1 — Grouped effect buttons (alternative)
 

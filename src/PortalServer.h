@@ -41,6 +41,7 @@ private:
   void handleIndex();
   void handleStatus();
   void handleCatalog();
+  void handleInspectPreset();
   void handleScan();
   void handleEnroll();
   void handleControl();

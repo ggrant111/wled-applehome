@@ -105,6 +105,14 @@
 - **CI verified:** [run 42449994004](https://github.com/ggrant111/wled-applehome/actions/runs/42449994004) — host test suite including TV-to-grouped NVS migration, D1 Mini/CYD builds, OTA size guard, each image 1,560,144 bytes/2,031,616 (471,472 free). **Physical iPhone grouped controls and effect actuation pending.** [Phase 7B test plan](PHASE7B_TEST_PLAN.md).
 - **Merged into main:** [PR #7](https://github.com/ggrant111/wled-applehome/pull/7). This update adds no extra HomeKit accessory until the user explicitly selects conversion in portal, then reboots.
 
+## 2026-11-07 — v0.8 grouped effect power and WLED segment diagnosis
+
+- User confirms v0.7.1 **grouped preset switches work in Apple Home**, but applying a saved preset does not restore some WLED segment settings. The user also requests preset power-button behavior.
+- Code investigation: all preset switch paths call `WledClient::applyPreset`, which queues the normal WLED `{"ps":id}` through the background worker. No bridge API is intentionally omitting `seg` during preset recall. WLED itself may lack saved `start`/`stop` segment bounds, depending on its **Save segment bounds** preset option. This must be inspected, not assumed.
+- Added read-only per-preset inspection in the authenticated portal with streaming ArduinoJson filter, no WLED preset mutations. Reports total saved segment entries, boundaries present, and whether the preset appears to be a macro.
+- Updated only grouped named effect switches to keep a selected preset On while the WLED `ps` and power match; selecting another preset turns the previous indicator Off after background reconciliation; toggling the current preset Off queues WLED Off. Standalone momentary switches stay unchanged. No AID/NVS/partition changes.
+- **CI and physical validation pending**, including WLED direct preset restore vs HomeKit behavior. [Phase 8 checklist](PHASE8_TEST_PLAN.md).
+
 ## Next actions
 
 1. **Done:** v0.4 host tests, migration regression, D1 Mini/CYD builds and OTA size guard passed.

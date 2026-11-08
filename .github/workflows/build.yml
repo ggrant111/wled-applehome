@@ -61,6 +61,11 @@ jobs:
             src/EffectsControllerRegistry.cpp -o /tmp/bridge-effects-controller
           /tmp/bridge-effects-controller
 
+      - name: Test grouped effect power state and segment bounds policy
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_preset_power_policy.cpp -o /tmp/bridge-preset-power
+          /tmp/bridge-preset-power
+
   firmware:
     runs-on: ubuntu-latest
     strategy:

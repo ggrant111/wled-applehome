@@ -1,19 +1,34 @@
 #include "PresetSwitchService.h"
 #include <Arduino.h>
+#include "PresetPowerPolicy.h"
 
 PresetSwitchService::PresetSwitchService(WledClient &client,
                                          uint32_t lightAid, uint8_t presetId,
-                                         const char *serviceName)
+                                         const char *serviceName,
+                                         WledLightService *trackedLight)
     : Service::Switch(), client_(client), lightAid_(lightAid),
-      presetId_(presetId) {
+      presetId_(presetId), trackedLight_(trackedLight) {
   on_ = new Characteristic::On(false);
   if (serviceName && *serviceName)
     new Characteristic::ConfiguredName(serviceName);
 }
 
 boolean PresetSwitchService::update() {
-  // A preset is an *action*, not a persistent state. Ignore "Off" requests.
-  if (!on_->getNewVal<bool>()) return true;
+  const bool nextOn = on_->getNewVal<bool>();
+  if (!nextOn) {
+    // Grouped effects are SELECTABLE POWER buttons: Off turns the associated
+    // WLED light off. Existing standalone preset triggers remain momentary.
+    if (!trackedLight_) return true;
+    if (!client_.writeState(true, false, false, 50)) {
+      Serial.printf("[EffectPower] Cannot queue off: light AID=%lu\n",
+                    static_cast<unsigned long>(lightAid_));
+      return false;
+    }
+    lastActionMs_ = millis();
+    Serial.printf("[EffectPower] light AID=%lu preset=%u OFF queued\n",
+                  static_cast<unsigned long>(lightAid_), unsigned(presetId_));
+    return true;
+  }
 
   if (!client_.applyPreset(presetId_)) {
     Serial.printf("[Preset] FAILED light AID=%lu preset=%u\n",
@@ -22,8 +37,11 @@ boolean PresetSwitchService::update() {
     return false; // Rejected by the local queue or failed synchronously.
   }
 
-  triggeredAtMs_ = millis();
-  resetPending_ = true;
+  lastActionMs_ = millis();
+  if (!trackedLight_) {
+    triggeredAtMs_ = lastActionMs_;
+    resetPending_ = true;
+  }
   Serial.printf("[Preset] %s light AID=%lu preset=%u\n",
                 client_.backgroundActive() ? "Queued" : "Triggered",
                 static_cast<unsigned long>(lightAid_),
@@ -32,9 +50,21 @@ boolean PresetSwitchService::update() {
 }
 
 void PresetSwitchService::loop() {
-  // Reset AFTER HomeSpan commits its update() to avoid characteristic races.
+  if (trackedLight_) {
+    // Only one grouped effect stays On, matching the selected WLED preset.
+    // Never infer failure from stale readings during or right after a command.
+    if (!trackedLight_->online() || !trackedLight_->lastSeenMs()
+        || trackedLight_->pendingCommands()
+        || static_cast<uint32_t>(millis() - lastActionMs_) < 1400)
+      return;
+    const bool active = bridge::presetPowerOn(
+        trackedLight_->observedOn(), trackedLight_->observedPresetId(), presetId_);
+    if (on_->getVal<bool>() != active) on_->setVal(active);
+    return;
+  }
+  // Standalone preset switches retain the original momentary action behavior.
   if (resetPending_ && static_cast<uint32_t>(millis() - triggeredAtMs_) >= 250) {
     resetPending_ = false;
-    on_->setVal(false); // send event so the switch can be pressed again.
+    on_->setVal(false);
   }
 }

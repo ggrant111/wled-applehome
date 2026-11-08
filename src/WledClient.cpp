@@ -233,6 +233,65 @@ bool WledClient::loadPresetNames(JsonDocument &out, int onlyPresetId) {
   return true;
 }
 
+bool WledClient::inspectPresetSegments(uint8_t presetId, WledPresetSegments &out) {
+  out = {};
+  if (!bridge::validPresetId(presetId) || !configured() || !ready()) return false;
+  WiFiClient transport;
+  HTTPClient http;
+  http.setConnectTimeout(kStateTimeoutMs);
+  http.setTimeout(kCatalogTimeoutMs);
+  if (!http.begin(transport, String("http://") + host_ + "/presets.json"))
+    return false;
+  const int status = http.GET();
+  if (!ok(status) || http.getSize() > 524288) {
+    Serial.printf("[Presets] Inspection GET failed HTTP %d (%s)\n",
+                  status, host_.c_str());
+    http.end();
+    return false;
+  }
+  // The WLED preset file can be very large. ArduinoJson filters to only
+  // the selected preset and only segment BOUNDS, never copying palettes,
+  // effects, segment color arrays or other presets into ESP32 heap.
+  JsonDocument filter;
+  JsonObject itemFilter = filter[String(presetId)].to<JsonObject>();
+  itemFilter["n"] = true;
+  itemFilter["win"] = true;
+  itemFilter["o"] = true;
+  itemFilter["playlist"] = true;
+  JsonArray segmentFilters = itemFilter["seg"].to<JsonArray>();
+  JsonObject segmentFilter = segmentFilters.add<JsonObject>();
+  segmentFilter["id"] = true;
+  segmentFilter["start"] = true;
+  segmentFilter["stop"] = true;
+  JsonDocument doc;
+  const DeserializationError error = deserializeJson(
+      doc, http.getStream(), DeserializationOption::Filter(filter));
+  http.end();
+  if (error) {
+    Serial.printf("[Presets] Inspection JSON failed (%s): %s\n",
+                  host_.c_str(), error.c_str());
+    return false;
+  }
+  JsonVariant item = doc[String(presetId)];
+  if (item.isNull()) return false;
+  out.apiMacro = !item["win"].isNull() || !item["o"].isNull()
+      || !item["playlist"].isNull();
+  JsonArray segments = item["seg"].as<JsonArray>();
+  out.hasSegmentArray = !segments.isNull();
+  for (JsonObject segment : segments) {
+    ++out.savedSegments;
+    const bool hasStart = !segment["start"].isNull();
+    const bool hasStop = !segment["stop"].isNull();
+    // WLED may save a stop:0 tombstone to remove a missing segment.
+    if (hasStop && (hasStart || segment["stop"].as<int>() == 0))
+      ++out.segmentsWithBounds;
+  }
+  Serial.printf("[Presets] inspected %u: segment items=%u bounds=%u macro=%u\n",
+                unsigned(presetId), out.savedSegments,
+                out.segmentsWithBounds, out.apiMacro);
+  return true;
+}
+
 bool WledClient::printPresetCatalog() {
   JsonDocument doc;
   if (!loadPresetNames(doc, 0)) return false;

@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include "PortalPage.h"
 #include "PresetPolicy.h"
+#include "PresetPowerPolicy.h"
 #include "CsrfPolicy.h"
 
 namespace {
@@ -105,7 +106,7 @@ void PortalServer::handleStatus() {
   http_.sendHeader("X-Bridge-Token", token_);
   JsonDocument doc;
   doc["ok"] = true;
-  doc["version"] = "0.7.1-dev";
+  doc["version"] = "0.8.0-dev";
   doc["wifi"] = WiFi.status() == WL_CONNECTED;
   doc["ip"] = WiFi.localIP().toString();
   doc["rssi"] = WiFi.RSSI();
@@ -189,6 +190,33 @@ void PortalServer::handleCatalog() {
     row["name"] = String(preset["n"] | "Preset");
   }
   sendJSON(response);
+}
+
+void PortalServer::handleInspectPreset() {
+  if (!authorize()) return;
+  uint32_t aid = 0, id = 0;
+  if (!parseRequestId(http_.arg("aid"), aid)
+      || !parseRequestId(http_.arg("preset"), id)
+      || !bridge::validPresetId(id))
+    return respond(400, "Valid light AID and saved WLED preset required");
+  const int index = devices_.indexByAid(aid);
+  if (index < 0) return respond(404, "WLED light not enrolled");
+  WledPresetSegments found;
+  if (!clients_[index].inspectPresetSegments(static_cast<uint8_t>(id), found))
+    return respond(502, "Cannot inspect that saved WLED preset");
+  JsonDocument doc;
+  doc["ok"] = true;
+  doc["aid"] = aid;
+  doc["presetId"] = id;
+  doc["savedSegments"] = found.savedSegments;
+  doc["segmentsWithBounds"] = found.segmentsWithBounds;
+  doc["hasSegmentArray"] = found.hasSegmentArray;
+  doc["apiMacro"] = found.apiMacro;
+  // This is READ ONLY. A preset with no segment boundaries cannot restore
+  // those bounds on activation; re-save directly in WLED with sb enabled.
+  doc["hasCompleteBounds"] = bridge::presetHasCompleteBounds(
+      found.savedSegments, found.segmentsWithBounds);
+  sendJSON(doc);
 }
 
 void PortalServer::handleScan() {
@@ -424,6 +452,7 @@ void PortalServer::routes() {
   http_.on("/", HTTP_GET, [this]() { handleIndex(); });
   http_.on("/api/status", HTTP_GET, [this]() { handleStatus(); });
   http_.on("/api/catalog", HTTP_GET, [this]() { handleCatalog(); });
+  http_.on("/api/presets/inspect", HTTP_GET, [this]() { handleInspectPreset(); });
   http_.on("/api/scan", HTTP_POST, [this]() { handleScan(); });
   http_.on("/api/enroll", HTTP_POST, [this]() { handleEnroll(); });
   http_.on("/api/control", HTTP_POST, [this]() { handleControl(); });

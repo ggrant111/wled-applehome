@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.7.1 optional grouped effect buttons (CI passed; Apple Home grouped UI hardware test pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.8 grouped power-selection and WLED preset segment diagnostics (code candidate; CI/hardware pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -143,6 +143,18 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 - [x] **CI passed:** [run 42449994004](https://github.com/ggrant111/wled-applehome/actions/runs/42449994004) — NVS/AID conversion integration, existing host/browser tests, D1 Mini/CYD firmware, 70KB OTA space guard. Both images 1,560,144 bytes with 471,472 bytes free.
 - [ ] **Hardware:** Verify one grouped Home tile exposes separately named controls, preset activation, light/Siri continuity, restart/pairing, and no change to existing independent switches.
 - [ ] **Fallback:** Native Apple Home scenes and existing separate preset switches, if multi-switch presentation disappoints.
+
+### Phase 8 / v0.8 — Segment restoration diagnosis and preset power selection
+
+- [x] **User verified:** v0.7.1 grouped named effect switches in Apple Home work; hardware success supersedes previous hardware pending status, with unresolved segment-layout restoration behavior.
+- [x] **Research:** WLED's JSON `{"ps":id}` is the normal full saved-preset activation request (the bridge already sends it). Segment bounds are only restored if WLED saved `start` and `stop` geometry. WLED's own guide instructs enabling **Use current state** and **Save segment bounds** when saving a preset.
+- [x] **Code candidate:** Add a **read-only** authenticated API and portal inspection for the chosen WLED preset, stream-filtering only the selected preset's `seg[].start`/`stop`, and reporting segment counts with saved bounds. Diagnose missing preset data without rewriting WLED `presets.json`.
+- [x] **Code candidate:** Grouped effect controls persist On for the active saved WLED preset; activating a different effect synchronizes other On indicators to Off after the background worker's authoritative WLED GET; turning the active effect Off powers WLED Off. Keep standalone switch actions momentary. Preserve all existing paired AIDs and HomeKit service types.
+- [ ] **CI:** New pure host power-state/bounds tests, old regressions and both ESP32 builds/OTA headroom.
+- [ ] **Hardware:** Inspect a problematic saved preset; if bounds missing, fix the **WLED preset** in its native editor and test direct WLED recall. Compare preset activation through Apple Home. Verify toggling first, second and Off effects updates selected statuses, preserves WLED segments, and Siri color remains working.
+- [ ] **Unresolved:** If preset includes bounds and direct WLED recall fully restores segments but Apple Home doesn't, capture WLED `/json/state` before/after plus logs. Do not force-write segment geometry without clear evidence; WLED's native preset engine owns it.
+
+**Home UI limitation:** Existing grouped accessories are standard HomeKit Switch services; making On/Off persistent does **not** force an Apple-designed TV-style large round power picker for each service. A new LightBulb or Outlet service subtype would change grouping and has not been tested.
 
 ## After MVP
 
