@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.6 Apple Home RGB color (CI verified; physical HomeKit & WLED tests pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.6 Apple Home RGB color (user-confirmed color changes and Siri control; remaining test gates pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -107,10 +107,19 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 - [x] **Code:** Parse current main-segment RGB primary from WLED's `/json/state`, publish Hue/Saturation to HomeKit after a fresh background poll. Never claim a color if WLED doesn't return an RGB primary.
 - [x] **Code:** Add portable HSV↔RGB tests for the six color-wheel anchors, grayscale, rounding and representative round-trips.
 - [x] **CI PASSED:** [run 42445302149](https://github.com/ggrant111/wled-applehome/actions/runs/42445302149) — all host tests, D1 Mini/CYD firmware builds and OTA 70KB headroom check.
-- [ ] **Hardware:** Color wheel appears for existing paired lights; Apple Home red/green/blue and white render correctly; direct WLED edits and presets refresh Apple Home color; multi-segment device affects only main segment; current pairing/preset AIDs retained.
+- [x] **User verified (2026-11-07):** New Apple Home color controls change WLED colors and work through Siri.
+- [ ] **Hardware still pending:** Specific red/green/blue/white and RGBW edge cases; reverse color sync after direct WLED edits/presets; multi-segment isolation; full pairing/preset AID persistence and uptime.
 - [ ] **Future:** Color temperature (actual CCT/white-channel handling), group/segment selection and WLED effects, palettes, speed and intensity in a separate advanced web interface; not represented as native HomeKit effects.
 
 **Limitations:** Hue/Saturation represent the **main segment's configured primary RGB color**, not the instantaneous output color of each LED when an animation or palette runs. Changing color deliberately selects Solid mode for the main segment; use an existing WLED preset switch to restore your animation. Existing HomeKit pairing and registry are not erased or renumbered.
+
+### Apple Home effect selection — supported UI and follow-on plan
+
+Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue, Saturation and ColorTemperature, **not WLED Effect, Palette, Speed or Intensity**. Custom characteristics cannot add a native effect picker to Apple's built-in light tile.
+
+- **Recommended UX:** Keep HomeKit preset trigger switches internally for WLED JSON preset actions, but let users organize a small number into named **Apple Home scenes** (e.g., Fireplace, Rainbow, Movie Night). Scenes expose a natural Home app tile and Siri invocation without hijacking the color wheel.
+- **Future software exploration (not implemented):** Optional scene-helper setup documentation and clearer preset switch names; possible Apple Shortcuts integration. Apple Home scenes must be configured by the user in Apple's Home app; the ESP32/HomeSpan bridge cannot independently create scenes in the user's Apple Home database.
+- **Avoid:** Mapping special colors or brightness values to effects. That undermines basic light control and breaks Siri/color semantics. Alternative HomeKit service types won't place WLED effects inside the native LightBulb controls.
 
 ## After MVP
 

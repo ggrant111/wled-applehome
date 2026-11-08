@@ -8,7 +8,8 @@
 - [ ] Confirm the existing Apple Home bridged lights remain available, plus previously exposed preset switches.
 
 ## HomeKit color wheel
-- [ ] After ESP32 restarts and Home reconnects, each WLED light shows the Apple Home color control (Hue/Saturation) in addition to On/Brightness. If not, reconnect Home app before attempting re-pairing.
+- [x] **User verified (2026-11-07):** Apple Home color control changes WLED colors, including commands from Siri. Exact accessories tested were not specified; test remaining lights separately.
+- [ ] Verify all enrolled lights show the color wheel after reboot and retain their pairing; do not assume from first successful light.
 - [ ] Choose red, green, blue, yellow and white from Apple Home. Confirm matching colors on WLED's main segment.
 - [ ] Adjust brightness without altering color and switch power off/on while retaining selected color.
 - [ ] Check RGBW strips: white LEDs do not unexpectedly overpower a chosen saturated color.

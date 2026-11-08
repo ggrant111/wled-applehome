@@ -82,6 +82,12 @@
 - Added native conversion/round-trip tests. **CI passed:** [run 42445302149](https://github.com/ggrant111/wled-applehome/actions/runs/42445302149) — HSV↔RGB tests, existing host/browser/security checks, D1 Mini/CYD firmware and OTA image-size check. D1 Mini image 1,545,312 / 2,031,616 bytes (486,304 free); CYD image 1,545,296 bytes (486,320 free). **On-device Apple Home color control, pairing persistence and OTA still require testing.** [Phase 6 test plan](PHASE6_TEST_PLAN.md).
 - **Merged to main:** [PR #5](https://github.com/ggrant111/wled-applehome/pull/5). Keep the prior v0.5 binary available for rollback until the -Oz-optimized image is tested on hardware.
 
+## 2026-11-07 — v0.6 real-device color and Siri confirmation
+
+- **User confirmed:** Apple Home's new color controls successfully change WLED colors, and Siri voice color changes also work with installed v0.6 firmware.
+- Only the color control and Siri path are verified by this report; do **not** infer successful WLED-to-Home color synchronization, preset effects, eight-device stress, OTA update, multi-segment isolation or long-run stability.
+- Discussed native effects: HomeKit's LightBulb service does not expose an effects/palettes picker. Recommend user-created Apple Home scenes that activate selected existing preset switches, giving named scenes and Siri invocation while retaining standard light color controls. No firmware change required for user-created scenes.
+
 ## Next actions
 
 1. **Done:** v0.4 host tests, migration regression, D1 Mini/CYD builds and OTA size guard passed.
