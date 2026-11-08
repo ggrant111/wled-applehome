@@ -85,3 +85,9 @@ For a user-selected Home color, POST the WLED `/json/state` partial segment obje
 For reverse synchronization, find `mainseg` and the segment object matching its id in the WLED `/json/state` response. Derive hue/saturation from that segment's reported primary `col[0]` RGB, **not** from the instantaneous output of effects. If the segment data is missing or invalid, leave HomeKit's last known color untouched. Retain last Hue on greys/whites, since hue is undefined when saturation is zero.
 
 HomeKit cannot natively offer arbitrary WLED effect/palette/speed sliders through a LightBulb service; continue using preset trigger switches and plan advanced WLED-specific UI later. Do not expose fabricated characteristics for effects.
+
+## ADR-020 — Preserve ESP32 instruction RAM and OTA safety (2026-11-07)
+
+The first v0.6 color builds compiled but exceeded the project's 70KB OTA-app headroom rule (about 61KB remaining). Whole-framework GCC LTO attempts failed on this ESP32/Arduino/HomeSpan toolchain: default linker flags include `-fno-lto`, and enabling LTO eventually overflows instruction RAM (`iram0_0_seg`) with extensive relocation errors. **Do not ship LTO-enabled builds.**
+
+Attempt GCC 14 `-Oz` (aggressive size optimization) instead of `-Os`, without altering the ESP32 linker, NVS, HomeKit IDs or OTA partitions. Require passing both 4MB-board builds with at least 70KB spare before merging. Hardware performance/OTA testing remains mandatory.
