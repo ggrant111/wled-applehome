@@ -1,5 +1,7 @@
 # Phase 7B — v0.7.1 grouped effects controls
 
+**CI:** [42449994004](https://github.com/ggrant111/wled-applehome/actions/runs/42449994004) passed native NVS/AID migration and existing regression tests, both firmware board builds and 70KB OTA space gate. Both images are 1,560,144 bytes with 471,472 bytes of OTA space available. Only the actual iPhone UI can verify usability.
+
 **Motivation:** User's iPhone Home app shows all v0.7 TV-style preset input names under Settings → Inputs, but the accessory panel offers only a power button; no actionable input selector. A successful build is not proof the new grouped controls will display either.
 
 ## OTA + conversion

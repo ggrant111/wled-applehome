@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.7.1-dev — optional grouped effects buttons after bridged TV input UI failed on iPhone (**CI and grouped-button hardware test pending**).
+**Current version:** v0.7.1-dev — optional grouped effects buttons after bridged TV input UI failed on iPhone (**CI passed; grouped-button hardware test pending**). [Firmware artifacts / CI](https://github.com/ggrant111/wled-applehome/actions/runs/42449994004).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -26,7 +26,7 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 
 ## v0.7.1 — Grouped effect buttons (alternative)
 
-**Confirmed user feedback:** v0.7's bridged Television shows its four preset names in Settings, but **does not display a selectable input menu**. Update to v0.7.1, open the portal's Effects Controller, select **Convert to grouped buttons**, then reboot. This produces a new HomeKit accessory with multiple named **Switch** services, preserving the selected WLED presets, normal RGB light, Siri color commands, and any other preset switches. Converting is opt-in and uses a fresh stable accessory ID, never recycling the TV ID. Actual group appearance and actions still require a device test. [Phase 7B checklist](docs/PHASE7B_TEST_PLAN.md).
+**Confirmed user feedback:** v0.7's bridged Television shows its four preset names in Settings, but **does not display a selectable input menu**. Update to v0.7.1, open the portal's Effects Controller, select **Convert to grouped buttons**, then reboot. This produces a new HomeKit accessory with multiple named **Switch** services, preserving the selected WLED presets, normal RGB light, Siri color commands, and any other preset switches. Converting is opt-in and uses a fresh stable accessory ID, never recycling the TV ID. [v0.7.1 CI run 42449994004](https://github.com/ggrant111/wled-applehome/actions/runs/42449994004) passed (both firmware.bin sizes 1,560,144 bytes; 471,472 bytes OTA headroom). Actual group appearance and actions still require a device test. [Phase 7B checklist](docs/PHASE7B_TEST_PLAN.md).
 
 ## v0.7 — Experimental effects selector
 

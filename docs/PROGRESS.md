@@ -102,7 +102,8 @@
 
 - The user's iPhone screenshots confirm the experimental v0.7 TV-style accessory registered, and all four saved WLED names (Mammoth, Wednesday, Dodger Celebrate, Rainbow by Shelf) appear under Settings → Inputs. There is **no selectable input control** in the accessory detail view—only power. This fails the user-facing feature requirement.
 - Added an opt-in **Convert to grouped buttons** alternative: one new HomeKit accessory with 1–5 named momentary Switch services, populated from the same previously selected preset names/IDs. Keep the old TV until the user explicitly converts. New AID avoids caching a different service under the TV AID. Existing RGB light, Siri color, and preset-switch AIDs unchanged.
-- **CI and physical grouped-control test pending.** [Phase 7B test plan](PHASE7B_TEST_PLAN.md).
+- **CI verified:** [run 42449994004](https://github.com/ggrant111/wled-applehome/actions/runs/42449994004) — host test suite including TV-to-grouped NVS migration, D1 Mini/CYD builds, OTA size guard, each image 1,560,144 bytes/2,031,616 (471,472 free). **Physical iPhone grouped controls and effect actuation pending.** [Phase 7B test plan](PHASE7B_TEST_PLAN.md).
+- **Merged into main:** [PR #7](https://github.com/ggrant111/wled-applehome/pull/7). This update adds no extra HomeKit accessory until the user explicitly selects conversion in portal, then reboots.
 
 ## Next actions
 
