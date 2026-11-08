@@ -12,6 +12,7 @@ public:
   bool observedOn() const { return observedOn_; }
   int observedBrightness() const { return observedBrightness_; }
   int observedPresetId() const { return lastObservedPresetId_; }
+  int observedPlaylistId() const { return lastObservedPlaylistId_; }
   uint32_t lastSeenMs() const { return lastSeenMs_; }
   uint16_t pendingCommands() const { return pendingCommands_; }
   uint32_t networkFailures() const { return failures_; }
@@ -35,6 +36,7 @@ private:
   uint32_t retryIntervalMs_ = 8000;
   uint32_t acknowledgedRevision_ = 0;
   int lastObservedPresetId_ = -2;
+  int lastObservedPlaylistId_ = -1;
   bool online_ = false;
   bool observedOn_ = false;
   int observedBrightness_ = 50;

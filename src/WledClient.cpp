@@ -103,6 +103,7 @@ bool WledClient::readState(WledState &out) {
   out.on = data["on"].as<bool>();
   out.brightness = bridge::wledToHomeBrightness(data["bri"].as<int>());
   out.presetId = data["ps"] | -1;
+  out.playlistId = data["pl"] | -1;
   out.colorValid = false;
   // WLED's main segment represents the color shown in its own controls.
   // Do not invent a color if the segment has no RGB primary color.
@@ -214,14 +215,21 @@ bool WledClient::loadPresetNames(JsonDocument &out, int onlyPresetId) {
     http.end();
     return false;
   }
-  // Filtering retains ONLY preset names, not entire LED/segment arrays.
+  // Only retain names and playlist IDs; WLED stores both resources in
+  // /presets.json. Playlist "ps" steps are needed only to detect presence.
+  // Segment colors/effects and all duration/transition arrays are excluded.
   JsonDocument filter;
-  if (onlyPresetId > 0) {
-    filter[String(onlyPresetId)]["n"] = true;
-  } else {
+  auto includeEntry = [&](unsigned id) {
+    JsonObject entry = filter[String(id)].to<JsonObject>();
+    entry["n"] = true;
+    JsonObject playlist = entry["playlist"].to<JsonObject>();
+    playlist["ps"] = true; // WLED saved playlists always contain ps array.
+  };
+  if (onlyPresetId > 0)
+    includeEntry(static_cast<unsigned>(onlyPresetId));
+  else
     for (unsigned id = 1; id <= bridge::kMaxWledPresetId; ++id)
-      filter[String(id)]["n"] = true;
-  }
+      includeEntry(id);
   const DeserializationError error = deserializeJson(
       out, http.getStream(), DeserializationOption::Filter(filter));
   http.end();
@@ -311,19 +319,27 @@ bool WledClient::printPresetCatalog() {
   return true;
 }
 
-bool WledClient::lookupPresetName(uint8_t presetId, String &name) {
+bool WledClient::lookupPresetInfo(uint8_t presetId, String &name,
+                                  bool &isPlaylist) {
+  isPlaylist = false;
   if (!bridge::validPresetId(presetId)) return false;
   JsonDocument doc;
   if (!loadPresetNames(doc, presetId)) return false;
   JsonVariant item = doc[String(presetId)];
   if (item.isNull()) {
-    Serial.printf("[Presets] %u is not a saved preset on %s\n",
+    Serial.printf("[Presets] %u is not a saved preset/playlist on %s\n",
                   presetId, host_.c_str());
     return false;
   }
-  name = String(item["n"] | "Preset");
+  isPlaylist = !item["playlist"].isNull();
+  name = String(item["n"] | (isPlaylist ? "Playlist" : "Preset"));
   name.trim();
-  if (name.isEmpty()) name = "Preset";
+  if (name.isEmpty()) name = isPlaylist ? "Playlist" : "Preset";
   if (name.length() > 34) name = name.substring(0, 34);
   return true;
+}
+
+bool WledClient::lookupPresetName(uint8_t presetId, String &name) {
+  bool ignored = false;
+  return lookupPresetInfo(presetId, name, ignored);
 }

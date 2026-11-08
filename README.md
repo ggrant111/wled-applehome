@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.9.0-dev — up to eight WLED-specific grouped Effects Controllers (**CI passed; physical multi-light verification pending**). [Download firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880).
+**Current version:** v0.9.1-dev — add saved WLED playlists alongside presets with correct HomeKit active-playlist state (**CI and hardware validation pending**). [Download firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -23,6 +23,14 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 - Automated PlatformIO builds for D1 Mini/CYD and host-side brightness/registry policy tests.
 
 **Build verified:** v0.3 passed native tests, D1 Mini and CYD firmware builds ([CI run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722)). **Physical tests remain pending** for Phases 2, 3 and 4. **Not yet hardware-verified:** v0.2 discovery, 8-light operation, and paired Apple Home database refresh after adding/removing devices. No presets, web setup UI, or CYD touchscreen interface yet.
+
+## v0.9.1 — WLED saved playlists inside HomeKit Effects groups
+
+**Saved WLED playlists** are stored in the same WLED `/presets.json` catalog as normal presets and launch through the exact same API call `{"ps":playlistId}`. The web dashboard now labels saved resources as **Preset** or **Playlist** and lets you add both to the same per-light Effects group (up to five total controls per WLED device). This does not create/modify playlists on WLED; create them in WLED first.
+
+The bridge reads WLED's live `pl` (currently playing playlist ID) **as well as** `ps` (current preset step). A grouped playlist switch stays On while the playlist cycles through its constituent presets, and turns Off when playback stops or another selection is made. Ordinary preset buttons are not incorrectly highlighted as playlist steps. Toggling the active playlist button Off powers off the associated WLED light, matching the existing group's v0.8 On/Off semantics.
+
+The resource kind is saved independently in the existing NVS `wled-fx` / `wled-fx9` entry; existing controls default to Preset and preserve their IDs, names, and order. If a playlist had previously been added as a preset, selecting the same entry again updates its classification **without changing its HomeKit accessory ID**, followed by a bridge restart. All grouped accessory AIDs and original light identities remain unchanged. [Playlist hardware test plan](docs/PHASE9_PLAYLIST_TEST_PLAN.md).
 
 ## v0.9 — Multiple WLED effects groups
 

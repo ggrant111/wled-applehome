@@ -83,15 +83,15 @@ footer{color:var(--muted);font-size:12px;padding-top:12px}
       </div>
       <div class="panel">
         <h2>WLED effects groups <span class="pill">UP TO 8</span></h2>
-        <p>Give each WLED light its own set of up to five saved effects. The original grouped accessory keeps its HomeKit ID. New lights receive separate controllers.</p>
+        <p>Give each WLED light up to five favorites: saved presets and playlists together. A playlist stays On while WLED cycles through its steps. Existing grouped accessories keep their HomeKit IDs.</p>
         <div id="effectController"></div>
         <div class="actionrow">
           <select id="effectsLight" aria-label="WLED device for effects"></select>
-          <button type="button" id="loadEffectsCatalog">Load saved presets</button>
+          <button type="button" id="loadEffectsCatalog">Load presets &amp; playlists</button>
         </div>
         <div class="actionrow">
-          <select id="effectsPreset" aria-label="Saved WLED preset to add"><option value="">Select a light, then load presets</option></select>
-          <button type="button" class="primary" id="addEffect">Add effect to this light</button>
+          <select id="effectsPreset" aria-label="Saved WLED preset to add"><option value="">Select a light, then load presets and playlists</option></select>
+          <button type="button" class="primary" id="addEffect">Add selected preset or playlist</button>
         </div>
         <p class="small">Adding or renaming preserves current accessory identity. Removing or reordering a button rebuilds ONLY that effects group with a new HomeKit ID; confirm before changing it. The original WLED light and other effects groups remain paired.</p>
       </div>
@@ -178,7 +178,7 @@ function render(data){
     '<div class="controls">'+(c.mode==="tv"?'<button data-action="convertEffects" data-aid="'+c.aid+'">Convert legacy TV</button>':'')+
     '<button class="danger" data-action="deleteEffects" data-aid="'+c.aid+'">Remove group</button></div></div>'+
     '<div class="effects-items">'+(c.inputs||[]).map((x,i)=>
-      '<div class="controls"><div class="title" style="flex:1;min-width:125px">'+safe(x.name)+' <span class="small">#'+x.presetId+'</span></div>'+
+      '<div class="controls"><div class="title" style="flex:1;min-width:125px">'+safe(x.name)+' <span class="small">'+(x.kind==="playlist"?"Playlist":"Preset")+' #'+x.presetId+'</span></div>'+
       '<button data-action="renameEffect" data-aid="'+c.aid+'" data-preset="'+x.presetId+'">Rename</button>'+
       (i>0?'<button data-action="moveEffect" data-aid="'+c.aid+'" data-preset="'+x.presetId+'" data-direction="up">Up</button>':'')+
       (i<c.inputs.length-1?'<button data-action="moveEffect" data-aid="'+c.aid+'" data-preset="'+x.presetId+'" data-direction="down">Down</button>':'')+
@@ -228,13 +228,13 @@ $("loadEffectsCatalog").onclick=async()=>{
   try{
     const result=await api("/api/catalog?aid="+encodeURIComponent(aid));
     $("effectsPreset").innerHTML=(result.presets||[]).map(p=>
-      '<option value="'+p.id+'">'+safe(p.name)+' (#'+p.id+')</option>').join("")||
-      '<option value="">No saved WLED presets found</option>';
+      '<option value="'+p.id+'">'+(p.kind==="playlist"?"Playlist":"Preset")+' · '+safe(p.name)+' (#'+p.id+')</option>').join("")||
+      '<option value="">No saved WLED presets or playlists found</option>';
   }catch(ex){notice(ex.message);}
 };
 $("addEffect").onclick=async()=>{
   const aid=$("effectsLight").value,preset=$("effectsPreset").value;
-  if(!aid||!preset)return notice("Choose a WLED light and load its saved presets first.");
+  if(!aid||!preset)return notice("Choose a WLED light and load its saved presets and playlists first.");
   try{await mutate("/api/effects/add",{aid,preset});}catch(ex){notice(ex.message);}
 };
 $("inspectPreset").onclick=async()=>{

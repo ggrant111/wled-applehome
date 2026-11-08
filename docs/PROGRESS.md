@@ -131,6 +131,14 @@
 - **CI passed:** [run 42454610880](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880): eight-controller NVS and legacy-AID tests, independent groups, structural edit recovery, browser/CSRF tests, D1 Mini and CYD OTA builds and 70KB minimum flash headroom. D1 Mini image 1,574,848 bytes, 456,768 bytes free; CYD image 1,574,832 bytes, 456,784 bytes free.
 - **Merged to main:** [PR #9](https://github.com/ggrant111/wled-applehome/pull/9) at commit a299c2c. **Physical validation with two or more independent WLED controllers and effects groups remains pending.** [Phase 9 test plan](PHASE9_TEST_PLAN.md).
 
+## 2026-11-08 — v0.9.1 WLED playlist support implementation
+
+- User confirmed **second WLED effects group and its presets** are live and working in Apple Home (v0.9 multi-group physical validation for onboarding and triggering). Full eight-device stress/OTA pairing still pending.
+- User requests adding saved WLED playlists as Effects selections. Verified WLED official JSON API: playlist resources are saved by numeric IDs next to ordinary presets, and `{"ps":playlistId}` activates them. During playback, WLED `pl` is the playlist's saved ID while `ps` changes to child presets; using `ps` alone would incorrectly deactivate the playlist button.
+- Code candidate: filtered catalog now returns both names and a playlist-vs-preset type; per-device dashboard labels both types. Grouped inputs persist a playlist-kind flag in existing (legacy/new) NVS namespaces, default false for original presets; selecting a preexisting playlist input updates its kind without changing any AID.
+- WLED state poll and HomeKit switch synchronizer use playlist ID as authoritative while playlist is active. Ordinary preset buttons ignore playlist child steps. Clicking any playlist sends the same standard saved resource activation command; WLED itself plays/cycles the playlist.
+- Added native tests for state semantics, migrations/reclassification and type preserved across group reorder; browser catalog/type contract. **CI and physical playlist tests pending.** See [Phase 9 playlist test checklist](PHASE9_PLAYLIST_TEST_PLAN.md).
+
 ## Next actions
 
 1. **Done:** v0.4 host tests, migration regression, D1 Mini/CYD builds and OTA size guard passed.

@@ -85,10 +85,13 @@ void WledLightService::loop() {
           saturation_->getVal<float>() > result.state.saturation + 0.4f)
         saturation_->setVal(result.state.saturation);
     }
-    if (lastObservedPresetId_ != result.state.presetId) {
+    if (lastObservedPresetId_ != result.state.presetId
+        || lastObservedPlaylistId_ != result.state.playlistId) {
       lastObservedPresetId_ = result.state.presetId;
-      Serial.printf("[WLED] %s active preset=%d\n",
-                    wled_.host().c_str(), result.state.presetId);
+      lastObservedPlaylistId_ = result.state.playlistId;
+      Serial.printf("[WLED] %s active preset=%d playlist=%d\n",
+                    wled_.host().c_str(), result.state.presetId,
+                    result.state.playlistId);
     }
     return;
   }
@@ -142,9 +145,11 @@ void WledLightService::loop() {
         saturation_->getVal<float>() > state.saturation + 0.4f)
       saturation_->setVal(state.saturation);
   }
-  if (lastObservedPresetId_ != state.presetId) {
+  if (lastObservedPresetId_ != state.presetId
+      || lastObservedPlaylistId_ != state.playlistId) {
     lastObservedPresetId_ = state.presetId;
-    Serial.printf("[WLED] %s active preset=%d\n",
-                  wled_.host().c_str(), state.presetId);
+    lastObservedPlaylistId_ = state.playlistId;
+    Serial.printf("[WLED] %s active preset=%d playlist=%d\n",
+                  wled_.host().c_str(), state.presetId, state.playlistId);
   }
 }

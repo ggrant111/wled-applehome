@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.9 multi-WLED Effects Controllers (CI passed; multi-device Apple Home hardware verification pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.9.1 WLED playlist support within Effects groups (implementation/CI verification pending; physical playlist playback test pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -182,6 +182,18 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 **Version handling:** v0.9 still uses the exact existing LightBulb and PresetSwitch HAP services with unchanged AIDs; only specifically opted-in new Effects groups get new accessories. Removing/reordering buttons is the only operation that intentionally rebuilds that group's AID after confirmation. No WLED presets, segments, colors or WLED firmware are modified by management operations.
 
 **Status:** [PR #9](https://github.com/ggrant111/wled-applehome/pull/9) merged to main and all CI gates passed. Multi-device physical HomeKit tests remain outstanding.
+
+### Phase 9B / v0.9.1 — Saved playlists as HomeKit effect selections
+
+- [x] **API verified:** WLED stores saved playlist objects alongside presets in `/presets.json`, and triggers either using `{"ps":ID}`. Running playlist status uses `pl` (playlist resource ID); `ps` changes as child presets advance. WLED playback timing/durations/transitions remain handled by WLED.
+- [x] **Code candidate:** Filter-fetch catalog names and playlist IDs, expose `kind: preset|playlist` through the existing authenticated portal. Mixed preset/playlist selector on each WLED device; no duplicate controller or custom HomeKit service.
+- [x] **Code candidate:** Persist `isPlaylist` as per-input metadata in legacy and new NVS namespaces, defaulting to normal preset for existing keys. Updating the same existing resource from Preset to Playlist is a metadata-only change and keeps its HomeKit AID/IIDs.
+- [x] **Code candidate:** Parse `pl` in WLED polling. HomeKit playlist Switch remains On while WLED reports playlist active even as child `ps` changes; ordinary preset switches stay Off during playlist playback. Playlist finish, stop, power-off, and direct WLED playlist changes synchronize to Apple Home using existing worker/poll loop.
+- [x] **Code candidate:** Native tests for playlist multi-step state and NVS persistence/migration, multi-device group reorder preserving playlist type, and browser labels/type contract. Existing standalone saved preset switches remain momentary and may trigger playlists via the same `ps` API.
+- [ ] **CI:** Both board builds, NVS/power/browser tests and OTA headroom check.
+- [ ] **Hardware:** Save a WLED playlist on device, add it alongside a normal preset, verify continuous On during multiple playlist steps and Off when finished, select playlist from WLED directly and watch Home sync; test two independent WLED groups and preserve existing lights/pairing.
+
+**Non-goals:** The bridge does not build/edit playlist sequences, duration, transition, shuffle, or repeats; those stay in WLED. No HomeKit effect picker beyond the already physically working named grouped Switch controls.
 
 ## After MVP
 

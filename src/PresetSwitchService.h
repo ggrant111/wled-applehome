@@ -7,7 +7,8 @@ class PresetSwitchService : public Service::Switch {
 public:
   PresetSwitchService(WledClient &client, uint32_t lightAid, uint8_t presetId,
                       const char *serviceName = nullptr,
-                      WledLightService *trackedLight = nullptr);
+                      WledLightService *trackedLight = nullptr,
+                      bool isPlaylist = false);
   boolean update() override;
   void loop() override;
 
@@ -16,6 +17,7 @@ private:
   uint32_t lightAid_;
   uint8_t presetId_;
   WledLightService *trackedLight_ = nullptr;
+  bool isPlaylist_ = false;
   uint32_t lastActionMs_ = 0;
   SpanCharacteristic *on_;
   bool resetPending_ = false;

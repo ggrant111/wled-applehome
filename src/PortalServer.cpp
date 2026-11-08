@@ -107,7 +107,7 @@ void PortalServer::handleStatus() {
   http_.sendHeader("X-Bridge-Token", token_);
   JsonDocument doc;
   doc["ok"] = true;
-  doc["version"] = "0.9.0-dev";
+  doc["version"] = "0.9.1-dev";
   doc["wifi"] = WiFi.status() == WL_CONNECTED;
   doc["ip"] = WiFi.localIP().toString();
   doc["rssi"] = WiFi.RSSI();
@@ -131,6 +131,8 @@ void PortalServer::handleStatus() {
     if (booted) {
       row["on"] = services_[i]->observedOn();
       row["brightness"] = services_[i]->observedBrightness();
+      row["presetId"] = services_[i]->observedPresetId();
+      row["playlistId"] = services_[i]->observedPlaylistId();
       row["lastSeenSec"] = services_[i]->lastSeenMs() == 0
           ? -1 : static_cast<int32_t>((millis() - services_[i]->lastSeenMs()) / 1000);
       row["pendingCommands"] = services_[i]->pendingCommands();
@@ -167,6 +169,7 @@ void PortalServer::handleStatus() {
       item["id"] = i + 1;
       item["presetId"] = e.inputs[i].presetId;
       item["name"] = e.inputs[i].name;
+      item["kind"] = e.inputs[i].isPlaylist ? "playlist" : "preset";
     }
   }
   sendJSON(doc);
@@ -191,7 +194,9 @@ void PortalServer::handleCatalog() {
     if (preset.isNull()) continue;
     JsonObject row = items.add<JsonObject>();
     row["id"] = id;
-    row["name"] = String(preset["n"] | "Preset");
+    const bool playlist = !preset["playlist"].isNull();
+    row["name"] = String(preset["n"] | (playlist ? "Playlist" : "Preset"));
+    row["kind"] = playlist ? "playlist" : "preset";
   }
   sendJSON(response);
 }
@@ -382,12 +387,14 @@ void PortalServer::handleAddEffect() {
   if (index < 0) return respond(404, "Light not registered");
 
   String name;
-  if (!clients_[index].lookupPresetName(static_cast<uint8_t>(id), name))
-    return respond(502, "Saved WLED preset not found or controller offline");
+  bool isPlaylist = false;
+  if (!clients_[index].lookupPresetInfo(static_cast<uint8_t>(id), name, isPlaylist))
+    return respond(502, "Saved WLED preset/playlist not found or controller offline");
 
   uint32_t tvAid = 0;
   const EffectsAddResult result =
-      effects_.add(devices_, aid, static_cast<uint8_t>(id), name, &tvAid);
+      effects_.add(devices_, aid, static_cast<uint8_t>(id), name,
+                   &tvAid, isPlaylist);
   if (result == EffectsAddResult::Invalid) return respond(400, "Invalid WLED light/preset");
   if (result == EffectsAddResult::Full) return respond(409, "Five effects maximum per WLED light");
   if (result == EffectsAddResult::ControllerLimit)
@@ -400,10 +407,15 @@ void PortalServer::handleAddEffect() {
   JsonDocument response;
   response["ok"] = true;
   response["aid"] = tvAid;
+  response["kind"] = isPlaylist ? "playlist" : "preset";
   response["requiresReboot"] = result != EffectsAddResult::Exists;
   response["message"] = result == EffectsAddResult::Exists
-      ? "Preset already listed for this WLED light."
-      : "Saved to this WLED light's Effects group. Restart bridge to update Apple Home.";
+      ? "Preset/playlist already listed for this WLED light."
+      : result == EffectsAddResult::Reclassified
+          ? "Updated existing button to track WLED playlist playback. Restart bridge."
+          : isPlaylist
+              ? "Playlist added to this WLED light's Effects group. Restart bridge."
+              : "Preset added to this WLED light's Effects group. Restart bridge.";
   sendJSON(response);
 }
 
