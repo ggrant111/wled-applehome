@@ -77,6 +77,8 @@ footer{color:var(--muted);font-size:12px;padding-top:12px}
         <form id="addPreset">
           <div class="actionrow"><select id="presetLight" aria-label="Choose WLED light"></select><button type="button" id="loadCatalog">Load presets</button></div>
           <div class="actionrow"><select id="presetId" aria-label="Choose saved preset"><option value="">Load a catalog first</option></select><button type="submit">Add as switch</button></div>
+          <div class="actionrow"><button type="button" id="inspectPreset">Inspect saved segments</button></div>
+          <div class="small" id="presetInspection" role="status" aria-live="polite"></div>
         </form>
       </div>
       <div class="panel">
@@ -84,7 +86,7 @@ footer{color:var(--muted);font-size:12px;padding-top:12px}
         <p>Choose up to five saved WLED presets for one light. Apple Home sometimes hides bridged-TV input selection. Convert the experimental TV to one accessory with named tappable preset switches; your normal RGB light stays unchanged.</p>
         <div id="effectController"></div>
         <div class="actionrow"><button type="button" class="primary" id="addEffect">Add selected preset to Effects Controller</button></div>
-        <p class="small">Restart after edits. Grouped preset buttons are momentary and do not turn the light off; TV mode retains its power behavior.</p>
+        <p class="small">Grouped preset controls now work as persistent power selections: turning one On activates that WLED preset, turning the active one Off switches WLED off, and Home reflects whichever saved preset WLED reports. Separate preset switches remain momentary. Restart only after changing the accessory list.</p>
       </div>
       <div class="panel">
         <h2>Bridge maintenance</h2>
@@ -198,12 +200,32 @@ $("loadCatalog").onclick=async()=>{
     $("presetId").innerHTML=(result.presets||[]).map(p=>'<option value="'+p.id+'">'+safe(p.name)+' (#'+p.id+')</option>').join("")||'<option value="">No saved presets found</option>';
   }catch(e){notice(e.message);}
 };
-$("presetLight").onchange=()=>{$("presetId").innerHTML='<option value="">Load presets for this light</option>';};
+$("presetLight").onchange=()=>{$("presetId").innerHTML='<option value="">Load presets for this light</option>';$("presetInspection").textContent="";};
 $("addEffect").onclick=async()=>{
   const aid=$("presetLight").value,preset=$("presetId").value;
   if(!aid||!preset)return notice("Load and choose a saved WLED preset first.");
   try{await mutate("/api/effects/add",{aid,preset});}catch(ex){notice(ex.message);}
 };
+$("inspectPreset").onclick=async()=>{
+  const aid=$("presetLight").value,preset=$("presetId").value;
+  if(!aid||!preset)return notice("Load and choose a saved WLED preset to inspect.");
+  const output=$("presetInspection");
+  output.textContent="Checking the saved WLED preset...";
+  try{
+    const r=await api("/api/presets/inspect?aid="+encodeURIComponent(aid)+
+                      "&preset="+encodeURIComponent(preset));
+    if(r.hasCompleteBounds)
+      output.textContent="Saved: "+r.savedSegments+" segment entries with stored boundaries. If applying this preset from Apple Home still fails to restore layout, test the same preset directly in WLED and compare the result.";
+    else if(r.hasSegmentArray)
+      output.textContent="Saved: "+r.savedSegments+" segment entries, but only "+r.segmentsWithBounds+
+        " include segment boundaries. In WLED, configure the desired segments, edit this preset, enable 'Use current state / Overwrite with state' and 'Save segment bounds', then save it again.";
+    else
+      output.textContent=r.apiMacro?
+        "This preset is an API command/playlist without stored segment bounds. Its behavior depends on the command. Inspect it in WLED before changing anything.":
+        "This preset does not store a segment array. Re-save the preset from the intended current WLED state with 'Save segment bounds' enabled.";
+  }catch(ex){output.textContent="Inspection failed: "+ex.message;}
+};
+$("presetId").onchange=()=>{$("presetInspection").textContent="";};
 $("addPreset").onsubmit=async e=>{
   e.preventDefault();
   const aid=$("presetLight").value, preset=$("presetId").value;

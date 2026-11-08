@@ -13,6 +13,15 @@ struct WledState {
   uint8_t mainSegmentId = 0;
 };
 
+// Read-only inspection of a saved WLED preset. This bridge never edits
+// the WLED /presets.json file or rewrites segment geometry.
+struct WledPresetSegments {
+  unsigned savedSegments = 0;
+  unsigned segmentsWithBounds = 0;
+  bool hasSegmentArray = false;
+  bool apiMacro = false;
+};
+
 struct WledInfo {
   String ip;
   String mac;
@@ -37,6 +46,7 @@ public:
   bool printPresetCatalog();
   bool getPresetNames(JsonDocument &out) { return loadPresetNames(out, 0); }
   bool lookupPresetName(uint8_t presetId, String &name);
+  bool inspectPresetSegments(uint8_t presetId, WledPresetSegments &out);
   uint32_t mutationRevision() const { return mutationRevision_; }
   uint32_t lastMutationMs() const { return lastMutationMs_; }
   static bool probe(const String &ip, WledInfo &out);
