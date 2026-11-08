@@ -7,7 +7,7 @@
 <title>GlowDeck | WLED Apple Home Bridge</title>
 <style>
 :root{color-scheme:dark;--bg:#0c151a;--surface:#142228;--surface2:#192b32;--surface3:#20363d;--ink:#eff7f6;--sub:#9eb4b5;--line:#2e474d;--accent:#59c2af;--deep:#245c55;--danger:#e58a88;--positive:#82d8b4;--warning:#f0c77d;--shadow:0 14px 48px #00000026}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,Segoe UI,Arial,sans-serif}button,input,select{font:inherit}button{cursor:pointer}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,Segoe UI,Arial,sans-serif}button,input,select{font:inherit}button{cursor:pointer}
 [hidden]{display:none!important}a{color:var(--accent)}:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .shell{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
 .sidebar{border-right:1px solid var(--line);background:#0f1c22;position:sticky;top:0;height:100vh;padding:26px 16px;display:flex;flex-direction:column}
@@ -24,7 +24,7 @@
 .status-dot.online{background:var(--positive);box-shadow:0 0 0 3px #59c2af19}.status-dot.offline{background:var(--danger)}
 .workspace{min-width:0}.topbar{height:77px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 clamp(20px,3.5vw,48px);background:#111f25e8}
 .breadcrumb{color:var(--sub);font-size:13px}.breadcrumb strong{color:var(--ink);font-weight:700}.top-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.top-connection{color:var(--sub);font-size:12px;display:flex;align-items:center;gap:9px}
-.content{max-width:1160px;margin:auto;padding:35px clamp(20px,3.5vw,48px) 90px}.page-head{display:flex;justify-content:space-between;align-items:start;gap:18px;margin-bottom:26px;flex-wrap:wrap}
+.content{max-width:1460px;margin:auto;padding:35px clamp(20px,3.1vw,44px) 90px}.page-head{display:flex;justify-content:space-between;align-items:start;gap:18px;margin-bottom:26px;flex-wrap:wrap}
 .kicker{font-size:11px;letter-spacing:.13em;color:var(--accent);font-weight:800;text-transform:uppercase;margin:0 0 6px}h1{font-size:clamp(26px,3vw,34px);line-height:1.15;letter-spacing:-.045em;margin:0 0 9px;font-weight:760}
 h2{font-size:17px;letter-spacing:-.025em;margin:0 0 6px}h3{font-size:14px;margin:0;letter-spacing:-.01em}p{color:var(--sub);margin:0 0 12px}.lede{max-width:630px;line-height:1.55;font-size:14px}
 h1+h2{margin-top:0}.muted{color:var(--sub)}.small{font-size:12px;color:var(--sub)}
@@ -37,10 +37,10 @@ h1+h2{margin-top:0}.muted{color:var(--sub)}.small{font-size:12px;color:var(--sub
 .panel-header p{font-size:12px;margin:3px 0 0}.panel-header h2{margin:0}
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
 .metric{border:1px solid var(--line);border-radius:15px;background:var(--surface);padding:18px 19px;min-width:0}.metric .metric-label{font-size:11px;color:var(--sub);letter-spacing:.065em;text-transform:uppercase;font-weight:720}
-.metric strong{font-size:29px;line-height:1.2;letter-spacing:-.045em;display:block;margin:9px 0 3px}.metric .metric-note{color:var(--sub);font-size:11px}
+.metric strong{font-size:31px;line-height:1.2;letter-spacing:-.045em;display:block;margin:9px 0 3px}.metric .metric-note{color:var(--sub);font-size:11px}
 .split{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr);gap:16px;align-items:start}.stack{display:grid;gap:15px}
 .note{border:1px solid var(--line);border-radius:12px;padding:12px 15px;background:#1a2e34;color:var(--sub);font-size:12px;line-height:1.5}.note b{color:var(--ink)}
-.notice-wrap{position:sticky;top:0;z-index:11;max-width:1160px;margin:auto;padding:0 20px}
+.notice-wrap{position:sticky;top:0;z-index:11;max-width:1460px;margin:auto;padding:0 20px}
 .toast{border:1px solid #3e8f7f;background:#1b4540;box-shadow:var(--shadow);color:#e8fff6;padding:13px 17px;border-radius:12px;margin-top:12px;display:flex;align-items:center;gap:10px}
 .pending-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#393022;border:1px solid #776038;color:#fae8bc;border-radius:13px;padding:13px 17px;margin-bottom:20px;flex-wrap:wrap}
 .pending-bar p{color:#f5e1b3;margin:0;font-size:12px}
@@ -60,7 +60,7 @@ h1+h2{margin-top:0}.muted{color:var(--sub)}.small{font-size:12px;color:var(--sub
 .tile-controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.tile-controls .btn{flex:0 0 auto}
 .brightness{display:flex;align-items:center;gap:7px;margin-left:auto}.brightness input{width:68px;min-width:0;text-align:center;height:37px}.brightness label{font-size:11px;color:var(--sub)}
 .quickgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
-.quick{border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:17px;text-align:left;color:var(--ink);min-height:93px}.quick strong{display:block;font-size:14px;margin-bottom:5px}.quick span{color:var(--sub);font-size:12px}
+.quick{border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:17px;text-align:left;color:var(--ink);min-height:93px}.quick strong{display:block;font-size:15px;margin-bottom:5px}.quick span{color:var(--sub);font-size:12px}
 .quick:hover{border-color:#408e7e;background:#1d3539}
 .device-row{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}
 .device-row:last-child{border:none}.device-row .title{font-weight:700}.device-row .meta{color:var(--sub);font-size:11px}.device-row .pill{margin-left:auto}
@@ -72,13 +72,29 @@ h1+h2{margin-top:0}.muted{color:var(--sub)}.small{font-size:12px;color:var(--sub
 .segmented{display:flex;gap:7px;flex-wrap:wrap}
 .group-pill{border:1px solid var(--line);background:#192b31;border-radius:10px;color:var(--sub);padding:8px 10px;font-size:12px}
 .group-pill.selected{color:#e6f9f3;border-color:#409d87;background:#204c43}
+.group-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:10px}
+.group-tabs .group-pill{text-align:left;padding:13px 14px;min-width:0;display:flex;flex-direction:column;gap:3px;transition:background .15s,border-color .15s}
+.group-tabs .group-pill:hover{background:#243e43;border-color:#408c7f}
+.group-tabs .tab-title{font-size:13px;font-weight:740;color:var(--ink);overflow-wrap:anywhere}
+.group-tabs .tab-meta{color:var(--sub);font-size:11px}
+.group-tabs .group-pill.selected .tab-meta{color:#b9e2d9}
+.mobile-effects-select{display:none}
+.effects-add{background:#172d31;margin-top:15px}
+.effects-add summary{display:flex;gap:9px;align-items:center;justify-content:space-between}
+.effects-add summary::after{content:"+";font-size:18px;color:var(--accent);line-height:1}
+.effects-add[open] summary::after{content:"−"}
+.effects-add .small{margin-top:11px}
+.effects-add .device-chooser{margin-top:12px}
+.group-summary{font-size:12px;color:var(--sub)}
+.group-summary strong{color:var(--ink)}
+
 .info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.info-item{background:var(--surface2);border:1px solid var(--line);padding:12px 15px;border-radius:11px;min-width:0}.info-item span{font-size:11px;color:var(--sub);display:block}.info-item strong{display:block;font-size:14px;font-weight:720;overflow-wrap:anywhere;margin-top:5px}
 details{background:var(--surface2);border-radius:13px;border:1px solid var(--line);padding:15px 17px}details summary{cursor:pointer;font-weight:700;color:var(--ink)}details[open] summary{margin-bottom:15px}
 .divider{height:1px;background:var(--line);margin:20px 0}.footer{padding:0 clamp(20px,3.5vw,48px) 25px;color:#7e999c;font-size:11px;max-width:1220px;margin:auto}
 dialog{border:1px solid var(--line);background:#19292f;color:var(--ink);border-radius:16px;padding:26px;max-width:min(420px,calc(100vw - 30px));width:100%;box-shadow:0 25px 100px #0009}dialog::backdrop{background:#0009}
 @media(max-width:1080px){.split{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:780px){.shell{display:block}.sidebar{height:auto;position:relative;top:auto;padding:12px 16px 5px;border-right:0;border-bottom:1px solid var(--line)}.brand{padding:0 3px 12px}.sidebar-foot,.nav-label{display:none}.nav-list{display:flex;overflow-x:auto;gap:5px;padding-bottom:8px}.nav-btn{flex:0 0 auto;padding:9px 12px;gap:7px}.topbar{height:65px;padding:0 17px}.content{padding:22px 16px 60px}.footer{padding:0 16px 20px}}
-@media(max-width:470px){.metrics{gap:8px}.metric{padding:13px}.metric strong{font-size:22px}.panel{padding:15px}.top-connection{display:none}.page-head{margin-bottom:18px}.tile-controls .btn{padding:8px 11px}.brightness{margin-left:0}.form-grid,.device-chooser{grid-template-columns:1fr}.quickgrid{grid-template-columns:1fr}.effect-actions{width:100%}.effect-row{align-items:flex-start}.effect-actions .btn{flex:1}}
+@media(max-width:780px){.group-tabs{display:none}.mobile-effects-select{display:flex;flex-direction:column;gap:8px}.shell{display:block}.sidebar{height:auto;position:relative;top:auto;padding:12px 16px 5px;border-right:0;border-bottom:1px solid var(--line)}.brand{padding:0 3px 12px}.sidebar-foot,.nav-label{display:none}.nav-list{display:flex;overflow-x:auto;gap:5px;padding-bottom:8px}.nav-btn{flex:0 0 auto;padding:9px 12px;gap:7px}.topbar{height:65px;padding:0 17px}.content{padding:22px 16px 60px}.footer{padding:0 16px 20px}}
+@media(max-width:470px){.group-tabs{display:none}.mobile-effects-select{display:flex}.metrics{gap:8px}.metric{padding:13px}.metric strong{font-size:22px}.panel{padding:15px}.top-connection{display:none}.page-head{margin-bottom:18px}.tile-controls .btn{padding:8px 11px}.brightness{margin-left:0}.form-grid,.device-chooser{grid-template-columns:1fr}.quickgrid{grid-template-columns:1fr}.effect-actions{width:100%}.effect-row{align-items:flex-start}.effect-actions .btn{flex:1}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
 </style>
 </head>
@@ -161,19 +177,24 @@ dialog{border:1px solid var(--line);background:#19292f;color:var(--ink);border-r
       <section data-view="effects" id="view-effects" hidden>
         <div class="page-head"><div><div class="kicker">Apple Home accessories</div><h1>Effects &amp; playlists</h1><p class="lede">Pick a light, then choose which saved WLED presets and playlists should appear as named controls in Apple Home.</p></div></div>
         <section class="panel">
-          <div class="panel-header"><div><h2>1. Choose a WLED light</h2><p>Each light can have its own group of up to 5 favorites</p></div><span class="pill" id="effectsGroupCount">0 / 8 groups</span></div>
-          <div class="device-chooser">
-            <div class="field"><label for="effectsLight">WLED device</label><select id="effectsLight" aria-label="WLED device for effects"><option value="">Loading…</option></select></div>
-            <button type="button" class="btn ghost" id="loadEffectsCatalog">Load saved presets &amp; playlists</button>
+          <div class="panel-header"><div><h2>Choose a WLED light</h2><p>Your existing Effects groups appear first, with a separate set of favorites for each light.</p></div><span class="pill" id="effectsGroupCount">0 / 8 groups</span></div>
+          <div class="group-tabs" id="groupPicker" aria-label="Choose a WLED light"></div>
+          <div class="mobile-effects-select field"><label for="effectsLight">WLED device</label>
+            <select id="effectsLight" aria-label="WLED device for effects"><option value="">Loading…</option></select>
           </div>
-          <div class="segmented" id="groupPicker" style="margin-top:14px"></div>
         </section>
         <section class="panel">
-          <div class="panel-header"><div><h2>2. Manage Apple Home favorites</h2><p id="selectedGroupSummary">Select a light to see its Effects accessory</p></div><span class="pill" id="groupStatus">Not configured</span></div>
+          <div class="panel-header"><div><h2>Apple Home favorites</h2><p id="selectedGroupSummary">Choose a light to see its favorite effects</p></div><span class="pill" id="groupStatus">Not configured</span></div>
           <div id="effectController" class="empty">Choose a WLED light above.</div>
-          <div class="divider"></div>
-          <div class="field"><label for="effectsPreset">3. Add a saved preset or playlist</label><select id="effectsPreset"><option value="">Load the saved items for this light first</option></select></div>
-          <div class="row" style="margin-top:13px"><button type="button" class="btn primary" id="addEffect">+ Add to Apple Home</button><span class="small">Adding a button keeps the existing Effects accessory ID.</span></div>
+          <details id="effectsAdd" class="effects-add">
+            <summary>Add a saved preset or playlist</summary>
+            <p class="small">Choose a saved WLED resource to expose as a named switch in Apple Home. You can add up to five per light.</p>
+            <div class="device-chooser">
+              <div class="field"><label for="effectsPreset">Saved WLED item</label><select id="effectsPreset" disabled><option value="">Load presets and playlists from this light</option></select></div>
+              <button type="button" class="btn ghost" id="loadEffectsCatalog">Load from WLED</button>
+            </div>
+            <div class="row" style="margin-top:13px"><button type="button" class="btn primary" id="addEffect" disabled>+ Add to Apple Home</button><span class="small" id="effectsCatalogHint">Load saved items from this light to begin.</span></div>
+          </details>
         </section>
         <div class="note"><b>Accessory safety:</b> Renaming keeps a group’s HomeKit ID. Removing or reordering a button rebuilds that one group with a new ID and may require updating any Home scenes that use it. All changes need a restart before Apple Home reflects them.</div>
       </section>
@@ -278,7 +299,7 @@ async function api(path,fields,retry=true){
 }
 
 let snapshot={devices:[],presets:[],effectControllers:[]};
-let currentView="overview", selectedEffectsAid="", restartRequired=false, renaming=null;
+let currentView="overview", selectedEffectsAid="", restartRequired=false, renaming=null, effectsSelectionInitialized=false;
 let noticeTimer=0, lastStatusAt="";
 function notice(message){
   const n=$("notice");
@@ -320,7 +341,7 @@ function currentProgram(d){
   }
   if(Number(d.playlistId??-1)>0)return "Playlist #"+d.playlistId;
   if(Number(d.presetId??-1)>0)return "Preset #"+d.presetId;
-  return "Custom / solid";
+  return "Current WLED effect";
 }
 function card(d){
   const status=deviceState(d),bright=Number.isFinite(d.brightness)?Math.min(100,Math.max(1,Math.round(d.brightness))):50;
@@ -372,14 +393,26 @@ function renderLights(){
 }
 function renderEffects(){
   const items=snapshot.devices||[];
+  // On first visit, start on a group that already has favorites. Never
+  // override the user's explicit selection during status refresh.
+  if(!effectsSelectionInitialized){
+    const firstConfigured=(snapshot.effectControllers||[]).find(c=>
+      items.some(d=>String(d.aid)===String(c.deviceAid)));
+    selectedEffectsAid=firstConfigured?String(firstConfigured.deviceAid):String(items[0]?.aid||"");
+    effectsSelectionInitialized=true;
+    $("effectsAdd").open=!groupByLight(selectedEffectsAid);
+  }
   selectedEffectsAid=populateDevices("effectsLight",selectedEffectsAid);
   const d=deviceByAid(selectedEffectsAid),g=groupByLight(selectedEffectsAid);
   $("effectsGroupCount").textContent=(snapshot.effectControllers||[]).length+" / 8 groups";
   $("groupPicker").innerHTML=items.map(x=>{
     const active=String(x.aid)===String(selectedEffectsAid);
+    const other=groupByLight(x.aid);
     return '<button type="button" class="group-pill'+(active?' selected':'')+
-      '" data-action="selectEffectsLight" data-aid="'+x.aid+'">'+safe(x.name)+
-      ' · '+(groupByLight(x.aid)?.inputs?.length||0)+'/5</button>';
+      '" aria-pressed="'+active+'" data-action="selectEffectsLight" data-aid="'+x.aid+'">'+
+      '<span class="tab-title">'+safe(x.name)+'</span><span class="tab-meta">'+
+      (other?(other.inputs||[]).length+' / 5 favorites':'No Effects group')+
+      ' · '+(x.online?"Online":"Offline")+'</span></button>';
   }).join("");
   $("selectedGroupSummary").textContent=d?d.name+" · "+(g?(g.inputs||[]).length+" of 5 favorites":"No Effects group yet"):"Choose a WLED device";
   const groupStatus=$("groupStatus");
@@ -485,7 +518,12 @@ function switchEffectsLight(aid){
   const previous=selectedEffectsAid;
   selectedEffectsAid=String(aid);
   if(previous!==selectedEffectsAid){
-    $("effectsPreset").innerHTML='<option value="">Load presets and playlists for this light</option>';
+    $("effectsPreset").innerHTML='<option value="">Load presets and playlists from this light</option>';
+    $("effectsPreset").disabled=true;
+    $("effectsPreset").dataset.loadedAid="";
+    $("addEffect").disabled=true;
+    $("effectsCatalogHint").textContent="Load saved items from this light to begin.";
+    $("effectsAdd").open=!groupByLight(selectedEffectsAid);
   }
   showView("effects");
   renderEffects();
@@ -499,7 +537,15 @@ async function loadCatalog(aid,selectId,button){
     const list=result.presets||[];
     $(selectId).innerHTML=list.length?list.map(p=>
       '<option value="'+p.id+'">'+(p.kind==="playlist"?"Playlist":"Preset")+' · '+safe(p.name)+' (#'+p.id+')</option>').join(""):
-      '<option value="">No saved presets or playlists found</option>';
+      '<option value="">No saved presets or playlists on this WLED light</option>';
+    if(selectId==="effectsPreset"){
+      $("effectsPreset").dataset.loadedAid=String(aid);
+      $("effectsPreset").disabled=!list.length;
+      $("addEffect").disabled=!list.length;
+      $("effectsCatalogHint").textContent=list.length
+        ?list.length+" saved items available. Select one and add it as an Apple Home favorite."
+        :"No saved items found on this WLED light. Create a preset or playlist in WLED first.";
+    }
     if(list.length)notice("Loaded "+list.length+" saved presets and playlists.");
   }catch(ex){notice(ex.message);}finally{button.disabled=false;button.textContent=old;}
 }
@@ -543,7 +589,8 @@ $("loadEffectsCatalog").onclick=()=>loadCatalog($("effectsLight").value,"effects
 $("loadCatalog").onclick=()=>loadCatalog($("presetLight").value,"presetId",$("loadCatalog"));
 $("addEffect").onclick=async()=>{
   const aid=$("effectsLight").value,preset=$("effectsPreset").value;
-  if(!aid||!preset)return notice("Choose a WLED light, then load and select a preset or playlist.");
+  if(!aid||!preset||$("effectsPreset").dataset.loadedAid!==String(aid))
+    return notice("Load and choose a saved preset or playlist for this WLED light first.");
   try{await mutate("/api/effects/add",{aid,preset});}catch(ex){notice(ex.message);}
 };
 $("addPreset").onsubmit=async e=>{
