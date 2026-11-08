@@ -70,7 +70,8 @@
 - Per-light health metrics now include pending commands, HTTP failures and dropped commands. A queued write is **not** a confirmed WLED execution; expect eventual state reconciliation and inspect diagnostics for errors.
 - Added build-time gzip compression of the HTML portal: `web/portal.html` is the editable source, `tools/prepare_portal.py` generates `include/PortalGzip.generated.h`. Remove HTML String allocation at page request time and preserve reboot-safe CSRF recovery using authenticated status header.
 - No HomeKit/NVS registry/administrator secret/partition changes.
-- **CI status:** Awaiting host tests and both firmware builds. **Hardware:** unverified; requires tests on user's existing bridge. [Phase 5 test plan](PHASE5_TEST_PLAN.md).
+- **CI PASSED:** [run 42443428109](https://github.com/ggrant111/wled-applehome/actions/runs/42443428109) — all host tests (including browser security and worker freshness), both D1 Mini and CYD firmware builds, and binary headroom gate passed. HTML compresses **13,425 → 5,001 bytes**. D1 Mini firmware.bin **1,957,408 bytes (74,208 free)**; CYD **1,957,424 (74,192 free)**. **Hardware remains unverified;** consult [Phase 5 test plan](PHASE5_TEST_PLAN.md).
+- **Merged into main:** [PR #4](https://github.com/ggrant111/wled-applehome/pull/4). All previous NVS/HomeKit identities and admin configuration should persist, but no physical v0.5 upgrade has yet been tested.
 
 ## Next actions
 

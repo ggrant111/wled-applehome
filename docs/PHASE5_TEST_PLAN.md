@@ -1,6 +1,6 @@
 # v0.5 background WLED network worker — physical acceptance checklist
 
-> Source code may compile without hardware validation. Do not mark a feature verified from CI alone. Preserve the existing paired ESP32 NVS/HomeKit identity while testing.
+> Both board builds and host tests passed in [CI 42443428109](https://github.com/ggrant111/wled-applehome/actions/runs/42443428109), but this is not hardware validation. Do not mark a feature verified from CI alone. Preserve the existing paired ESP32 NVS/HomeKit identity while testing.
 
 ## Before update
 - [ ] Record existing firmware version, HomeKit bridge pairing, device AIDs/IPs, preset switch count, and current portal password.

@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.5 background WLED networking, diagnostics and flash optimization (CI / hardware verification pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.5 background WLED networking and compressed portal (CI passed; hardware verification pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -82,7 +82,7 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 
 **User-verified hardware evidence:** Web manager operational; discovered WLED controllers using portal and successfully added lights to Apple Home. Do not infer tests of every light's independent power/brightness, pairing across reboot, preset activation, removal, or OTA.
 
-### Phase 5 / v0.5 — Background WLED networking & firmware footprint — **CODE CANDIDATE / CI PENDING**
+### Phase 5 / v0.5 — Background WLED networking & firmware footprint — **CI PASSED / HARDWARE VERIFICATION PENDING**
 
 - [x] **Code:** Moved routine WLED polling and HomeKit/portal light + preset JSON POSTs into one bounded FreeRTOS task on ESP32 core 0. The HomeSpan main loop now queues commands without synchronously waiting on WLED HTTP.
 - [x] **Code:** Fixed-length command queue (24 commands), enqueue rejection on saturation, per-light queue depth, HTTP failures, drop counts, online state and last-success timestamps surfaced in cached portal status.
@@ -90,7 +90,7 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 - [x] **Code:** In-flight GETs are invalidated when a newer command or host/IP update arrives; only the main loop updates HomeKit characteristics from worker snapshots.
 - [x] **Code:** Portal page now precompressed to gzip at build time, served directly from flash with no 13KB HTML String allocation; authenticated status endpoint supplies the live CSRF token.
 - [x] **Code:** Added native freshness/scheduler checks, compressed asset tests and existing browser CSRF regression to CI.
-- [ ] **CI:** Verify D1 Mini/CYD builds, binaries respect minimum 70KB OTA margin, and all regression tests pass.
+- [x] **CI PASSED:** [run 42443428109](https://github.com/ggrant111/wled-applehome/actions/runs/42443428109) — host C++/browser/asset tests, both firmware builds, 70KB OTA headroom guard.
 - [ ] **Hardware:** Validate multiple connected WLED lights, offline device isolation, commands queued/failed, preset switch timing, HomeKit state reconciliation, Wi-Fi disconnect/reconnect, 24-hour soak and stability.
 - [ ] On-demand discovery, WLED preset catalog and manual IP verification still use bounded **blocking** calls in the portal/serial action path; make these async later if real latency tests justify.
 - [ ] Continue measuring heap and browser performance, and evaluate queuing/coalescing latest brightness changes if heavy automation fills the queue.
@@ -184,10 +184,14 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 | v0.4.1 CSRF fix, browser regression, D1 Mini/CYD firmware & OTA size | **Passed** | [CI run 42442460633](https://github.com/ggrant111/wled-applehome/actions/runs/42442460633) |
 | v0.4.1 live preset-add / stale-tab recovery | **Hardware pending** | User to verify without NVS erase |
 
+| v0.5 worker / gzip portal / D1 Mini + CYD builds | **Passed** | [CI run 42443428109](https://github.com/ggrant111/wled-applehome/actions/runs/42443428109) |
+| v0.5 background worker behavior with offline controllers | **Pending hardware** | [v0.5 test plan](PHASE5_TEST_PLAN.md) |
+
 ## Engineering risk / budget
 
 - **4MB OTA flash budget is tight.** v0.2 compiled binary uses ~1,733,463 bytes (85.3%) of each 2,031,616-byte app slot; approximately 298KB remains. Major additions (especially touchscreen/web assets) will need explicit size-budget tests, optimization, larger flash hardware, or an altered OTA strategy.
 - v0.3 linked flash use was **1,758,847 bytes (86.6%)** of 2,031,616 per OTA application slot.
+- **v0.5 full firmware.bin:** D1 Mini **1,957,408** / 2,031,616 bytes (**74,208 free**); CYD **1,957,424** bytes (**74,192 free**) — **96.3%** of OTA slot. Portal raw HTML 13,425 bytes compresses to 5,001 bytes at build time. CI 42443428109 passed all gates.
 - **v0.4.1 full firmware.bin:** 1,956,928 / 2,031,616 bytes (96.3% OTA slot); **74,688 bytes remaining** on both D1 Mini and CYD.
 - **v0.4 linked flash:** D1 Mini **1,876,139 bytes (92.3%)**, CYD 1,876,155 (92.3%). **Full firmware.bin** (includes headers/padding): D1 Mini **1,955,232** bytes, CYD **1,955,248**; **96.2% OTA slot** and only **76,384 / 76,368 bytes spare** respectively. Do not plan significant more UI code on 4MB boards without moving to larger-flash hardware, compression, or optimizing flash use. CI requires at least 70KB spare.
 - **Important migration fix:** Empty WLED MAC and IP strings are valid on the v0.1 original light, but ESP32 Preferences::putString returns 0 for a successful empty write. DeviceRegistry now verifies NVS string writes by readback; a native mock-Preferences regression test checks AID=2 migration and stable IDs across reboots.

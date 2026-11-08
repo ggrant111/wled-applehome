@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.5.0-dev — background WLED network worker + compressed portal (**code candidate; CI and physical testing pending**).
+**Current version:** v0.5.0-dev — background WLED worker + compressed portal (**CI passed; hardware validation pending**). [CI run and firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42443428109).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -67,3 +67,7 @@ If the ESP32 restarts while the management dashboard stays open, the browser tab
 - [HomeSpan](https://github.com/HomeSpan/HomeSpan)
 - [WLED JSON API](https://kno.wled.ge/interfaces/json-api/)
 - [PlatformIO Espressif32](https://github.com/platformio/platform-espressif32)
+
+### v0.5 build verification
+
+[CI run 42443428109](https://github.com/ggrant111/wled-applehome/actions/runs/42443428109) passed both builds and host tests. Full D1 Mini binary: 1,957,408 bytes (74,208 bytes remaining in each 2,031,616-byte OTA slot). CYD: 1,957,424 bytes (74,192 bytes remaining). **Only code/CI verified; physical Apple Home and WLED network-recovery tests are pending.**
