@@ -128,7 +128,8 @@
 - New groups use a separate NVS namespace `wled-fx9` with a spare slot for crash-resilient structural edits. All new groups use named grouped Switch controls, not Television Inputs. WLED state polling and queued `{"ps":id}` commands remain isolated per WLED device.
 - Portal supports adding presets to the selected WLED, renaming a control without changing identity, safely removing/reordering individual preset controls by explicitly rebuilding **only that group** under a new AID, removing a complete group, and loading independent saved preset catalogs.
 - Tests added for eight-group capacity, NVS AID preservation across reboot, physical group isolation mapping, rename, remove/reorder AID change, interrupted rebuild recovery and legacy TV conversion. New endpoints keep Digest+CSRF protection and user-entered labels use HTML escaping.
-- **CI / actual multi-device hardware validation pending.** See [Phase 9 test plan](PHASE9_TEST_PLAN.md).
+- **CI passed:** [run 42454610880](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880): eight-controller NVS and legacy-AID tests, independent groups, structural edit recovery, browser/CSRF tests, D1 Mini and CYD OTA builds and 70KB minimum flash headroom. D1 Mini image 1,574,848 bytes, 456,768 bytes free; CYD image 1,574,832 bytes, 456,784 bytes free.
+- **Merged to main:** [PR #9](https://github.com/ggrant111/wled-applehome/pull/9) at commit a299c2c. **Physical validation with two or more independent WLED controllers and effects groups remains pending.** [Phase 9 test plan](PHASE9_TEST_PLAN.md).
 
 ## Next actions
 

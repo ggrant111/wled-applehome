@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.9.0-dev — up to eight WLED-specific grouped effects controllers (**CI and physical multi-light test pending**).
+**Current version:** v0.9.0-dev — up to eight WLED-specific grouped Effects Controllers (**CI passed; physical multi-light verification pending**). [Download firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -28,7 +28,7 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 
 Up to eight WLED light accessories can now have their own opt-in **grouped Effects accessory**, each with up to five named saved WLED presets. The original v0.8 Effects group keeps its existing pairing/AID, configured names, order and stateful On/Off behavior. New groups created from the authenticated web portal each get a separate, monotonic HomeKit accessory ID. Each group observes only its own WLED light's actual preset/power status.
 
-The dashboard includes per-light preset discovery, adding effects, renaming controls, and removing/reordering controls. **Important:** removing/reordering an individual grouped control changes HomeKit service ordering, so the UI warns and recreates **that group only** with a new AID; scenes/automations using that one group may need updating. Appending or renaming presets leaves its existing AID unchanged. Use an OTA update **without erasing NVS**, then restart the bridge only when the portal indicates HomeKit accessory changes are pending. [Phase 9 hardware test checklist](docs/PHASE9_TEST_PLAN.md).
+The dashboard includes per-light preset discovery, adding effects, renaming controls, and removing/reordering controls. **Important:** removing/reordering an individual grouped control changes HomeKit service ordering, so the UI warns and recreates **that group only** with a new AID; scenes/automations using that one group may need updating. Appending or renaming presets leaves its existing AID unchanged. Use an OTA update **without erasing NVS**, then restart the bridge when the portal indicates HomeKit accessory changes are pending. **Build verification:** [run 42454610880](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880) passed host tests, D1 Mini firmware (1,574,848 bytes) and CYD firmware (1,574,832 bytes), leaving over 456KB available in either OTA slot. Hardware verification with multiple independent WLED groups remains pending. [Phase 9 hardware test checklist](docs/PHASE9_TEST_PLAN.md).
 
 ## v0.8 — Stateful preset power and segment inspection
 

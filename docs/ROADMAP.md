@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.9 multi-WLED Effects Controllers (implementation candidate; CI and physical multi-light validation pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.9 multi-WLED Effects Controllers (CI passed; multi-device Apple Home hardware verification pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -157,7 +157,7 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 
 **Home UI limitation:** Existing grouped accessories are standard HomeKit Switch services; making On/Off persistent does **not** force an Apple-designed TV-style large round power picker for each service. A new LightBulb or Outlet service subtype would change grouping and has not been tested.
 
-### Phase 9 / v0.9 — Multi-WLED grouped effects (IMPLEMENTED CANDIDATE; CI / HARDWARE PENDING)
+### Phase 9 / v0.9 — Multi-WLED grouped effects (MERGED / CI PASSED / HARDWARE PENDING)
 
 **Goal:** Extend the physically working v0.8 grouped-effects design from one selected WLED device to separate opt-in grouped-effects accessories for up to all eight registered WLED devices.
 
@@ -176,12 +176,12 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 - [x] Remove or reorder an individual effect **changes that group's HomeKit service topology** and therefore requires an explicit warning and new non-reusable AID for that **one group** (not the WLED light). Existing Home scenes or automations targeting that group might need to be updated. A new group is persisted BEFORE retiring the previous AID. A reboot after an interrupted swap favors the larger/newer AID and retires the superseded copy.
 - [x] Light removal now removes only effects groups bound to that light; unrelated groups are unchanged.
 - [x] Host integration test covers v0.8 legacy migration, eight groups, independent state mapping, name persistence, per-group rebuild, NVS crash recovery, legacy TV conversion and duplicate rejection; JS endpoint contract enforces CSRF and escaped labels.
-- [ ] CI gate: native host tests, browser/CSRF, D1 Mini and CYD firmware builds, OTA headroom.
+- [x] **CI passed:** [run 42454610880](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880) — eight-device registry and v0.8 NVS migration, browser/CSRF, all existing host tests, both ESP32 firmware builds and >=70KB OTA flash budget. D1 Mini 1,574,848 bytes / 2,031,616 (**456,768 free**); CYD 1,574,832 bytes (**456,784 free**).
 - [ ] Hardware gate: physically test **two WLED devices**, each with independent grouped effects; verify active state from WLED, editing, reboot/pairing persistence, offline WLED isolation and no impact on Siri/color controls. Repeat across more devices as available.
 
 **Version handling:** v0.9 still uses the exact existing LightBulb and PresetSwitch HAP services with unchanged AIDs; only specifically opted-in new Effects groups get new accessories. Removing/reordering buttons is the only operation that intentionally rebuilds that group's AID after confirmation. No WLED presets, segments, colors or WLED firmware are modified by management operations.
 
-**Status:** Implementation candidate; CI and hardware acceptance results not yet recorded.
+**Status:** [PR #9](https://github.com/ggrant111/wled-applehome/pull/9) merged to main and all CI gates passed. Multi-device physical HomeKit tests remain outstanding.
 
 ## After MVP
 
@@ -283,10 +283,14 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 | v0.8 preset power/bounds diagnostics, host tests and both ESP32 builds | **Passed** | [CI run 42452061034](https://github.com/ggrant111/wled-applehome/actions/runs/42452061034) |
 | v0.8 actual WLED segment restoration and HomeKit power status | **Hardware pending** | [Phase 8 checklist](PHASE8_TEST_PLAN.md) |
 
+| v0.9 eight effects groups, migration, browser/CSRF, both ESP32 builds | **Passed** | [CI run 42454610880](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880) |
+| v0.9 two physical WLED groups and HomeKit state/identity isolation | **Hardware pending** | [Phase 9 checklist](PHASE9_TEST_PLAN.md) |
+
 ## Engineering risk / budget
 
 - **4MB OTA flash budget is tight.** v0.2 compiled binary uses ~1,733,463 bytes (85.3%) of each 2,031,616-byte app slot; approximately 298KB remains. Major additions (especially touchscreen/web assets) will need explicit size-budget tests, optimization, larger flash hardware, or an altered OTA strategy.
 - v0.3 linked flash use was **1,758,847 bytes (86.6%)** of 2,031,616 per OTA application slot.
+- **v0.9 full firmware.bin with GCC -Oz:** D1 Mini **1,574,848 bytes** (456,768 free); CYD **1,574,832 bytes** (456,784 free) in each 2,031,616-byte OTA slot. [CI run 42454610880](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880) passed all gates; on-device multi-WLED performance and HomeKit display still unverified.
 - **v0.8 full firmware.bin with GCC -Oz:** D1 Mini and CYD **1,564,800 bytes** (**466,816 bytes free** of 2,031,616); [CI run 42452061034](https://github.com/ggrant111/wled-applehome/actions/runs/42452061034) passed minimum OTA headroom. Real segment recall depends on WLED preset content and still requires user hardware validation.
 - **v0.7.1 full firmware.bin with GCC -Oz:** both D1 Mini and CYD **1,560,144 bytes** (**471,472 bytes free** of 2,031,616); [CI run 42449994004](https://github.com/ggrant111/wled-applehome/actions/runs/42449994004) passed flash budget. Grouped HomeKit switch UI still requires physical verification.
 - **v0.7 full firmware.bin with GCC -Oz:** D1 Mini and CYD each **1,557,792 bytes** (**473,824 free** in the 2,031,616-byte OTA slot); [CI 42448093812](https://github.com/ggrant111/wled-applehome/actions/runs/42448093812) passed 70KB headroom. Home app TV input rendering remains untested.

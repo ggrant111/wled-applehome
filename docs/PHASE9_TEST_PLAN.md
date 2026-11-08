@@ -1,6 +1,6 @@
 # Phase 9 — Multi-WLED effects groups hardware acceptance
 
-CI/build evidence is **not** physical verification. Preserve HomeKit pairing; never erase flash/NVS or change partition table.
+**CI passed:** [run 42454610880](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880) — all native/JS tests, D1 Mini/CYD builds, OTA slot size safety. Images: D1 Mini 1,574,848 bytes (456,768 free); CYD 1,574,832 (456,784 free). **CI/build evidence is not physical verification.** Preserve HomeKit pairing; never erase flash/NVS or change partition table.
 
 ## Upgrade / migration
 - [ ] Before update, record the existing v0.8 Effects group AID, saved preset names/order and working WLED light. Keep a copy of the previous OTA firmware.
