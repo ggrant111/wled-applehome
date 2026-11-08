@@ -126,10 +126,19 @@ void WledNetworkWorker::runCommand(const Command &cmd, WledClient &transport) {
     transport.setHost(host);
     if (cmd.kind == Kind::Preset)
       succeeded = transport.applyPreset(cmd.preset);
-    else
+    else {
+      int mainSegment = -1;
+      if (cmd.changeColor) {
+        portENTER_CRITICAL(&guard_);
+        // Host changes clear this snapshot; never reuse another host's ID.
+        if (s.snapshot.valid) mainSegment = s.snapshot.state.mainSegmentId;
+        portEXIT_CRITICAL(&guard_);
+      }
       succeeded = transport.writeState(cmd.changePower, cmd.power,
-                                     cmd.changeBrightness, cmd.brightness,
-                                     cmd.changeColor, cmd.hue, cmd.saturation);
+                                      cmd.changeBrightness, cmd.brightness,
+                                      cmd.changeColor, cmd.hue, cmd.saturation,
+                                      mainSegment);
+    }
   }
   const uint32_t now = millis();
   portENTER_CRITICAL(&guard_);

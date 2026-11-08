@@ -18,7 +18,7 @@ Code and CI alone do not prove that Apple Home refreshes optional characteristic
 - [ ] Manually change primary color using WLED web UI, then confirm Apple Home updates within approximately 8 seconds while controller online.
 - [ ] Trigger a selected WLED preset in Apple Home; confirm its effect/colors are restored and Home's color indicator tracks main-segment primary color.
 - [ ] On a WLED device with multiple segments, change color from Apple Home. Confirm only WLED **main segment** gets `fx:0` and new primary RGB; other segments retain existing effects/positions.
-- [ ] Change WLED's main segment to a different segment and repeat the test; confirm the new main segment is targeted.
+- [ ] Change WLED's main segment to a different segment (including when other segments are selected) and repeat. Only the explicit current main-segment ID should change. A main-segment switch just before a HomeKit command may require the next poll.
 - [ ] Disconnect one WLED and verify another controller still handles HomeKit color changes.
 - [ ] Test rapid hue wheel and brightness interactions, observing queue failures/status under load.
 

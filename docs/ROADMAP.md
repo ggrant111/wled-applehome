@@ -102,7 +102,7 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 ### Phase 6 / v0.6 — Apple Home full-color light controls — **IMPLEMENTED CANDIDATE / CI & HARDWARE PENDING**
 
 - [x] **Code:** Append Hue (0–360 degrees) and Saturation (0–100%) HomeSpan characteristics to existing light services after On and Brightness, preserving original service/characteristic ordering and accessory AIDs.
-- [x] **Code:** Convert HomeKit HSV (value remains under the independent Brightness characteristic) to 8-bit WLED RGB primary color on the **main WLED segment** using a targeted JSON `seg` object, leaving other segment layout untouched. Explicit color selection sets the main segment to Solid effect (`fx:0`) to ensure the color is visible; restores effects through normal preset switches.
+- [x] **Code:** Convert HomeKit HSV (value remains under the independent Brightness characteristic) to 8-bit WLED RGB primary color on the **main WLED segment** using a targeted JSON `seg` object with an explicit main-segment ID, leaving other segment layout untouched. Explicit color selection sets the main segment to Solid effect (`fx:0`) to ensure the color is visible; restores effects through normal preset switches.
 - [x] **Code:** Combine HomeKit power/brightness/color edits in one queued worker command. Default WLED white channel to 0 on RGB color choice, without changing other segment colors.
 - [x] **Code:** Parse current main-segment RGB primary from WLED's `/json/state`, publish Hue/Saturation to HomeKit after a fresh background poll. Never claim a color if WLED doesn't return an RGB primary.
 - [x] **Code:** Add portable HSV↔RGB tests for the six color-wheel anchors, grayscale, rounding and representative round-trips.

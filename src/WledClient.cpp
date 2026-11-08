@@ -106,7 +106,10 @@ bool WledClient::readState(WledState &out) {
   out.colorValid = false;
   // WLED's main segment represents the color shown in its own controls.
   // Do not invent a color if the segment has no RGB primary color.
-  const int mainSegment = data["mainseg"] | 0;
+  const int rawMainSegment = data["mainseg"] | 0;
+  const int mainSegment = rawMainSegment >= 0 && rawMainSegment <= 255
+      ? rawMainSegment : 0;
+  out.mainSegmentId = static_cast<uint8_t>(mainSegment);
   JsonArray segments = data["seg"].as<JsonArray>();
   for (JsonObject segment : segments) {
     if (static_cast<int>(segment["id"] | -1) != mainSegment) continue;
@@ -149,7 +152,7 @@ bool WledClient::sendJson(const String &body) {
 
 bool WledClient::writeState(bool changePower, bool power,
                             bool changeBrightness, int brightnessPercent,
-                            bool changeColor, float hue, float saturation) {
+                            bool changeColor, float hue, float saturation, int segmentId) {
   if (!changePower && !changeBrightness && !changeColor) return true;
   if (worker_) {
     const bool queued = worker_->queueWrite(workerSlot_, changePower, power,
@@ -164,10 +167,15 @@ bool WledClient::writeState(bool changePower, bool power,
     data["bri"] = bridge::homeToWledBrightness(brightnessPercent);
   if (changeColor) {
     const bridge::RgbColor rgb = bridge::homeColorToRgb(hue, saturation);
-    // No ID: WLED applies a segment object to its current main segment.
-    // Switch only that segment to Solid so the Home color wheel is visible.
-    // Preserve other segments, names, positions, speed and brightness.
+    // An omitted ID can affect selected segments other than the main one.
+    // Target the main segment explicitly; read its ID first if unknown.
+    if (segmentId < 0 || segmentId > 255) {
+      WledState current;
+      if (!readState(current)) return false;
+      segmentId = current.mainSegmentId;
+    }
     JsonObject segment = data["seg"].to<JsonObject>();
+    segment["id"] = segmentId;
     segment["fx"] = 0;
     JsonArray colors = segment["col"].to<JsonArray>();
     JsonArray primary = colors.add<JsonArray>();

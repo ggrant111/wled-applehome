@@ -76,7 +76,7 @@
 ## 2026-11-07 — v0.6 Apple Home Hue/Saturation code candidate
 
 - Implemented HomeSpan Hue and Saturation on existing WLED bridged LightBulb services while keeping original AIDs and On/Brightness characteristic order.
-- HomeKit hue/saturation converted to WLED RGB via portable pure C++ code, with explicit RGBW white=0 and WLED main segment Solid effect only when user changes color. No segment arrangement, other segments, NVS, or preset switch definitions changed.
+- HomeKit hue/saturation converted to WLED RGB via portable pure C++ code, with explicit RGBW white=0 and targeted WLED main segment Solid effect only when user changes color; includes an explicit main segment ID to protect other selected segments. No segment arrangement, other segments, NVS, or preset switch definitions changed.
 - WLED main-segment primary RGB read back during routine background polls and converted to HomeKit color characteristics; no attempt to show rapidly changing animation colors.
 - Reused v0.5 nonblocking queue, combined HomeKit color/power/brightness updates and existing stale-response safeguards.
 - Added native conversion/round-trip tests. **CI and physical on-device testing pending.** [Phase 6 test plan](PHASE6_TEST_PLAN.md).
