@@ -7,6 +7,10 @@ struct WledState {
   bool on = false;
   int brightness = 50;
   int presetId = -1;
+  float hue = 0.0f;
+  float saturation = 100.0f;
+  bool colorValid = false;
+  uint8_t mainSegmentId = 0;
 };
 
 struct WledInfo {
@@ -26,7 +30,9 @@ public:
   const String &host() const;
   bool configured() const;
   bool readState(WledState &out);
-  bool writeState(bool changePower, bool power, bool changeBrightness, int brightnessPercent);
+  bool writeState(bool changePower, bool power, bool changeBrightness, int brightnessPercent,
+                  bool changeColor = false, float hue = 0.0f, float saturation = 100.0f,
+                  int segmentId = -1);
   bool applyPreset(uint8_t presetId);
   bool printPresetCatalog();
   bool getPresetNames(JsonDocument &out) { return loadPresetNames(out, 0); }

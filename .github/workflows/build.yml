@@ -49,6 +49,11 @@ jobs:
           g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_worker_policy.cpp -o /tmp/bridge-worker-policy
           /tmp/bridge-worker-policy
 
+      - name: Test HomeKit Hue/Saturation and WLED RGB round-trips
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_color_math.cpp -o /tmp/bridge-color-math
+          /tmp/bridge-color-math
+
   firmware:
     runs-on: ubuntu-latest
     strategy:

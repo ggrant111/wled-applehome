@@ -28,6 +28,8 @@ private:
   bool lastCommandOK_ = true;
   SpanCharacteristic *power_;
   SpanCharacteristic *brightness_;
+  SpanCharacteristic *hue_;
+  SpanCharacteristic *saturation_;
   uint32_t lastPollMs_ = 0;
   uint32_t retryIntervalMs_ = 8000;
   uint32_t acknowledgedRevision_ = 0;

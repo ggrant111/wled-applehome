@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.5 background WLED networking and compressed portal (CI passed; hardware verification pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.6 Apple Home RGB color (code candidate; CI and hardware verification pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -99,6 +99,19 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 
 **Preservation:** No NVS schema, HomeKit AID, password, preset registry, partition table or pairing change in v0.5. Upgrade without erase.
 
+### Phase 6 / v0.6 — Apple Home full-color light controls — **IMPLEMENTED CANDIDATE / CI & HARDWARE PENDING**
+
+- [x] **Code:** Append Hue (0–360 degrees) and Saturation (0–100%) HomeSpan characteristics to existing light services after On and Brightness, preserving original service/characteristic ordering and accessory AIDs.
+- [x] **Code:** Convert HomeKit HSV (value remains under the independent Brightness characteristic) to 8-bit WLED RGB primary color on the **main WLED segment** using a targeted JSON `seg` object with an explicit main-segment ID, leaving other segment layout untouched. Explicit color selection sets the main segment to Solid effect (`fx:0`) to ensure the color is visible; restores effects through normal preset switches.
+- [x] **Code:** Combine HomeKit power/brightness/color edits in one queued worker command. Default WLED white channel to 0 on RGB color choice, without changing other segment colors.
+- [x] **Code:** Parse current main-segment RGB primary from WLED's `/json/state`, publish Hue/Saturation to HomeKit after a fresh background poll. Never claim a color if WLED doesn't return an RGB primary.
+- [x] **Code:** Add portable HSV↔RGB tests for the six color-wheel anchors, grayscale, rounding and representative round-trips.
+- [ ] **CI:** Both firmware builds, binary size guard and all host tests green.
+- [ ] **Hardware:** Color wheel appears for existing paired lights; Apple Home red/green/blue and white render correctly; direct WLED edits and presets refresh Apple Home color; multi-segment device affects only main segment; current pairing/preset AIDs retained.
+- [ ] **Future:** Color temperature (actual CCT/white-channel handling), group/segment selection and WLED effects, palettes, speed and intensity in a separate advanced web interface; not represented as native HomeKit effects.
+
+**Limitations:** Hue/Saturation represent the **main segment's configured primary RGB color**, not the instantaneous output color of each LED when an animation or palette runs. Changing color deliberately selects Solid mode for the main segment; use an existing WLED preset switch to restore your animation. Existing HomeKit pairing and registry are not erased or renumbered.
+
 ## After MVP
 
 | Version | Focus | Status |
@@ -106,7 +119,7 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 | v1.1 | Polished web dashboard, log viewer, per-device diagnostics | Planned |
 | v1.2 | Multi-WLED scenes, virtual groups, master brightness/on-off | Planned |
 | v1.3 | CYD touchscreen dashboard with light tiles and controls | Planned |
-| v1.4 | WLED segments, RGB, palettes, effect parameters | Planned |
+| v1.4 | Advanced segment mapping, palettes, effects, speed/intensity, and color temperature | Planned (basic Hue/Saturation in v0.6) |
 | v1.5 | WebSocket-led event sync and reliability/performance improvements | Planned |
 | v1.6 | Health monitoring, configuration backup and safe rollback | Planned |
 | v2.0 | Research Matter bridge for Apple Home/Google Home/Alexa | Research |

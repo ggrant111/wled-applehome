@@ -6,6 +6,7 @@
 #include <WiFiClient.h>
 #include <ctype.h>
 #include "BridgeMath.h"
+#include "ColorMath.h"
 #include "WledNetworkWorker.h"
 
 namespace {
@@ -102,6 +103,30 @@ bool WledClient::readState(WledState &out) {
   out.on = data["on"].as<bool>();
   out.brightness = bridge::wledToHomeBrightness(data["bri"].as<int>());
   out.presetId = data["ps"] | -1;
+  out.colorValid = false;
+  // WLED's main segment represents the color shown in its own controls.
+  // Do not invent a color if the segment has no RGB primary color.
+  const int rawMainSegment = data["mainseg"] | 0;
+  const int mainSegment = rawMainSegment >= 0 && rawMainSegment <= 255
+      ? rawMainSegment : 0;
+  out.mainSegmentId = static_cast<uint8_t>(mainSegment);
+  JsonArray segments = data["seg"].as<JsonArray>();
+  for (JsonObject segment : segments) {
+    if (static_cast<int>(segment["id"] | -1) != mainSegment) continue;
+    JsonArray primary = segment["col"][0].as<JsonArray>();
+    if (primary.size() < 3 || !primary[0].is<int>() ||
+        !primary[1].is<int>() || !primary[2].is<int>()) break;
+    const int r = primary[0].as<int>(), g = primary[1].as<int>(),
+              b = primary[2].as<int>();
+    if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
+      break;
+    const bridge::HsvColor hsv = bridge::wledRgbToHomeColor(
+        {static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b)});
+    out.hue = hsv.hue;
+    out.saturation = hsv.saturation;
+    out.colorValid = true;
+    break;
+  }
   return true;
 }
 
@@ -126,11 +151,13 @@ bool WledClient::sendJson(const String &body) {
 }
 
 bool WledClient::writeState(bool changePower, bool power,
-                            bool changeBrightness, int brightnessPercent) {
-  if (!changePower && !changeBrightness) return true;
+                            bool changeBrightness, int brightnessPercent,
+                            bool changeColor, float hue, float saturation, int segmentId) {
+  if (!changePower && !changeBrightness && !changeColor) return true;
   if (worker_) {
     const bool queued = worker_->queueWrite(workerSlot_, changePower, power,
-                                             changeBrightness, brightnessPercent);
+                                           changeBrightness, brightnessPercent,
+                                           changeColor, hue, saturation);
     if (queued) markMutation();
     return queued;
   }
@@ -138,6 +165,25 @@ bool WledClient::writeState(bool changePower, bool power,
   if (changePower) data["on"] = power;
   if (changeBrightness)
     data["bri"] = bridge::homeToWledBrightness(brightnessPercent);
+  if (changeColor) {
+    const bridge::RgbColor rgb = bridge::homeColorToRgb(hue, saturation);
+    // An omitted ID can affect selected segments other than the main one.
+    // Target the main segment explicitly; read its ID first if unknown.
+    if (segmentId < 0 || segmentId > 255) {
+      WledState current;
+      if (!readState(current)) return false;
+      segmentId = current.mainSegmentId;
+    }
+    JsonObject segment = data["seg"].to<JsonObject>();
+    segment["id"] = segmentId;
+    segment["fx"] = 0;
+    JsonArray colors = segment["col"].to<JsonArray>();
+    JsonArray primary = colors.add<JsonArray>();
+    primary.add(rgb.r);
+    primary.add(rgb.g);
+    primary.add(rgb.b);
+    primary.add(0);  // Explicit RGBW white=0 to avoid a stale white channel.
+  }
   String payload;
   serializeJson(data, payload);
   return sendJson(payload);

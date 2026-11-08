@@ -75,3 +75,19 @@ User-initiated discovery, manual WLED probe and large saved-preset catalogs rema
 The Phase 4 dashboard embedded ~13KB raw HTML in firmware and made a heap-allocating String copy for every request to interpolate a boot CSRF token. Move the editable page to `web/portal.html`; the PlatformIO `pre:tools/prepare_portal.py` script produces a gzip-compressed `include/PortalGzip.generated.h` at build time. Serve the bytes with `Content-Encoding: gzip` straight from PROGMEM, no runtime decompression or HTML String allocation.
 
 The boot CSRF token is now obtained from the existing **Digest-authenticated, no-store, same-origin** `/api/status` header, rather than rendered into HTML. All state-changing requests still require exact CSRF validation. Browser regression tests are updated to read the editable HTML source.
+
+## ADR-019 — HomeKit color wheel controls WLED main-segment primary RGB (2026-11-07)
+
+HomeKit LightBulb supports optional Hue (0..360 degrees) and Saturation (0..100%). Add these **after** On and Brightness to preserve existing characteristic identity ordering. Brightness remains the separate 0..100% characteristic, and color math encodes HSV hue/saturation with the value channel fixed at 255, avoiding double brightness scaling.
+
+For a user-selected Home color, POST the WLED `/json/state` partial segment object with an **explicit current main-segment ID**: `{"seg":{"id":X,"fx":0,"col":[[r,g,b,0]]}}`. An ID-less segment command may affect other selected segments; use the last WLED state snapshot's main-segment ID, or fetch it when no valid snapshot exists. Set effect 0 (Solid) only for explicit Home color edits, to display the chosen hue instead of retaining an effect/palette that may ignore primary RGB. RGBW white is explicitly set to 0 so RGB selection is not washed out by an old W value. No other segments, segment layout, LED settings or preset definitions should change.
+
+For reverse synchronization, find `mainseg` and the segment object matching its id in the WLED `/json/state` response. Derive hue/saturation from that segment's reported primary `col[0]` RGB, **not** from the instantaneous output of effects. If the segment data is missing or invalid, leave HomeKit's last known color untouched. Retain last Hue on greys/whites, since hue is undefined when saturation is zero.
+
+HomeKit cannot natively offer arbitrary WLED effect/palette/speed sliders through a LightBulb service; continue using preset trigger switches and plan advanced WLED-specific UI later. Do not expose fabricated characteristics for effects.
+
+## ADR-020 — Preserve ESP32 instruction RAM and OTA safety (2026-11-07)
+
+The first v0.6 color builds compiled but exceeded the project's 70KB OTA-app headroom rule (about 61KB remaining). Whole-framework GCC LTO attempts failed on this ESP32/Arduino/HomeSpan toolchain: default linker flags include `-fno-lto`, and enabling LTO eventually overflows instruction RAM (`iram0_0_seg`) with extensive relocation errors. **Do not ship LTO-enabled builds.**
+
+Attempt GCC 14 `-Oz` (aggressive size optimization) instead of `-Os`, without altering the ESP32 linker, NVS, HomeKit IDs or OTA partitions. Require passing both 4MB-board builds with at least 70KB spare before merging. Hardware performance/OTA testing remains mandatory.

@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.5.0-dev — background WLED worker + compressed portal (**CI passed; hardware validation pending**). [CI run and firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42443428109).
+**Current version:** v0.6.0-dev — Apple Home Hue/Saturation color wheel (**code candidate; CI and hardware tests pending**).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -10,7 +10,7 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 
 ## Current features
 
-- HomeSpan bridge with On and Brightness characteristics.
+- HomeSpan bridge with **On, Brightness, Hue and Saturation** characteristics (color functionality added in v0.6 candidate; not yet verified on hardware).
 - **User-confirmed:** Original firmware paired with Apple Home and changed brightness on a real WLED controller.
 - v0.2: Up to eight persistent WLED accessory entries, stable AIDs, initial AID=2 migration.
 - v0.2: On-demand mDNS WLED scan, `/json/info` validation, manual IP addition and explicit enrollment.
@@ -23,6 +23,10 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 - Automated PlatformIO builds for D1 Mini/CYD and host-side brightness/registry policy tests.
 
 **Build verified:** v0.3 passed native tests, D1 Mini and CYD firmware builds ([CI run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722)). **Physical tests remain pending** for Phases 2, 3 and 4. **Not yet hardware-verified:** v0.2 discovery, 8-light operation, and paired Apple Home database refresh after adding/removing devices. No presets, web setup UI, or CYD touchscreen interface yet.
+
+## v0.6 — Apple Home RGB color wheel
+
+Apple Home light accessories now expose **Hue** and **Saturation**, alongside the existing On/Brightness controls. Changing color selects **Solid** on WLED's main segment and sets RGB (white channel off), while WLED's other segments and saved presets remain untouched. Brightness remains independent; the main segment's primary color is polled back into Apple Home (animated pixel colors are not tracked). Existing paired bridge and stable AIDs are preserved; upgrade without erasing NVS. **On-device validation still pending.** See [color test plan](docs/PHASE6_TEST_PLAN.md).
 
 ## v0.5 — Network reliability and flash budget
 
