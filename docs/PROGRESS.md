@@ -114,6 +114,13 @@
 - **CI passed:** [run 42452061034](https://github.com/ggrant111/wled-applehome/actions/runs/42452061034) — new power/bounds host tests, existing regressions, D1 Mini/CYD firmware and OTA margin gate. Both images 1,564,800 bytes/2,031,616 slot, with 466,816 bytes free. **Physical segment restoration and selected On/Off HomeKit behavior still pending.** [Phase 8 checklist](PHASE8_TEST_PLAN.md).
 - **Merged to main:** [PR #8](https://github.com/ggrant111/wled-applehome/pull/8). Existing light and grouped-effect accessory AIDs/characteristics preserved.
 
+## 2026-11-07 — v0.8 physical verification and v0.9 proposed scope
+
+- **User confirms** installed v0.8's grouped preset active On/Off indicators and direct-WLED-to-Apple-Home preset reconciliation work as previously described. This is direct hardware confirmation of that behavior; do not infer exhaustive tests of every WLED preset/segment, all devices, OTA pairing persistence, or 24h uptime.
+- Earlier the user identified and corrected a problematic saved segment preset directly inside WLED. Exact segment restoration regression results were not supplied; continue to track as partially tested.
+- Proposed Phase 9 / v0.9: expand the currently single grouped Effects Controller to separate, explicitly enrolled controllers for up to eight WLED lights, each tracking its own WLED `ps`/power and managing up to five named saved presets. Priority: migration without changes to live HomeKit accessory IDs or pairing; per-device admin portal; true isolation; host tests and real multi-device physical test.
+- **No v0.9 firmware changes yet.** See [roadmap](ROADMAP.md).
+
 ## Next actions
 
 1. **Done:** v0.4 host tests, migration regression, D1 Mini/CYD builds and OTA size guard passed.

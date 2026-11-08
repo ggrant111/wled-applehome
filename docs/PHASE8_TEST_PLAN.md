@@ -13,11 +13,11 @@
 - [ ] If direct WLED recall restores boundaries but the bridge doesn't, capture WLED `/json/state` before and 1–2 seconds after both actions plus bridge serial logs. Do not guess the segment ID layout.
 
 ## Preset power
-- [ ] Select Mammoth: Mammoth control remains **On**, other grouped effects Off after a successful WLED poll.
+- [x] **User verified generally:** Installed v0.8 active-preset On/Off behavior works as described. Exact Mammoth sequence not separately reported.
 - [ ] Select Wednesday: Mammoth changes to Off, Wednesday stays On, without switching off the light between presets.
 - [ ] Turn Wednesday Off: entire WLED light becomes Off; all grouped effects show Off.
 - [ ] Turn Wednesday On again: WLED runs Wednesday; no unwanted Solid effect overwrite.
-- [ ] Change preset using WLED UI: Home grouped selection updates after background poll (~8s); change brightness/color in Apple Home and confirm On/Off synchronization.
+- [x] **User verified generally:** Direct changes in WLED update which saved preset Apple Home indicates. Exact update delay and cross-light tests not separately measured.
 - [ ] Verify standalone preset switches are STILL momentary and the underlying RGB LightBulb and Siri still work.
 - [ ] Stop if WLED effect changes are overwritten or other segments are touched unexpectedly.
 

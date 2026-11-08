@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.8 grouped power-selection and WLED preset segment diagnostics (CI passed; physical segment/power verification pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.9 planning — per-device grouped WLED effect controls (v0.8 power and WLED-to-Home preset state verified by user) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -151,10 +151,25 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 - [x] **Code candidate:** Add a **read-only** authenticated API and portal inspection for the chosen WLED preset, stream-filtering only the selected preset's `seg[].start`/`stop`, and reporting segment counts with saved bounds. Diagnose missing preset data without rewriting WLED `presets.json`.
 - [x] **Code candidate:** Grouped effect controls persist On for the active saved WLED preset; activating a different effect synchronizes other On indicators to Off after the background worker's authoritative WLED GET; turning the active effect Off powers WLED Off. Keep standalone switch actions momentary. Preserve all existing paired AIDs and HomeKit service types.
 - [x] **CI passed:** [run 42452061034](https://github.com/ggrant111/wled-applehome/actions/runs/42452061034) — host behavior, browser/CSRF, both ESP32 images and minimum OTA headroom. Both images 1,564,800 bytes; 466,816 bytes free.
-- [ ] **Hardware:** Inspect a problematic saved preset; if bounds missing, fix the **WLED preset** in its native editor and test direct WLED recall. Compare preset activation through Apple Home. Verify toggling first, second and Off effects updates selected statuses, preserves WLED segments, and Siri color remains working.
+- [x] **User-verified 2026-11-07:** v0.8 grouped effect power/selection and WLED-to-Home active-preset synchronization behaved as described on the user's Apple Home setup.
+- [ ] **Other hardware checks pending:** Specific saved segment-bounds inspection results and all preset segment layout variations; independent stress test across multiple lights, OTA continuity and Siri regression, long uptime.
 - [ ] **Unresolved:** If preset includes bounds and direct WLED recall fully restores segments but Apple Home doesn't, capture WLED `/json/state` before/after plus logs. Do not force-write segment geometry without clear evidence; WLED's native preset engine owns it.
 
 **Home UI limitation:** Existing grouped accessories are standard HomeKit Switch services; making On/Off persistent does **not** force an Apple-designed TV-style large round power picker for each service. A new LightBulb or Outlet service subtype would change grouping and has not been tested.
+
+### Phase 9 / v0.9 — Multi-WLED grouped effects (PROPOSED, not implemented)
+
+**Goal:** Extend the physically working v0.8 grouped-effects design from one selected WLED device to separate opt-in grouped-effects accessories for up to all eight registered WLED devices.
+
+1. **Registry design:** Evolve one global `wled-fx` controller into a collection keyed by *existing light AID* (not discovery list position). Migrate the existing live grouped controller without changing its AID, saved preset names, mapping, or position. Separate new effect accessories get monotonically allocated AIDs; never recycle former TV AIDs.
+2. **HomeKit:** Keep grouped `Service::Switch` controls and v0.8 On/Off behavior. Each group observes its corresponding WLED light's authoritative power and preset ID independently; changing one light must not affect the other groups.
+3. **Per-light management:** Portal shows grouped presets beneath each WLED device. Allow adding selected saved presets, removing selected entries, changing display names, and reordering display when safe. Preserve HomeKit characteristic/service identifiers for existing entries; **do not silently repack/reassign switch IIDs on a reboot**. If HomeKit cannot safely reorder the actual services, offer portal-only display order or require explicit recreation with warning.
+4. **Safety and tests:** Plan registry migration tests from v0.7 TV and v0.7.1/v0.8 grouped states, duplicate AID/preset rejection, removal/restore, reboot persistence, NVS power-failure conditions, mixed offline/online controllers, queue saturation, memory budget, and both ESP32 OTA image builds.
+5. **Acceptance:** Physical verification with at least two separate WLED devices, each with independent preset groups, switching from Home and WLED directly. Confirm no lost pairing, original color and Siri functionality, and no accidental cross-device triggering.
+
+**Scope exclusions:** Do not automatically add effects groups for every discovered device, rewrite WLED saved presets or segments, swap a working light accessory's service type, or erase NVS. Retain five selected presets per light initially; reassess limit based on actual accessory behavior/ESP32 memory.
+
+**Status:** Design proposal only, no v0.9 firmware code or CI run yet.
 
 ## After MVP
 
