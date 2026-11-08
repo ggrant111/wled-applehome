@@ -18,11 +18,22 @@ String DeviceRegistry::key(unsigned slot, const char *field) const {
 bool DeviceRegistry::save(unsigned slot) {
   const DeviceRecord &record = records_[slot];
   // Write the identity last. Records with an absent AID are ignored at boot.
-  const bool ipOk = prefs_.putString(key(slot, "ip").c_str(), record.ip) > 0;
-  const bool macOk = prefs_.putString(key(slot, "mac").c_str(), record.mac) > 0;
-  const bool nameOk = prefs_.putString(key(slot, "nm").c_str(), record.name) > 0;
-  const bool aidOk = prefs_.putUInt(key(slot, "aid").c_str(), record.aid) == sizeof(uint32_t);
-  return ipOk && macOk && nameOk && aidOk;
+  // ESP32 Preferences::putString returns strlen(value).  A successful write
+  // of an empty IPv4 or MAC string therefore returns ZERO, not an error!
+  // The original v0.1 light is intentionally migrated with mac="".
+  // Validate persisted values by reading them back before committing AID.
+  const String ipKey = key(slot, "ip");
+  const String macKey = key(slot, "mac");
+  const String nameKey = key(slot, "nm");
+  prefs_.putString(ipKey.c_str(), record.ip);
+  prefs_.putString(macKey.c_str(), record.mac);
+  prefs_.putString(nameKey.c_str(), record.name);
+  const bool metadataOK =
+      prefs_.isKey(ipKey.c_str()) && prefs_.getString(ipKey.c_str()) == record.ip
+      && prefs_.isKey(macKey.c_str()) && prefs_.getString(macKey.c_str()) == record.mac
+      && prefs_.isKey(nameKey.c_str()) && prefs_.getString(nameKey.c_str()) == record.name;
+  if (!metadataOK) return false;
+  return prefs_.putUInt(key(slot, "aid").c_str(), record.aid) == sizeof(uint32_t);
 }
 
 bool DeviceRegistry::begin() {

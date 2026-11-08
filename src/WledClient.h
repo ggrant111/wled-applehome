@@ -25,6 +25,7 @@ public:
   bool writeState(bool changePower, bool power, bool changeBrightness, int brightnessPercent);
   bool applyPreset(uint8_t presetId);
   bool printPresetCatalog();
+  bool getPresetNames(JsonDocument &out) { return loadPresetNames(out, 0); }
   bool lookupPresetName(uint8_t presetId, String &name);
   uint32_t mutationRevision() const { return mutationRevision_; }
   uint32_t lastMutationMs() const { return lastMutationMs_; }

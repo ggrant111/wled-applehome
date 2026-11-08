@@ -35,9 +35,18 @@
 - **Build VERIFIED:** [Phase 3 GitHub Actions run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722) passed all three jobs (host tests, D1 Mini build, CYD build). D1 Mini flash 1,758,847/2,031,616 (86.6%); CYD 1,758,863/2,031,616 (86.6%).
 - **Merged to main** via [PR #1](https://github.com/ggrant111/wled-applehome/pull/1). **All v0.3 physical behavior remains unverified** until user returns to hardware.
 
+## 2026-11-07 — Phase 4A web manager, OTA + safety implementation
+
+- User advanced to Phase 4 while away from hardware; **do not interpret the new work as physical verification of v0.2/v0.3**.
+- Implemented mobile-friendly local management web app on port 8080, with live cached WLED health, device actions, mDNS discovery, manual add/remove, selected preset catalog/enrollment, confirmation-based reboot, and diagnostics.
+- Kept the portal inactive until a strong 14–64 character administrator password is set at the physical serial console via `@k <password>` and rebooted. Digest login and a boot-local CSRF token protect POST mutations. No default login/OTA secret.
+- Enabled HomeSpan's **native authenticated OTA** only after the admin password is provisioned; same secret is used for OTA, and `SpanRollback.h` defers validating pending OTA firmware until stable operation (~60s with Wi-Fi).
+- Added host-side admin password/ID validation tests and CI guard that fails a firmware image with <70KB spare room in the 2,031,616-byte OTA app slot.
+- **Verification:** Awaiting CI D1 Mini / CYD build and USB/Apple Home/network/OTA hardware testing. Refer to `docs/PHASE4_TEST_PLAN.md`.
+
 ## Next actions
 
-1. **Done:** v0.3 native tests and both firmware builds passed; flash use recorded.
+1. Run and inspect v0.4 security policy host tests, D1 Mini and CYD builds, and OTA flash headroom checks.
 2. Preserve existing NVS/HomeSpan pairing: upload on the **same paired ESP32** without erase when home.
 3. Verify pending Phase 2 identity/discovery/multi-device acceptance tests before relying on preset switches.
 4. Test a named preset: `@c2` -> `@p2:5` (use actual saved preset ID) -> `R` -> trigger in Apple Home -> verify switch resets and WLED responds.

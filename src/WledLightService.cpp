@@ -58,11 +58,16 @@ void WledLightService::loop() {
   if (!wled_.configured()) return;
   WledState state;
   if (!wled_.readState(state)) {
+    online_ = false;
     retryIntervalMs_ = kOfflineBackoffMs;
     return;
   }
 
   retryIntervalMs_ = kPollEveryMs;
+  online_ = true;
+  observedOn_ = state.on;
+  observedBrightness_ = state.brightness;
+  lastSeenMs_ = now;
   acknowledgedRevision_ = currentRevision;
 
   const bool previousPower = power_->getVal<bool>();

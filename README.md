@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.3.0-dev — **Phase 3 CI PASS; physical validation pending**.
+**Current version:** v0.4.0-dev — **Phase 4A code candidate** (hardware verification pending; see CI).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -17,9 +17,21 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 - v0.2: Serial add/list/remove commands, 8-second staggered polling with 30s offline backoff.
 - v0.3: Saved WLED preset catalog (`@c<AID>`), selectively publish up to 12 momentary HomeKit preset switches (`@p<AID>:<presetId>`), list (`@s`) / remove (`@q<switchAID>`).
 - v0.3: Stable shared AID allocator for lights and preset switches, and prompt state reconciliation following accepted WLED commands.
+- v0.4: Local **password-gated web portal** (TCP 8080) with live health, light management/controls, opt-in preset switches, manual/restart operations and diagnostics.
+- v0.4: **Native HomeSpan OTA** (no browser uploader) with user-provisioned admin password and 60-second deferred firmware validation/rollback safety, plus binary-size CI guard.
 - Automated PlatformIO builds for D1 Mini/CYD and host-side brightness/registry policy tests.
 
 **Build verified:** v0.3 passed native tests, D1 Mini and CYD firmware builds ([CI run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722)). **Physical tests remain pending** for Phase 2 and Phase 3. **Not yet hardware-verified:** v0.2 discovery, 8-light operation, and paired Apple Home database refresh after adding/removing devices. No presets, web setup UI, or CYD touchscreen interface yet.
+
+## Phase 4A first-run setup
+
+1. Keep your paired ESP32 and flash **without erasing NVS**.
+2. On the serial CLI (115200 baud), enter `@k <YOUR-OWN-UNIQUE-ADMIN-PASSWORD>` using 14–64 printable non-space ASCII characters. Never post this password to GitHub.
+3. Reboot with `R`. The portal opens at `http://<ESP32-IP>:8080/` on the trusted local network. Login: `admin` + your password.
+4. Portal supports reading light status, device discovery, enrolling/removing lights, selected preset switches, and control. Accessory-list changes become effective after reboot.
+5. The same password enables HomeSpan's authenticated ArduinoOTA upload service; update via Arduino IDE's network port or a compatible uploader. **No default OTA password is exposed.**
+
+**Security:** Local HTTP Digest is not HTTPS. Never port-forward the portal or OTA ports. The password lives in device NVS, not in git. To disable the portal and OTA: `@k -` then `R`. See [setup](docs/SETUP.md).
 
 ## Quick start
 
@@ -29,7 +41,7 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 4. Type `@d` to discover WLED, then `@a1` to add a discovered controller, or `@m192.168.1.50` to add directly by IP (use your IP).
 5. Type `R` to reboot and refresh the bridged accessories in Apple Home.
 
-**Flash budget:** v0.3 uses ~86.6% of each 2,031,616-byte OTA app slot (about 273KB left) on 4MB hardware. Monitor size as the project grows.
+**Flash budget:** CI now enforces at least 70KB spare in each 2,031,616-byte OTA app slot; keep future web/GUI additions size-conscious. Monitor size as the project grows.
 
 ## Project tracking
 
@@ -37,6 +49,7 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 - **[Progress log](docs/PROGRESS.md)** — work completed and verified, in chronological order.
 - **[Phase 2 hardware test plan](docs/PHASE2_TEST_PLAN.md)** — safe test cases.
 - **[Phase 3 preset test plan](docs/PHASE3_TEST_PLAN.md)** — pairing, preset switches, power/brightness sync.
+- **[Phase 4 web/OTA test plan](docs/PHASE4_TEST_PLAN.md)** — browser authentication, OTA, recovery and soak checks. — pairing, preset switches, power/brightness sync.
 - **[Architecture decisions](docs/DECISIONS.md)** — board, HomeKit, NVS and network choices.
 - **[Setup](docs/SETUP.md)** — commands and deployment steps.
 

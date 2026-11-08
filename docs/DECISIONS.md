@@ -41,3 +41,17 @@ Allocate all newly enrolled light and preset-switch HomeKit AIDs via the existin
 ## ADR-012 — Poll-based reconciliation during Phase 3 (2026-11-07)
 
 On successful WLED POST (light/preset), increment a mutation revision and avoid querying the WLED state until ~450ms later to prevent stale state from replacing recently accepted HomeKit changes. After settling, read authoritative WLED power/brightness, notify Apple Home of changed values, and log observed `ps` preset ID. Keep 8-second staggered polling for external changes and existing offline backoff; implement WebSockets/nonblocking networking in a later reliability iteration. HTTP 2xx alone does not prove WLED physically applied a preset; hardware validation remains required.
+
+## ADR-013 — Authenticated local web portal on TCP 8080 (2026-11-07)
+
+HomeSpan owns HomeKit services and mDNS on its own ports. Use the Arduino-ESP32 synchronous `WebServer` on TCP **8080**, serviced after `homeSpan.poll()`, with no additional mDNS responder. Provide a compact local page for device health, WLED enrollment/controls, selected preset switches and explicit restarts. Read state from the existing WLED light services' **cached poll results**, avoiding additional HTTP calls every time the page refreshes. Discovery and catalog requests remain explicitly user-triggered and may block HomeKit briefly; nonblocking design is a later optimization.
+
+The portal is **disabled by default** and is available only after a 14–64 character administrator secret is provisioned over the serial CLI (`@k <secret>`) and the board is rebooted. Browser authentication uses HTTP Digest (username `admin`), with per-boot random CSRF token required on POST changes. Password stored in a separate `wled-admin` NVS namespace, never shipped in firmware/git. HTTP Digest is not TLS and no port forwarding is supported. The secret is stored in plaintext in local unencrypted NVS, so anyone with physical flash access may extract it; hardware-protected storage/secure boot is out of MVP scope.
+
+## ADR-014 — Native HomeSpan OTA with safe boot (2026-11-07)
+
+Use `homeSpan.enableOTA(adminPassword)` **only after** serial provisioning; do not expose HomeSpan's known default OTA password. Reuse the admin password for ArduinoOTA. Preserve the existing dual `0x1F0000` app partitions and HomeSpan/NVS pairing. Include `SpanRollback.h` and call `homeSpan.markSketchOK()` only after 60 seconds of runtime with connected Wi-Fi to allow ESP-IDF bootloader rollback if a new OTA firmware crashes before it becomes healthy. This is **not an automatic browser update form**; use Arduino IDE network upload or compatible secure OTA client. On-device recovery testing is mandatory before release.
+
+## ADR-015 — Explicit code and partition-size gates (2026-11-07)
+
+GitHub Actions must compile both targets and run host validation tests. A dedicated post-build gate compares `firmware.bin` against the 2,031,616-byte OTA partition and requires at least 70,000 bytes spare, preventing oversized releases. Report size and note limits before adding UI/touchscreen assets.

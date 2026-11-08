@@ -25,6 +25,16 @@ jobs:
           g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_preset_policy.cpp -o /tmp/bridge-preset-tests
           /tmp/bridge-preset-tests
 
+      - name: Build and run portal security policy tests
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_portal_validation.cpp -o /tmp/bridge-portal-tests
+          /tmp/bridge-portal-tests
+
+      - name: Compile and run DeviceRegistry NVS migration tests
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -Itests/stubs -Isrc -Iinclude tests/test_device_registry.cpp src/DeviceRegistry.cpp -o /tmp/bridge-registry-migration
+          /tmp/bridge-registry-migration
+
   firmware:
     runs-on: ubuntu-latest
     strategy:
@@ -40,6 +50,8 @@ jobs:
         run: python -m pip install platformio
       - name: Compile firmware
         run: pio run -e ${{ matrix.env }}
+      - name: Enforce OTA flash headroom
+        run: python tests/check_firmware_size.py .pio/build/${{ matrix.env }}/firmware.bin
       - uses: actions/upload-artifact@v4
         with:
           name: firmware-${{ matrix.env }}

@@ -1,0 +1,192 @@
+#pragma once
+
+// Served from program flash. Script sets textContent/escaped HTML for WLED-supplied names.
+static const char kPortalHtml[] PROGMEM = R"PORTAL(<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>WLED Apple Home | Bridge</title>
+<style>
+:root{--bg:#101820;--panel:#1b2931;--panel2:#22343c;--text:#e9f4f1;--muted:#a1b4b3;--line:#34494e;--accent:#31837a;--accent2:#55b8a9;--danger:#c96c66}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 0 0,#213b3a 0,transparent 36rem),var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,sans-serif}
+main{max-width:1040px;margin:auto;padding:24px 18px 70px}
+.top{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.17em;color:var(--accent2);font-weight:700}
+h1{font-size:30px;letter-spacing:-.04em;margin:5px 0}h2{font-size:19px;letter-spacing:-.02em;margin:0 0 12px}
+p{color:var(--muted);margin:4px 0 14px}
+.status{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:9px 12px;font-size:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent2)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:22px 0}
+.stat,.panel,.device{border:1px solid var(--line);background:var(--panel);border-radius:17px}
+.stat{padding:13px 17px}.stat strong{font-size:20px;display:block;margin-top:3px;overflow-wrap:anywhere}.stat span{font-size:12px;color:var(--muted)}
+.panels{display:grid;grid-template-columns:1.2fr 1fr;gap:15px}
+.panel{padding:20px;margin-bottom:15px}
+.device{padding:15px;margin-bottom:9px;background:var(--panel2)}
+.devicehead{display:flex;justify-content:space-between;gap:9px;align-items:start}
+.title{font-weight:650}.meta{color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.pill{border-radius:14px;padding:4px 8px;background:#344248;font-size:11px;white-space:nowrap}
+.pill.live{background:#1c5047;color:#9af5e1}
+.controls,.actionrow{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:12px}
+input,select{background:#13242b;border:1px solid #486168;color:var(--text);border-radius:10px;padding:10px 11px;min-width:0}
+input[type=number]{width:85px}input[type=text]{flex:1;min-width:145px}select{max-width:100%;flex:1}
+button{border:1px solid #516b6a;background:#294148;border-radius:10px;padding:9px 13px;color:var(--text);font-weight:600;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent)}button.danger{border-color:#7c514f;color:#ffc8c0}
+button:disabled{opacity:.5;cursor:default}button:hover:not(:disabled){filter:brightness(1.18)}
+.empty{border:1px dashed var(--line);border-radius:12px;padding:20px;color:var(--muted)}
+.small{font-size:12px;color:var(--muted)}.banner{padding:12px;border:1px solid var(--line);border-radius:12px;background:#20343a;margin-bottom:16px;color:var(--text)}
+#notice{position:sticky;top:10px;z-index:5;min-height:0}.notice{background:#214b46;color:#d9fff1;padding:12px;border:1px solid #39776b;border-radius:12px;margin-bottom:12px}
+footer{color:var(--muted);font-size:12px;padding-top:12px}
+@media(max-width:800px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.panels{grid-template-columns:1fr}h1{font-size:25px}}
+@media(max-width:400px){.stat{padding:12px}.controls button{flex:1}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div><div class="eyebrow">GLOWDECK / LOCAL BRIDGE</div><h1>WLED Apple Home</h1>
+      <p>Lights, WLED presets, discovery and bridge health.</p></div>
+    <div class="status"><span class="dot"></span><span id="connection">Connecting...</span></div>
+  </div>
+  <div id="notice"></div>
+  <div class="stats">
+    <div class="stat"><span>BRIDGE</span><strong id="version">—</strong></div>
+    <div class="stat"><span>WLED LIGHTS</span><strong id="lightCount">—</strong></div>
+    <div class="stat"><span>PRESET SWITCHES</span><strong id="presetCount">—</strong></div>
+    <div class="stat"><span>FREE HEAP</span><strong id="heap">—</strong></div>
+  </div>
+  <div class="banner"><strong>Changes to Apple Home:</strong> Adding/removing lights or preset switches requires a bridge restart. Your existing pairing should be retained. Never erase the ESP32 flash/NVS for an update.</div>
+  <div class="panels">
+    <section>
+      <div class="panel">
+        <div class="top"><h2>WLED devices</h2><button id="refresh">Refresh</button></div>
+        <div id="devices" class="empty">Loading devices...</div>
+      </div>
+      <div class="panel">
+        <h2>Discover & add WLED</h2><p>Discovery checks actual WLED devices before adding them. You approve each light.</p>
+        <div class="actionrow"><button id="scan" class="primary">Scan network</button></div>
+        <div id="discovered"></div>
+        <form id="addIp" class="controls">
+          <input type="text" name="ip" placeholder="WLED IPv4 address" required aria-label="WLED IPv4 address">
+          <button type="submit">Add by IP</button>
+        </form>
+      </div>
+    </section>
+    <section>
+      <div class="panel">
+        <h2>Preset switches</h2><p>Expose only your favorite saved WLED presets to Apple Home.</p>
+        <div id="presets"></div>
+        <form id="addPreset">
+          <div class="actionrow"><select id="presetLight" aria-label="Choose WLED light"></select><button type="button" id="loadCatalog">Load presets</button></div>
+          <div class="actionrow"><select id="presetId" aria-label="Choose saved preset"><option value="">Load a catalog first</option></select><button type="submit" class="primary">Add to Home</button></div>
+        </form>
+      </div>
+      <div class="panel">
+        <h2>Bridge maintenance</h2>
+        <p id="network">Network status loading...</p>
+        <div class="small">OTA firmware updates use HomeSpan's password-protected ArduinoOTA service. Use the Arduino IDE network port or a compatible ESP OTA uploader. OTA uses the administrator password configured at the device's serial console.</div>
+        <div class="actionrow"><button class="danger" id="restart">Restart bridge</button></div>
+      </div>
+    </section>
+  </div>
+  <footer>Local access only · Port 8080 · Digest authentication · No cloud account · Do not expose this device to the public internet.</footer>
+</main>
+<script>
+"use strict";
+const CSRF="__CSRF__";
+const $=id=>document.getElementById(id);
+let snapshot={devices:[],presets:[]};
+function safe(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function notice(message){const n=$("notice");n.innerHTML='<div class="notice">'+safe(message)+'</div>';setTimeout(()=>{n.textContent="";},7000);}
+async function api(path,fields){
+  const opts={credentials:"same-origin"};
+  if(fields){opts.method="POST";opts.body=new URLSearchParams(Object.assign({token:CSRF},fields));}
+  const response=await fetch(path,opts);
+  if(!response.ok)throw Error("HTTP "+response.status);
+  const json=await response.json();
+  if(json.ok===false)throw Error(json.error||"Request failed");
+  return json;
+}
+function card(d){
+  const brightness=Number.isFinite(d.brightness)?d.brightness:50;
+  return '<div class="device"><div class="devicehead"><div><div class="title">'+safe(d.name)+'</div>'+
+    '<div class="meta">AID '+d.aid+' · '+safe(d.ip||"Not configured")+' · '+safe(d.mac||"MAC not set")+'</div></div>'+
+    '<span class="pill '+(d.online?"live":"")+'">'+(d.pending?"Restart needed":d.online?"Online":"Not confirmed online")+'</span></div>'+
+    '<div class="controls"><button data-action="on" data-aid="'+d.aid+'">On</button>'+
+    '<button data-action="off" data-aid="'+d.aid+'">Off</button>'+
+    '<input type="number" min="1" max="100" id="bright-'+d.aid+'" value="'+brightness+'" aria-label="Brightness percent">'+
+    '<button data-action="brightness" data-aid="'+d.aid+'">Set %</button>'+
+    '<button class="danger" data-action="remove" data-aid="'+d.aid+'">Remove</button></div></div>';
+}
+function render(data){
+  snapshot=data;
+  $("version").textContent=data.version||"—";
+  $("lightCount").textContent=(data.devices||[]).length+" / 8";
+  $("presetCount").textContent=(data.presets||[]).length+" / 12";
+  $("heap").textContent=(Math.round((data.freeHeap||0)/1024))+" KB";
+  $("connection").textContent=data.wifi?"Wi-Fi connected":"Wi-Fi unavailable";
+  $("network").textContent="IP: "+(data.ip||"none")+" · RSSI: "+data.rssi+" dBm · Uptime: "+data.uptimeSec+" s";
+  $("devices").className=data.devices.length?"":"empty";
+  $("devices").innerHTML=data.devices.length?data.devices.map(card).join(""):"No enrolled devices.";
+  $("presets").innerHTML=data.presets.length?data.presets.map(p=>
+    '<div class="device"><div class="devicehead"><div><div class="title">'+safe(p.name)+'</div><div class="meta">Switch AID '+p.aid+' · Light AID '+p.deviceAid+' · Preset '+p.presetId+'</div></div>'+
+    '<button class="danger" data-action="deletePreset" data-aid="'+p.aid+'">Remove</button></div></div>').join(""):"<p>No preset switches selected yet.</p>";
+  const lightSelect=$("presetLight");const previous=lightSelect.value;
+  lightSelect.innerHTML=data.devices.map(d=>'<option value="'+d.aid+'">'+safe(d.name)+' (AID '+d.aid+')</option>').join("");
+  if(data.devices.some(d=>String(d.aid)===previous))lightSelect.value=previous;
+}
+async function refresh(){try{render(await api("/api/status"));}catch(error){$("connection").textContent="Portal unavailable";notice(error.message);}}
+async function mutate(path,fields){
+  const result=await api(path,fields);
+  notice(result.message||"Saved. "+(result.requiresReboot?"Restart to update Apple Home.":""));
+  await refresh();
+  return result;
+}
+$("refresh").onclick=refresh;
+$("scan").onclick=async()=>{
+  $("scan").disabled=true;try{
+    const result=await api("/api/scan",{});
+    $("discovered").innerHTML=(result.devices||[]).map((d,i)=>
+      '<div class="device"><div class="title">'+safe(d.name)+'</div><div class="meta">'+safe(d.ip)+' · '+safe(d.mac)+'</div>'+
+      '<div class="controls"><button data-action="enrollScan" data-index="'+(i+1)+'">Add this WLED</button></div></div>').join("")||'<p>No WLED controllers found; try IP entry.</p>';
+    notice("Discovery finished.");
+  }catch(e){notice(e.message);}finally{$("scan").disabled=false;}
+};
+$("addIp").onsubmit=async e=>{e.preventDefault();try{await mutate("/api/enroll",{ip:e.target.elements.namedItem("ip").value});}catch(ex){notice(ex.message);}};
+$("loadCatalog").onclick=async()=>{
+  const id=$("presetLight").value;
+  if(!id)return notice("Add a WLED light first.");
+  try {
+    const result=await api("/api/catalog?aid="+encodeURIComponent(id));
+    $("presetId").innerHTML=(result.presets||[]).map(p=>'<option value="'+p.id+'">'+safe(p.name)+' (#'+p.id+')</option>').join("")||'<option value="">No saved presets found</option>';
+  }catch(e){notice(e.message);}
+};
+$("addPreset").onsubmit=async e=>{
+  e.preventDefault();
+  const aid=$("presetLight").value, preset=$("presetId").value;
+  if(!aid||!preset)return notice("Choose a light and saved preset.");
+  try{await mutate("/api/presets/add",{aid,preset});}catch(ex){notice(ex.message);}
+};
+document.body.addEventListener("click",async e=>{
+  const el=e.target.closest("button[data-action]");if(!el)return;
+  const aid=el.dataset.aid,action=el.dataset.action;
+  el.disabled=true;
+  try{
+    if(action==="enrollScan")await mutate("/api/enroll",{index:el.dataset.index});
+    if(action==="on"||action==="off"||action==="brightness"){
+      const brightness=$("bright-"+aid)?.value;
+      await mutate("/api/control",{aid,action,brightness:brightness||""});
+    }
+    if(action==="remove"&&confirm("Remove this light and its preset switches from Apple Home after restart?"))await mutate("/api/devices/remove",{aid});
+    if(action==="deletePreset"&&confirm("Remove this HomeKit preset switch?"))await mutate("/api/presets/remove",{aid});
+  }catch(ex){notice(ex.message);}finally{el.disabled=false;}
+});
+$("restart").onclick=async()=>{
+  if(!confirm("Restart bridge now? Apple Home may show No Response temporarily."))return;
+  try{await api("/api/restart",{confirm:"REBOOT"});notice("Bridge is restarting...");}catch(e){notice(e.message);}
+};
+refresh();
+setInterval(refresh,10000);
+</script>
+</body></html>)PORTAL";

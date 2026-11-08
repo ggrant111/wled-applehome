@@ -3,6 +3,9 @@
 #include <WiFi.h>
 #include <cstring>
 #include "HomeSpan.h"
+#include "SpanRollback.h"
+#include "AdminCredentials.h"
+#include "PortalServer.h"
 
 #include "DeviceRegistry.h"
 #include "PresetRegistry.h"
@@ -12,7 +15,7 @@
 #include "WledLightService.h"
 
 #ifndef WLED_APP_VERSION
-#define WLED_APP_VERSION "0.3.0"
+#define WLED_APP_VERSION "0.4.0"
 #endif
 
 namespace {
@@ -20,6 +23,10 @@ DeviceRegistry registry;
 PresetRegistry presets;
 WledDiscovery discovery;
 WledClient clients[bridge::kMaxDevices];
+WledLightService *lightServices[bridge::kMaxDevices] = {};
+AdminCredentials admin;
+PortalServer portal(registry, presets, discovery, clients, lightServices);
+bool sketchValidated_ = false;
 
 const char *args(const char *command, char commandLetter) {
   if (!command) return "";
@@ -159,6 +166,31 @@ void wledCommand(const char *command) {
                 probed ? "" : " (not verified online)");
 }
 
+void adminCommand(const char *command) {
+  // HomeSpan serial CLI: @k <strong-password> or @k -
+  const char *p = command ? command : "";
+  while (*p == ' ' || *p == '\t') ++p;
+  if ((*p == 'k' || *p == 'K') && (p[1] == ' ' || p[1] == '\t')) ++p;
+  while (*p == ' ' || *p == '\t') ++p;
+
+  if (*p == '\0') {
+    Serial.printf("[Admin] Portal and OTA: %s (password never displayed)\n",
+                  admin.enabled() ? "configured" : "disabled");
+    Serial.println("[Admin] @k <14-64 char ASCII password> | @k - to disable");
+    return;
+  }
+  if (strcmp(p, "-") == 0) {
+    Serial.println(admin.disable()
+      ? "[Admin] Remote portal and OTA disabled after reboot; pairing remains"
+      : "[Admin] Unable to remove saved admin password");
+    return;
+  }
+  if (admin.setPassword(String(p)))
+    Serial.println("[Admin] Password saved to device NVS. Reboot with R to enable digest-auth portal and password-protected OTA.");
+  else
+    Serial.println("[Admin] Rejected; use 14-64 printable ASCII characters, no spaces. Nothing changed.");
+}
+
 void catalogCommand(const char *command) {
   const uint32_t aid = parseAid(args(command, 'c'));
   const int idx = registry.indexByAid(aid);
@@ -241,7 +273,7 @@ void addDevices() {
     new SpanAccessory(record.aid);
       addBridgeInformation(record.aid == 2 ? "WLED Light" : record.name.c_str(),
                            "WLED JSON Light");
-      new WledLightService(clients[i], i);
+      lightServices[i] = new WledLightService(clients[i], i);
   }
 }
 
@@ -266,11 +298,13 @@ void setup() {
   Serial.begin(115200);
   delay(200);
   Serial.println("\n[Boot] WLED Apple Home Bridge v" WLED_APP_VERSION);
-  if (!registry.begin() || !presets.begin()) {
+  if (!registry.begin() || !presets.begin() || !admin.begin()) {
     Serial.println("[Boot] NVS registry failed; startup halted to prevent identity loss.");
     while (true) delay(1000);
   }
 
+  // Never enable the publicly known default HomeSpan OTA password.
+  if (admin.enabled()) homeSpan.enableOTA(admin.password().c_str());
   homeSpan.setSketchVersion(WLED_APP_VERSION);
   homeSpan.begin(Category::Bridges, "WLED Apple Home Bridge", "wled-applehome");
 
@@ -289,6 +323,13 @@ void setup() {
   new SpanUserCommand('p', " <light-AID>:<preset-ID> expose preset as switch", presetCommand);
   new SpanUserCommand('s', " list exposed HomeKit preset switches", listPresetsCommand);
   new SpanUserCommand('q', " <switch-AID> remove HomeKit preset switch", removePresetCommand);
+  new SpanUserCommand('k', " <password> enable LAN dashboard and OTA (R reboot)", adminCommand);
+
+  portal.configure(admin.password());
+  Serial.printf("[Admin] Management is %s; HTTP port 8080, authenticated on LAN only.\n",
+                admin.enabled() ? "enabled" : "disabled");
+  if (!admin.enabled())
+    Serial.println("[Admin] To enable: @k <unique-password-at-least-14-characters> then R. Never commit passwords.");
 
   Serial.println("[Setup] WLED: @l list, @d discover, @a1 add, @m<IP> manual add.");
   Serial.println("[Setup] Presets: @c2 catalog, @p2:5 add preset #5, @s list, @q<switch-AID> remove.");
@@ -298,4 +339,12 @@ void setup() {
 
 void loop() {
   homeSpan.poll();
+  portal.poll();
+
+  // Keep the OTA partition pending until startup and Wi-Fi stabilize.
+  if (!sketchValidated_ && millis() >= 60000 && WiFi.status() == WL_CONNECTED) {
+    homeSpan.markSketchOK();
+    sketchValidated_ = true;
+    Serial.println("[OTA] Sketch marked valid after startup stability window");
+  }
 }
