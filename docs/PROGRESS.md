@@ -73,6 +73,14 @@
 - **CI PASSED:** [run 42443428109](https://github.com/ggrant111/wled-applehome/actions/runs/42443428109) — all host tests (including browser security and worker freshness), both D1 Mini and CYD firmware builds, and binary headroom gate passed. HTML compresses **13,425 → 5,001 bytes**. D1 Mini firmware.bin **1,957,408 bytes (74,208 free)**; CYD **1,957,424 (74,192 free)**. **Hardware remains unverified;** consult [Phase 5 test plan](PHASE5_TEST_PLAN.md).
 - **Merged into main:** [PR #4](https://github.com/ggrant111/wled-applehome/pull/4). All previous NVS/HomeKit identities and admin configuration should persist, but no physical v0.5 upgrade has yet been tested.
 
+## 2026-11-07 — v0.6 Apple Home Hue/Saturation code candidate
+
+- Implemented HomeSpan Hue and Saturation on existing WLED bridged LightBulb services while keeping original AIDs and On/Brightness characteristic order.
+- HomeKit hue/saturation converted to WLED RGB via portable pure C++ code, with explicit RGBW white=0 and WLED main segment Solid effect only when user changes color. No segment arrangement, other segments, NVS, or preset switch definitions changed.
+- WLED main-segment primary RGB read back during routine background polls and converted to HomeKit color characteristics; no attempt to show rapidly changing animation colors.
+- Reused v0.5 nonblocking queue, combined HomeKit color/power/brightness updates and existing stale-response safeguards.
+- Added native conversion/round-trip tests. **CI and physical on-device testing pending.** [Phase 6 test plan](PHASE6_TEST_PLAN.md).
+
 ## Next actions
 
 1. **Done:** v0.4 host tests, migration regression, D1 Mini/CYD builds and OTA size guard passed.

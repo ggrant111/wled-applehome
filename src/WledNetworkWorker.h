@@ -31,7 +31,8 @@ public:
   bool ready() const { return started_; }
   bool setHost(unsigned slot, const String &host);
   bool queueWrite(unsigned slot, bool changePower, bool power,
-                  bool changeBrightness, int brightness);
+                  bool changeBrightness, int brightness,
+                  bool changeColor = false, float hue = 0.0f, float saturation = 100.0f);
   bool queuePreset(unsigned slot, uint8_t presetId);
   bool snapshot(unsigned slot, Snapshot &out) const;
 
@@ -44,6 +45,9 @@ private:
     bool power = false;
     bool changeBrightness = false;
     uint8_t brightness = 0;
+    bool changeColor = false;
+    float hue = 0.0f;
+    float saturation = 100.0f;
     uint8_t preset = 0;
     uint32_t hostVersion = 0;
   };
