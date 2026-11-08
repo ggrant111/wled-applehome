@@ -50,7 +50,7 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 - [ ] Hardware verify that add/remove + reboot refreshes Apple Home without accidental re-pairing.
 - [ ] Test reboot, IP changes, reordering, and missing devices.
 
-### Phase 3 — v0.3: Presets and state sync — **CODE CANDIDATE / CI + HARDWARE TESTS PENDING**
+### Phase 3 — v0.3: Presets and state sync — **CI PASSED / HARDWARE TESTS PENDING**
 
 - [x] **Code implemented:** On-demand read of `/presets.json` by light AID; streaming filtered JSON retains only names (avoids allocating full WLED preset configurations). Hardware discovery test pending.
 - [x] **Code implemented:** Explicitly enroll up to 12 preset triggers (`@p<lightAID>:<presetId>`) as HomeKit momentary Switch accessories with stable, never-reused AIDs. Reboot to advertise. Hardware behavior pending.
@@ -120,9 +120,13 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 | v0.2 D1 Mini firmware, CYD firmware, host tests | **Passed** | [CI run 42430738405](https://github.com/ggrant111/wled-applehome/actions/runs/42430738405) |
 | v0.2 mDNS discovery, multi-light behavior | Pending hardware | [Phase 2 test plan](PHASE2_TEST_PLAN.md) |
 
+| v0.3 D1 Mini firmware, CYD firmware and host tests | **Passed** | [Phase 3 CI run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722) |
+| v0.3 preset control / switch-reset / state reconciliation | Pending hardware | [Phase 3 test plan](PHASE3_TEST_PLAN.md) |
+
 ## Engineering risk / budget
 
 - **4MB OTA flash budget is tight.** v0.2 compiled binary uses ~1,733,463 bytes (85.3%) of each 2,031,616-byte app slot; approximately 298KB remains. Major additions (especially touchscreen/web assets) will need explicit size-budget tests, optimization, larger flash hardware, or an altered OTA strategy.
+- v0.3 builds use **1,758,847 bytes (86.6%)** on D1 Mini and **1,758,863 bytes (86.6%)** on CYD of the 2,031,616-byte OTA application slot. Approximately **273KB** remains per slot.
 - Current network operations use a bounded blocking HTTP client; eight offline lights and mDNS scans may temporarily delay HomeKit servicing. Treat nonblocking IO as a priority before closing Phase 2.
 
 ## Release decision process

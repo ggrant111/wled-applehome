@@ -32,11 +32,12 @@
 - Implemented explicit, persistent selection of up to 12 HomeKit momentary preset switches using `@p<light-AID>:<preset-ID>`, `@s` to list, and `@q<switch-AID>` to remove. Each switch sends only `{"ps":id}`; no WLED preset modification.
 - Introduced shared NVS-backed AID allocation for WLED lights and preset switches, maintaining original AID=2 and preventing AID collisions/reuse.
 - Enhanced local POST acknowledgement with a ~450ms settle window and prompt WLED power/brightness reconcile (periodic external-change polling remains).
-- **Build status:** Pending GitHub Actions verification; not hardware tested. See `docs/PHASE3_TEST_PLAN.md`.
+- **Build VERIFIED:** [Phase 3 GitHub Actions run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722) passed all three jobs (host tests, D1 Mini build, CYD build). D1 Mini flash 1,758,847/2,031,616 (86.6%); CYD 1,758,863/2,031,616 (86.6%).
+- **Merged to main** via [PR #1](https://github.com/ggrant111/wled-applehome/pull/1). **All v0.3 physical behavior remains unverified** until user returns to hardware.
 
 ## Next actions
 
-1. Pass v0.3 host-side policy checks, D1 Mini and CYD PlatformIO builds, flash-size checks.
+1. **Done:** v0.3 native tests and both firmware builds passed; flash use recorded.
 2. Preserve existing NVS/HomeSpan pairing: upload on the **same paired ESP32** without erase when home.
 3. Verify pending Phase 2 identity/discovery/multi-device acceptance tests before relying on preset switches.
 4. Test a named preset: `@c2` -> `@p2:5` (use actual saved preset ID) -> `R` -> trigger in Apple Home -> verify switch resets and WLED responds.
