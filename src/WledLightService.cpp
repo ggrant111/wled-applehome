@@ -43,9 +43,13 @@ boolean WledLightService::update() {
   if (power_->getVal<bool>() != power && !changedPower) power_->setVal(power);
   retryIntervalMs_ = kPollEveryMs;
   lastPollMs_ = millis();
-  Serial.printf("[HomeKit] %s %s power=%d brightness=%d color=%d hue=%.1f sat=%.1f\n",
+  // Avoid float printf formatting; it pulls a large formatter into our
+  // extremely tight 4MB dual-OTA image. Rounded degrees/percent suffice.
+  Serial.printf("[HomeKit] %s %s power=%d brightness=%d color=%d hue=%u sat=%u\n",
                 wled_.host().c_str(), worker_ ? "queued" : "accepted",
-                power, brightness, changedColor, hue, saturation);
+                power, brightness, changedColor,
+                static_cast<unsigned>(hue + 0.5f),
+                static_cast<unsigned>(saturation + 0.5f));
   return true;
 }
 
