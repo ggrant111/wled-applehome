@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.9 planning — per-device grouped WLED effect controls (v0.8 power and WLED-to-Home preset state verified by user) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.9 multi-WLED Effects Controllers (implementation candidate; CI and physical multi-light validation pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -157,7 +157,7 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 
 **Home UI limitation:** Existing grouped accessories are standard HomeKit Switch services; making On/Off persistent does **not** force an Apple-designed TV-style large round power picker for each service. A new LightBulb or Outlet service subtype would change grouping and has not been tested.
 
-### Phase 9 / v0.9 — Multi-WLED grouped effects (PROPOSED, not implemented)
+### Phase 9 / v0.9 — Multi-WLED grouped effects (IMPLEMENTED CANDIDATE; CI / HARDWARE PENDING)
 
 **Goal:** Extend the physically working v0.8 grouped-effects design from one selected WLED device to separate opt-in grouped-effects accessories for up to all eight registered WLED devices.
 
@@ -169,7 +169,19 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 
 **Scope exclusions:** Do not automatically add effects groups for every discovered device, rewrite WLED saved presets or segments, swap a working light accessory's service type, or erase NVS. Retain five selected presets per light initially; reassess limit based on actual accessory behavior/ESP32 memory.
 
-**Status:** Design proposal only, no v0.9 firmware code or CI run yet.
+**Implementation:** 
+- [x] Per-device registry supports eight active effects groups. Existing v0.7/v0.8 groups remain in their original `wled-fx` namespace and retain their exact original AID, slot order, preset names and IDs. New groups are opt-in and stored separately in `wled-fx9`, with up to 9 persistent modern slots for eight active groups and one spare transactional rebuild slot.
+- [x] New effects groups begin as named, stateful grouped Switch services; each group attaches to its *own* WLED light and reflects its own current `ps`/power via existing poll logic. Existing legacy Television conversion still supported.
+- [x] Dashboard shows each light's independent effects group and offers per-light saved preset loading, add, rename, remove, move up/down, and whole-group removal. New controller creation and appending a preset preserve all other AIDs. Rename preserves service identity; restarts are required for Home app to refresh names.
+- [x] Remove or reorder an individual effect **changes that group's HomeKit service topology** and therefore requires an explicit warning and new non-reusable AID for that **one group** (not the WLED light). Existing Home scenes or automations targeting that group might need to be updated. A new group is persisted BEFORE retiring the previous AID. A reboot after an interrupted swap favors the larger/newer AID and retires the superseded copy.
+- [x] Light removal now removes only effects groups bound to that light; unrelated groups are unchanged.
+- [x] Host integration test covers v0.8 legacy migration, eight groups, independent state mapping, name persistence, per-group rebuild, NVS crash recovery, legacy TV conversion and duplicate rejection; JS endpoint contract enforces CSRF and escaped labels.
+- [ ] CI gate: native host tests, browser/CSRF, D1 Mini and CYD firmware builds, OTA headroom.
+- [ ] Hardware gate: physically test **two WLED devices**, each with independent grouped effects; verify active state from WLED, editing, reboot/pairing persistence, offline WLED isolation and no impact on Siri/color controls. Repeat across more devices as available.
+
+**Version handling:** v0.9 still uses the exact existing LightBulb and PresetSwitch HAP services with unchanged AIDs; only specifically opted-in new Effects groups get new accessories. Removing/reordering buttons is the only operation that intentionally rebuilds that group's AID after confirmation. No WLED presets, segments, colors or WLED firmware are modified by management operations.
+
+**Status:** Implementation candidate; CI and hardware acceptance results not yet recorded.
 
 ## After MVP
 

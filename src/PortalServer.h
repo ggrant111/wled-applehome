@@ -22,7 +22,7 @@ private:
   DeviceRegistry &devices_;
   PresetRegistry &presets_;
   EffectsControllerRegistry &effects_;
-  uint32_t bootEffectsAid_ = 0;
+  uint32_t bootEffectsAids_[bridge::kEffectsSlots] = {};
   WledDiscovery &discovery_;
   WledClient *clients_;
   WledLightService **services_;
@@ -51,5 +51,8 @@ private:
   void handleAddEffect();
   void handleRemoveEffectsController();
   void handleConvertEffects();
+  void handleRenameEffect();
+  void handleRemoveEffectInput();
+  void handleMoveEffectInput();
   void handleRestart();
 };

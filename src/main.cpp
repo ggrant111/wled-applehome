@@ -18,7 +18,7 @@
 #include "WledLightService.h"
 
 #ifndef WLED_APP_VERSION
-#define WLED_APP_VERSION "0.8.0-dev"
+#define WLED_APP_VERSION "0.9.0-dev"
 #endif
 
 namespace {
@@ -135,10 +135,8 @@ void removeCommand(const char *command) {
   if (registry.removeByAid(aid)) {
     clients[index].setHost("");
     const unsigned removed = presets.removeForDevice(aid);
-    if (effects.configured() && effects.record().deviceAid == aid) {
-      effects.remove(effects.record().aid);
-      Serial.println("[Effects] Linked selector removed alongside WLED light.");
-    }
+    const unsigned groups = effects.removeForDevice(aid);
+    Serial.printf("[Effects] Removed %u linked effects group(s) with WLED light.\n", groups);
     Serial.printf("[Registry] Removed light AID=%lu, %u preset switch(es).\n",
                   static_cast<unsigned long>(aid), removed);
     Serial.println("[Registry] Type R to reboot and update Apple Home.");
@@ -287,13 +285,14 @@ void addDevices() {
   }
 }
 
-void addEffectsController() {
-  if (!effects.configured()) return;
-  const EffectsControllerRecord &record = effects.record();
+void addEffectsControllers() {
+  for (unsigned slot = 0; slot < bridge::kEffectsSlots; ++slot) {
+    const EffectsControllerRecord &record = effects.at(slot);
+    if (!record.aid) continue;
   const int index = registry.indexByAid(record.deviceAid);
   if (index < 0 || !lightServices[index]) {
     Serial.println("[Effects] Controller ignored because its light is missing");
-    return;
+    continue;
   }
   String name = registry.at(index).name + " Effects";
   if (name.length() > 35) name = name.substring(0, 35);
@@ -325,6 +324,7 @@ void addEffectsController() {
                     ? "grouped buttons" : "TV selector",
                 static_cast<unsigned long>(record.aid),
                 static_cast<unsigned long>(record.deviceAid));
+  }
 }
 
 void addPresetSwitches() {
@@ -362,7 +362,7 @@ void setup() {
     addBridgeInformation("WLED Apple Home Bridge", "ESP32 HomeKit Bridge");
   addDevices();
   addPresetSwitches();
-  addEffectsController();
+  addEffectsControllers();
   if (!networkWorker.start()) {
     Serial.println("[Boot] Background WLED HTTP worker failed; stopping to protect HomeKit responsiveness.");
     while (true) delay(1000);
