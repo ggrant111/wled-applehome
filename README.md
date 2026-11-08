@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.9.1-dev — add saved WLED playlists alongside presets with correct HomeKit active-playlist state (**CI and hardware validation pending**). [Download firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880).
+**Current version:** v0.9.1-dev — saved WLED playlists alongside presets with HomeKit active-playlist tracking (**CI passed; physical playlist test pending**). [Download firmware](https://github.com/ggrant111/wled-applehome/actions/runs/42505219721). [Download firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -30,7 +30,7 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 
 The bridge reads WLED's live `pl` (currently playing playlist ID) **as well as** `ps` (current preset step). A grouped playlist switch stays On while the playlist cycles through its constituent presets, and turns Off when playback stops or another selection is made. Ordinary preset buttons are not incorrectly highlighted as playlist steps. Toggling the active playlist button Off powers off the associated WLED light, matching the existing group's v0.8 On/Off semantics.
 
-The resource kind is saved independently in the existing NVS `wled-fx` / `wled-fx9` entry; existing controls default to Preset and preserve their IDs, names, and order. If a playlist had previously been added as a preset, selecting the same entry again updates its classification **without changing its HomeKit accessory ID**, followed by a bridge restart. All grouped accessory AIDs and original light identities remain unchanged. [Playlist hardware test plan](docs/PHASE9_PLAYLIST_TEST_PLAN.md).
+The resource kind is saved independently in the existing NVS `wled-fx` / `wled-fx9` entry; existing controls default to Preset and preserve their IDs, names, and order. If a playlist had previously been added as a preset, selecting the same entry again updates its classification **without changing its HomeKit accessory ID**, followed by a bridge restart. All grouped accessory AIDs and original light identities remain unchanged. [Playlist hardware test plan](docs/PHASE9_PLAYLIST_TEST_PLAN.md). **Both ESP32 firmware builds passed:** D1 Mini 1,576,656 bytes (454,960 free in OTA slot); CYD 1,576,640 bytes (454,976 free). [GitHub Actions CI](https://github.com/ggrant111/wled-applehome/actions/runs/42505219721).
 
 ## v0.9 — Multiple WLED effects groups
 

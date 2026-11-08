@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.9.1 WLED playlist support within Effects groups (implementation/CI verification pending; physical playlist playback test pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.9.1 saved WLED playlists in Effects groups (CI passed; physical playlist playback and HomeKit sync pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -190,8 +190,10 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 - [x] **Code candidate:** Persist `isPlaylist` as per-input metadata in legacy and new NVS namespaces, defaulting to normal preset for existing keys. Updating the same existing resource from Preset to Playlist is a metadata-only change and keeps its HomeKit AID/IIDs.
 - [x] **Code candidate:** Parse `pl` in WLED polling. HomeKit playlist Switch remains On while WLED reports playlist active even as child `ps` changes; ordinary preset switches stay Off during playlist playback. Playlist finish, stop, power-off, and direct WLED playlist changes synchronize to Apple Home using existing worker/poll loop.
 - [x] **Code candidate:** Native tests for playlist multi-step state and NVS persistence/migration, multi-device group reorder preserving playlist type, and browser labels/type contract. Existing standalone saved preset switches remain momentary and may trigger playlists via the same `ps` API.
-- [ ] **CI:** Both board builds, NVS/power/browser tests and OTA headroom check.
+- [x] **CI passed:** [run 42505219721](https://github.com/ggrant111/wled-applehome/actions/runs/42505219721) — playlist-state/NVS migration and JS contract host tests, existing regressions, both ESP32 builds and 70KB minimum OTA headroom. D1 Mini image **1,576,656 bytes**, **454,960 free**; CYD **1,576,640 bytes**, **454,976 free**.
 - [ ] **Hardware:** Save a WLED playlist on device, add it alongside a normal preset, verify continuous On during multiple playlist steps and Off when finished, select playlist from WLED directly and watch Home sync; test two independent WLED groups and preserve existing lights/pairing.
+
+**Merge:** [PR #10](https://github.com/ggrant111/wled-applehome/pull/10) merged into `main`. **Hardware acceptance pending**: actual WLED playlist progression and selected HomeKit On indicators must be verified.
 
 **Non-goals:** The bridge does not build/edit playlist sequences, duration, transition, shuffle, or repeats; those stay in WLED. No HomeKit effect picker beyond the already physically working named grouped Switch controls.
 
@@ -298,10 +300,14 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 | v0.9 eight effects groups, migration, browser/CSRF, both ESP32 builds | **Passed** | [CI run 42454610880](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880) |
 | v0.9 two physical WLED groups and HomeKit state/identity isolation | **Hardware pending** | [Phase 9 checklist](PHASE9_TEST_PLAN.md) |
 
+| v0.9.1 saved playlist parsing / NVS / power policy and both ESP32 builds | **Passed** | [CI run 42505219721](https://github.com/ggrant111/wled-applehome/actions/runs/42505219721) |
+| v0.9.1 iPhone playlist playback and direct WLED change reconciliation | **Hardware pending** | [Playlist test plan](PHASE9_PLAYLIST_TEST_PLAN.md) |
+
 ## Engineering risk / budget
 
 - **4MB OTA flash budget is tight.** v0.2 compiled binary uses ~1,733,463 bytes (85.3%) of each 2,031,616-byte app slot; approximately 298KB remains. Major additions (especially touchscreen/web assets) will need explicit size-budget tests, optimization, larger flash hardware, or an altered OTA strategy.
 - v0.3 linked flash use was **1,758,847 bytes (86.6%)** of 2,031,616 per OTA application slot.
+- **v0.9.1 full firmware.bin with GCC -Oz:** D1 Mini **1,576,656 bytes** (**454,960 bytes free**); CYD **1,576,640 bytes** (**454,976 bytes free**) of 2,031,616. [CI 42505219721](https://github.com/ggrant111/wled-applehome/actions/runs/42505219721) passed all build gates. Physical playlist behavior pending.
 - **v0.9 full firmware.bin with GCC -Oz:** D1 Mini **1,574,848 bytes** (456,768 free); CYD **1,574,832 bytes** (456,784 free) in each 2,031,616-byte OTA slot. [CI run 42454610880](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880) passed all gates; on-device multi-WLED performance and HomeKit display still unverified.
 - **v0.8 full firmware.bin with GCC -Oz:** D1 Mini and CYD **1,564,800 bytes** (**466,816 bytes free** of 2,031,616); [CI run 42452061034](https://github.com/ggrant111/wled-applehome/actions/runs/42452061034) passed minimum OTA headroom. Real segment recall depends on WLED preset content and still requires user hardware validation.
 - **v0.7.1 full firmware.bin with GCC -Oz:** both D1 Mini and CYD **1,560,144 bytes** (**471,472 bytes free** of 2,031,616); [CI run 42449994004](https://github.com/ggrant111/wled-applehome/actions/runs/42449994004) passed flash budget. Grouped HomeKit switch UI still requires physical verification.
