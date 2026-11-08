@@ -107,7 +107,7 @@ void PortalServer::handleStatus() {
   http_.sendHeader("X-Bridge-Token", token_);
   JsonDocument doc;
   doc["ok"] = true;
-  doc["version"] = "0.9.2-dev";
+  doc["version"] = "0.9.3-dev";
   doc["wifi"] = WiFi.status() == WL_CONNECTED;
   doc["ip"] = WiFi.localIP().toString();
   doc["rssi"] = WiFi.RSSI();

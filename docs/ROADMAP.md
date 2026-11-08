@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.9.2 dashboard UX redesign (CI passed and merged; user desktop/mobile UI verification pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.9.3 dashboard usability polish informed by desktop screenshots (CI/hardware pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -209,6 +209,19 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 - [ ] **Hardware/UI:** Check dashboard on iPhone and desktop, grouped playlist labels, device light selection, inline commands, rename and safe edit warnings, startup reconnect and two WLED devices. Existing HomeKit pairing and AIDs must remain untouched.
 
 **Risk controls:** No new NVS schema, WLED controller modification, HomeKit accessory topology or OTA service change. All POSTs still require Digest + per-boot CSRF. UI-only change is except the explicitly scoped Run endpoint. Do not claim hardware validation from browser unit tests.
+
+### Phase 9D / v0.9.3 — Screenshot-driven web UI polish
+
+- [x] **Actual desktop observation:** User confirmed v0.9.2 Overview and Effects screens render on bridge. Overview shows five enrolled devices, five online, two groups, one standalone preset switch, and ~132 KB free ESP32 heap. Effects screenshot shows two groups (4/5 each), while a selected unconfigured light occupies the main panel. Desktop content is visually narrow with wide unused margins and redundant device selector plus tabs.
+- [x] **Code candidate:** Widen desktop workspace to 1460 px, slightly enlarge type, preserve narrow/mobile responsive layout.
+- [x] **Code candidate:** Use single rich per-device group tabs on desktop; use one device dropdown on mobile. Default to first **existing** Effects group only on initial page load, then preserve explicit choices through periodic status updates.
+- [x] **Code candidate:** Keep current named effects front and center; move adding a saved preset or playlist behind an expandable section, automatically opened for a light without a group. Maintain visible AID-change warnings for destructive edits.
+- [x] **Code candidate:** Disable Add until WLED catalog for the selected light is explicitly loaded; changing light invalidates stale catalog. Distinguish untouched catalog from WLED with no saved resources.
+- [x] **Code candidate:** Extend existing JS VM browser tests to verify default configured group, tab/label escaping, catalog lifecycle, cross-device safety and unchanged CSRF/Run behavior.
+- [ ] **CI:** Browser regression, all host tests, gzip portal, D1 Mini and CYD firmware builds / OTA headroom.
+- [ ] **User UI:** Confirm wider desktop canvas, first configured group shown by default, correct mobile dropdown and expandable Add flow on actual bridge; existing Apple Home lights and pairing unaffected.
+
+**No underlying HomeKit/NVS/REST route changes**; v0.9.3 is a dashboard-only refinement with an app/firmware version bump.
 
 ## After MVP
 

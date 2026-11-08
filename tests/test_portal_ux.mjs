@@ -18,6 +18,9 @@ assert.equal((html.match(/<script>/g)||[]).length,1,"Dashboard must stay one sel
 assert(!html.includes('src="https://'),"No remote JS");
 assert(html.includes('id="renameDialog"'),"Accessible rename dialog required");
 assert(html.includes('id="restartBanner"'),"Pending HomeKit restart visibility required");
+assert(html.includes('id="effectsAdd"'),"Add favorites should use a collapsible section");
+assert(html.includes('class="group-tabs"'),"Effects devices should have dedicated tabs");
+assert(html.includes("effectsSelectionInitialized"),"Default configured group selection missing");
 assert(html.includes('aria-live="polite"'),"Status feedback should be announced");
 for(const endpoint of ["/api/scan","/api/enroll","/api/control","/api/effects/add",
   "/api/effects/run","/api/effects/rename","/api/effects/remove-preset",
@@ -121,6 +124,12 @@ assert(get("overviewDevices").innerHTML.includes("Shelf &amp; TV"),"Overview nam
 assert(!get("overviewDevices").innerHTML.includes("<script>"),"Overview must not inject HTML");
 vm.runInContext('showView("effects")',ctx);
 assert(!get("view-effects").hidden && get("view-overview").hidden,"Navigation switches visible panel");
+assert.equal(get("effectsLight").value,"2","First configured Effects group should be selected initially");
+assert(get("effectController").innerHTML.includes("Mammoth"),
+  "Existing favorites should be the first content shown");
+assert(!get("effectsAdd").open,
+  "Add-favorite editor should start collapsed when an Effects group already exists");
+assert(get("groupPicker").innerHTML.includes("Shelf &amp; TV"),"Tabs must escape WLED names");
 vm.runInContext('switchEffectsLight("7")',ctx);
 assert(get("effectController").innerHTML.includes("Kitchen playlist &amp; more"));
 assert(get("effectController").innerHTML.includes("Running"),"Playlist must reflect WLED pl status");
@@ -128,6 +137,17 @@ assert(!get("effectController").innerHTML.includes("Step preset</div><div class=
   "Playlist child presets must not be shown active");
 assert(!get("effectController").innerHTML.includes("<script>"),"Device names must be escaped");
 assert(get("effectsLight").value==="7","Device selection persisted");
+assert(get("effectsPreset").disabled,"Changing WLED light must clear stale saved resources");
+assert(get("addEffect").disabled,"Cannot add before this light's catalog has loaded");
+await vm.runInContext('loadCatalog("7","effectsPreset",document.getElementById("loadEffectsCatalog"))',ctx);
+assert.equal(get("effectsPreset").dataset.loadedAid,"7");
+assert(!get("effectsPreset").disabled);
+assert(!get("addEffect").disabled);
+assert(get("effectsCatalogHint").textContent.includes("1 saved items available"));
+vm.runInContext('switchEffectsLight("2")',ctx);
+assert(get("effectsPreset").disabled && get("addEffect").disabled,
+  "Changing WLED light must invalidate previous device's catalog");
+vm.runInContext('switchEffectsLight("7")',ctx);
 
 await vm.runInContext('mutate("/api/effects/run",{aid:"9",preset:"34"})',ctx);
 const run=requests.find(r=>r.path==="/api/effects/run");
@@ -144,4 +164,4 @@ quickEls[1].listeners.click();
 assert(!get("view-lights").hidden,"Quick add navigation works");
 assert(get("addWled").open,"Quick add opens discovery");
 
-console.log("Portal redesign: script, 5 views, state/playlist cards, escaped labels, run/CSRF, and restart UX passed");
+console.log("v0.9.3 portal: default configured group, single device tabs, lazy catalog, retained selections and CSRF passed");

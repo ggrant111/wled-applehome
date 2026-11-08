@@ -150,6 +150,14 @@
 - **CI passed:** [run 42506904065](https://github.com/ggrant111/wled-applehome/actions/runs/42506904065) — five-view browser VM smoke test, HTML escaping, CSRF stale tab recovery, existing host tests, compressed portal and D1 Mini/CYD firmware builds/OTA guard. Both firmware images 1,584,544 bytes with 447,072 bytes free. **Real phone/desktop visual checks and WLED Run action remain user hardware pending.**
 - **Merged to main:** [PR #11](https://github.com/ggrant111/wled-applehome/pull/11) at ab70493. [v0.9.2 checklist](PHASE9_PORTAL_UX_TEST_PLAN.md).
 
+## 2026-11-08 — v0.9.3 desktop screenshot UX follow-up
+
+- User provided direct v0.9.2 desktop screenshots of Overview and Effects & Playlists. The bridge is online with five WLED lights, two Effects groups (both with four favorites), and one standalone preset switch. The user-selected Effects page light in the screenshot has no configured group.
+- The layout renders correctly, but the centered desktop content area is narrow with large unused screen margins, Effects has redundant dropdown and pill selectors, and the add form dominates the page even when the goal is reviewing existing favorites.
+- Refined the dashboard with a wider content area, larger typography, single desktop device tabs/mobile dropdown, default initial selection to a light that already has a group, current favorites emphasized and Add editor folded away until needed.
+- Preset/playlist catalog loads remain explicit and bound to the selected WLED device. Invalidating the old catalog on device changes prevents using the wrong device's saved preset ID.
+- Added browser VM assertions for first-group default, cross-device catalog lifecycle and unchanged Effects/CSRF functionality. **CI/device verification pending.** [Phase 9D checklist](PHASE9_UX_POLISH_TEST_PLAN.md).
+
 ## Next actions
 
 1. **Done:** v0.4 host tests, migration regression, D1 Mini/CYD builds and OTA size guard passed.
