@@ -4,114 +4,245 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>WLED Apple Home | Bridge</title>
+<title>GlowDeck | WLED Apple Home Bridge</title>
 <style>
-:root{--bg:#101820;--panel:#1b2931;--panel2:#22343c;--text:#e9f4f1;--muted:#a1b4b3;--line:#34494e;--accent:#31837a;--accent2:#55b8a9;--danger:#c96c66}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 0 0,#213b3a 0,transparent 36rem),var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,sans-serif}
-main{max-width:1040px;margin:auto;padding:24px 18px 70px}
-.top{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
-.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.17em;color:var(--accent2);font-weight:700}
-h1{font-size:30px;letter-spacing:-.04em;margin:5px 0}h2{font-size:19px;letter-spacing:-.02em;margin:0 0 12px}
-p{color:var(--muted);margin:4px 0 14px}
-.status{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:9px 12px;font-size:12px}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--accent2)}
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:22px 0}
-.stat,.panel,.device{border:1px solid var(--line);background:var(--panel);border-radius:17px}
-.stat{padding:13px 17px}.stat strong{font-size:20px;display:block;margin-top:3px;overflow-wrap:anywhere}.stat span{font-size:12px;color:var(--muted)}
-.panels{display:grid;grid-template-columns:1.2fr 1fr;gap:15px}
-.panel{padding:20px;margin-bottom:15px}
-.device{padding:15px;margin-bottom:9px;background:var(--panel2)}
-.devicehead{display:flex;justify-content:space-between;gap:9px;align-items:start}
-.title{font-weight:650}.meta{color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-.pill{border-radius:14px;padding:4px 8px;background:#344248;font-size:11px;white-space:nowrap}
-.pill.live{background:#1c5047;color:#9af5e1}
-.controls,.actionrow{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:12px}
-input,select{background:#13242b;border:1px solid #486168;color:var(--text);border-radius:10px;padding:10px 11px;min-width:0}
-input[type=number]{width:85px}input[type=text]{flex:1;min-width:145px}select{max-width:100%;flex:1}
-button{border:1px solid #516b6a;background:#294148;border-radius:10px;padding:9px 13px;color:var(--text);font-weight:600;cursor:pointer}
-button.primary{background:var(--accent);border-color:var(--accent)}button.danger{border-color:#7c514f;color:#ffc8c0}
-button:disabled{opacity:.5;cursor:default}button:hover:not(:disabled){filter:brightness(1.18)}
-.empty{border:1px dashed var(--line);border-radius:12px;padding:20px;color:var(--muted)}
-.small{font-size:12px;color:var(--muted)}.banner{padding:12px;border:1px solid var(--line);border-radius:12px;background:#20343a;margin-bottom:16px;color:var(--text)}
-#notice{position:sticky;top:10px;z-index:5;min-height:0}.notice{background:#214b46;color:#d9fff1;padding:12px;border:1px solid #39776b;border-radius:12px;margin-bottom:12px}
-footer{color:var(--muted);font-size:12px;padding-top:12px}
-@media(max-width:800px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.panels{grid-template-columns:1fr}h1{font-size:25px}}
-@media(max-width:400px){.stat{padding:12px}.controls button{flex:1}}
+:root{color-scheme:dark;--bg:#0c151a;--surface:#142228;--surface2:#192b32;--surface3:#20363d;--ink:#eff7f6;--sub:#9eb4b5;--line:#2e474d;--accent:#59c2af;--deep:#245c55;--danger:#e58a88;--positive:#82d8b4;--warning:#f0c77d;--shadow:0 14px 48px #00000026}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,Segoe UI,Arial,sans-serif}button,input,select{font:inherit}button{cursor:pointer}
+[hidden]{display:none!important}a{color:var(--accent)}:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.shell{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
+.sidebar{border-right:1px solid var(--line);background:#0f1c22;position:sticky;top:0;height:100vh;padding:26px 16px;display:flex;flex-direction:column}
+.brand{display:flex;gap:12px;align-items:center;padding:2px 8px 28px}.brand-mark{width:39px;height:39px;border:1px solid #33776e;border-radius:13px;display:flex;align-items:end;justify-content:center;gap:3px;padding:8px;background:linear-gradient(140deg,#205a51,#102e34)}
+.brand-mark i{width:5px;border-radius:3px;background:var(--accent);display:block}.brand-mark i:nth-child(1){height:9px}.brand-mark i:nth-child(2){height:19px}.brand-mark i:nth-child(3){height:13px}
+.brand-title{font-size:14px;font-weight:750;letter-spacing:-.02em}.brand-sub{font-size:11px;color:var(--sub)}
+.nav-label{padding:0 13px 9px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#728f93;font-weight:750}
+.nav-list{display:grid;gap:6px}.nav-btn{border:1px solid transparent;background:transparent;border-radius:11px;padding:12px 14px;text-align:left;color:var(--sub);font-weight:600;display:flex;align-items:center;gap:11px;transition:background .15s}
+.nav-btn .nav-glyph{width:16px;text-align:center;font-size:16px;line-height:1}
+.nav-btn:hover{background:#1d3238;color:var(--ink)}.nav-btn.active{background:#204c46;color:#d8fff4;border-color:#32675e}
+.sidebar-foot{margin-top:auto;padding:16px 12px 0;border-top:1px solid var(--line);font-size:12px;color:var(--sub)}
+.sidebar-foot strong{display:block;color:var(--ink);font-size:13px;font-weight:650}.side-status{display:flex;align-items:center;gap:8px;margin:12px 0}
+.status-dot{display:inline-block;width:8px;height:8px;flex:none;border-radius:50%;background:var(--warning);box-shadow:0 0 0 3px #f0c77d19}
+.status-dot.online{background:var(--positive);box-shadow:0 0 0 3px #59c2af19}.status-dot.offline{background:var(--danger)}
+.workspace{min-width:0}.topbar{height:77px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 clamp(20px,3.5vw,48px);background:#111f25e8}
+.breadcrumb{color:var(--sub);font-size:13px}.breadcrumb strong{color:var(--ink);font-weight:700}.top-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.top-connection{color:var(--sub);font-size:12px;display:flex;align-items:center;gap:9px}
+.content{max-width:1160px;margin:auto;padding:35px clamp(20px,3.5vw,48px) 90px}.page-head{display:flex;justify-content:space-between;align-items:start;gap:18px;margin-bottom:26px;flex-wrap:wrap}
+.kicker{font-size:11px;letter-spacing:.13em;color:var(--accent);font-weight:800;text-transform:uppercase;margin:0 0 6px}h1{font-size:clamp(26px,3vw,34px);line-height:1.15;letter-spacing:-.045em;margin:0 0 9px;font-weight:760}
+h2{font-size:17px;letter-spacing:-.025em;margin:0 0 6px}h3{font-size:14px;margin:0;letter-spacing:-.01em}p{color:var(--sub);margin:0 0 12px}.lede{max-width:630px;line-height:1.55;font-size:14px}
+h1+h2{margin-top:0}.muted{color:var(--sub)}.small{font-size:12px;color:var(--sub)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 15px;min-height:38px;border-radius:10px;border:1px solid #3e6065;background:#21373e;color:var(--ink);font-weight:700;white-space:nowrap}
+.btn:hover:not(:disabled){background:#2a464d}.btn:disabled,button:disabled{opacity:.48;cursor:not-allowed}.btn.primary{background:#318c7c;color:#f8fffc;border-color:#409b8b}.btn.primary:hover{background:#3ca18f}
+.btn.ghost{background:transparent;border-color:var(--line)}.btn.danger{color:#ffc1c0;border-color:#754747;background:#3f2528}.btn.sm{padding:7px 10px;min-height:32px;font-size:12px}
+.btn.link-btn{border:none;background:transparent;color:var(--accent);padding:0;min-height:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:16px;box-shadow:var(--shadow)}
+.panel.soft{background:var(--surface2)}.panel-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.panel-header p{font-size:12px;margin:3px 0 0}.panel-header h2{margin:0}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.metric{border:1px solid var(--line);border-radius:15px;background:var(--surface);padding:18px 19px;min-width:0}.metric .metric-label{font-size:11px;color:var(--sub);letter-spacing:.065em;text-transform:uppercase;font-weight:720}
+.metric strong{font-size:29px;line-height:1.2;letter-spacing:-.045em;display:block;margin:9px 0 3px}.metric .metric-note{color:var(--sub);font-size:11px}
+.split{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr);gap:16px;align-items:start}.stack{display:grid;gap:15px}
+.note{border:1px solid var(--line);border-radius:12px;padding:12px 15px;background:#1a2e34;color:var(--sub);font-size:12px;line-height:1.5}.note b{color:var(--ink)}
+.notice-wrap{position:sticky;top:0;z-index:11;max-width:1160px;margin:auto;padding:0 20px}
+.toast{border:1px solid #3e8f7f;background:#1b4540;box-shadow:var(--shadow);color:#e8fff6;padding:13px 17px;border-radius:12px;margin-top:12px;display:flex;align-items:center;gap:10px}
+.pending-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#393022;border:1px solid #776038;color:#fae8bc;border-radius:13px;padding:13px 17px;margin-bottom:20px;flex-wrap:wrap}
+.pending-bar p{color:#f5e1b3;margin:0;font-size:12px}
+.pending-bar strong{font-weight:750}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.space-between{justify-content:space-between}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}.field label{font-weight:650;font-size:12px;color:#d1e2e0}
+.field input,.field select,select,input[type=text],input[type=number]{height:42px;background:#0f1e23;border:1px solid #38545a;border-radius:10px;color:var(--ink);padding:0 12px;min-width:0;max-width:100%}
+.field select{width:100%}.field input::placeholder{color:#7b999c}.field input:focus,.field select:focus{border-color:var(--accent)}
+.form-grid{display:grid;grid-template-columns:1fr minmax(150px,auto);gap:11px;align-items:end}.form-grid>.field{min-width:0}.field-grow{flex:1}.form-actions{display:flex;align-items:end;gap:9px;flex-wrap:wrap}
+.empty{border:1px dashed #3a555b;background:#17282e;padding:22px;border-radius:12px;text-align:center;color:var(--sub);font-size:13px}
+.empty strong{display:block;color:var(--ink);font-size:14px;margin-bottom:6px}
+.tile{border-radius:13px;border:1px solid var(--line);background:var(--surface2);padding:16px;min-width:0}.tile+.tile{margin-top:10px}.tile-title{font-size:14px;font-weight:720;overflow-wrap:anywhere}
+.tile-meta{font-size:12px;color:var(--sub);overflow-wrap:anywhere;margin-top:3px}
+.tile-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.tile-bottom{border-top:1px solid var(--line);padding-top:13px;margin-top:13px}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid #40555c;background:#24343a;padding:4px 9px;border-radius:999px;font-size:11px;color:#cfdfde;font-weight:650;white-space:nowrap}
+.pill.live{color:#a7f2cd;background:#1c433b;border-color:#366d5a}.pill.warn{color:#f5d7a3;background:#44351e;border-color:#755c36}.pill.danger{color:#ffc9c5;background:#44272a;border-color:#754a4a}
+.tile-controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.tile-controls .btn{flex:0 0 auto}
+.brightness{display:flex;align-items:center;gap:7px;margin-left:auto}.brightness input{width:68px;min-width:0;text-align:center;height:37px}.brightness label{font-size:11px;color:var(--sub)}
+.quickgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.quick{border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:17px;text-align:left;color:var(--ink);min-height:93px}.quick strong{display:block;font-size:14px;margin-bottom:5px}.quick span{color:var(--sub);font-size:12px}
+.quick:hover{border-color:#408e7e;background:#1d3539}
+.device-row{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}
+.device-row:last-child{border:none}.device-row .title{font-weight:700}.device-row .meta{color:var(--sub);font-size:11px}.device-row .pill{margin-left:auto}
+.group-header{display:flex;align-items:center;justify-content:space-between;gap:13px;flex-wrap:wrap;margin:12px 0 10px}
+.effects-items{display:grid;gap:9px}.effect-row{border:1px solid var(--line);border-radius:12px;padding:13px 14px;background:var(--surface2);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.effect-row.active{border-color:#3b9885;background:#1b3937}.effect-name{font-weight:700;font-size:13px}.effect-kind{font-size:11px;color:var(--sub)}.effect-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.effect-actions .btn{min-width:30px}.effect-row .on-dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:var(--accent);margin-right:6px}
+.device-chooser{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:11px;align-items:end}
+.segmented{display:flex;gap:7px;flex-wrap:wrap}
+.group-pill{border:1px solid var(--line);background:#192b31;border-radius:10px;color:var(--sub);padding:8px 10px;font-size:12px}
+.group-pill.selected{color:#e6f9f3;border-color:#409d87;background:#204c43}
+.info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.info-item{background:var(--surface2);border:1px solid var(--line);padding:12px 15px;border-radius:11px;min-width:0}.info-item span{font-size:11px;color:var(--sub);display:block}.info-item strong{display:block;font-size:14px;font-weight:720;overflow-wrap:anywhere;margin-top:5px}
+details{background:var(--surface2);border-radius:13px;border:1px solid var(--line);padding:15px 17px}details summary{cursor:pointer;font-weight:700;color:var(--ink)}details[open] summary{margin-bottom:15px}
+.divider{height:1px;background:var(--line);margin:20px 0}.footer{padding:0 clamp(20px,3.5vw,48px) 25px;color:#7e999c;font-size:11px;max-width:1220px;margin:auto}
+dialog{border:1px solid var(--line);background:#19292f;color:var(--ink);border-radius:16px;padding:26px;max-width:min(420px,calc(100vw - 30px));width:100%;box-shadow:0 25px 100px #0009}dialog::backdrop{background:#0009}
+@media(max-width:1080px){.split{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:780px){.shell{display:block}.sidebar{height:auto;position:relative;top:auto;padding:12px 16px 5px;border-right:0;border-bottom:1px solid var(--line)}.brand{padding:0 3px 12px}.sidebar-foot,.nav-label{display:none}.nav-list{display:flex;overflow-x:auto;gap:5px;padding-bottom:8px}.nav-btn{flex:0 0 auto;padding:9px 12px;gap:7px}.topbar{height:65px;padding:0 17px}.content{padding:22px 16px 60px}.footer{padding:0 16px 20px}}
+@media(max-width:470px){.metrics{gap:8px}.metric{padding:13px}.metric strong{font-size:22px}.panel{padding:15px}.top-connection{display:none}.page-head{margin-bottom:18px}.tile-controls .btn{padding:8px 11px}.brightness{margin-left:0}.form-grid,.device-chooser{grid-template-columns:1fr}.quickgrid{grid-template-columns:1fr}.effect-actions{width:100%}.effect-row{align-items:flex-start}.effect-actions .btn{flex:1}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
 </style>
 </head>
 <body>
-<main>
-  <div class="top">
-    <div><div class="eyebrow">GLOWDECK / LOCAL BRIDGE</div><h1>WLED Apple Home</h1>
-      <p>Lights, saved WLED presets, per-device effects groups and bridge health.</p></div>
-    <div class="status"><span class="dot"></span><span id="connection">Connecting...</span></div>
-  </div>
-  <div id="notice"></div>
-  <div class="stats">
-    <div class="stat"><span>BRIDGE</span><strong id="version">—</strong></div>
-    <div class="stat"><span>WLED LIGHTS</span><strong id="lightCount">—</strong></div>
-    <div class="stat"><span>PRESET SWITCHES</span><strong id="presetCount">—</strong></div>
-    <div class="stat"><span>FREE HEAP</span><strong id="heap">—</strong></div>
-  </div>
-  <div class="banner"><strong>Changes to Apple Home:</strong> Changes to HomeKit accessory groups require a bridge restart. Rename, add, remove, or reorder preset controls without resetting pairing. Your existing pairing should be retained. Never erase the ESP32 flash/NVS for an update.</div>
-  <div class="panels">
-    <section>
-      <div class="panel">
-        <div class="top"><h2>WLED devices</h2><button id="refresh">Refresh</button></div>
-        <div id="devices" class="empty">Loading devices...</div>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div><div class="brand-title">WLED Apple Home</div><div class="brand-sub">GlowDeck local bridge</div></div>
+    </div>
+    <div class="nav-label">Workspace</div>
+    <nav class="nav-list" aria-label="Dashboard sections">
+      <button class="nav-btn active" type="button" data-view-target="overview" aria-current="page"><span class="nav-glyph" aria-hidden="true">◫</span> Overview</button>
+      <button class="nav-btn" type="button" data-view-target="lights"><span class="nav-glyph" aria-hidden="true">◉</span> WLED lights</button>
+      <button class="nav-btn" type="button" data-view-target="effects"><span class="nav-glyph" aria-hidden="true">✳</span> Effects &amp; playlists</button>
+      <button class="nav-btn" type="button" data-view-target="switches"><span class="nav-glyph" aria-hidden="true">▤</span> Preset switches</button>
+      <button class="nav-btn" type="button" data-view-target="settings"><span class="nav-glyph" aria-hidden="true">⚙</span> Bridge settings</button>
+    </nav>
+    <div class="sidebar-foot">
+      <strong id="sidebarVersion">Bridge firmware</strong>
+      <div class="side-status"><span class="status-dot" id="sidebarDot"></span><span id="sidebarStatus">Checking connection</span></div>
+      <div>Private LAN connection · Port 8080</div>
+    </div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <div class="breadcrumb">GlowDeck / <strong id="viewTitle">Overview</strong></div>
+      <div class="top-actions">
+        <div class="top-connection"><span class="status-dot" id="topDot"></span><span id="connection">Connecting…</span></div>
+        <button type="button" class="btn ghost sm" id="refresh">↻ Refresh</button>
       </div>
-      <div class="panel">
-        <h2>Discover & add WLED</h2><p>Discovery checks actual WLED devices before adding them. You approve each light.</p>
-        <div class="actionrow"><button id="scan" class="primary">Scan network</button></div>
-        <div id="discovered"></div>
-        <form id="addIp" class="controls">
-          <input type="text" name="ip" placeholder="WLED IPv4 address" required aria-label="WLED IPv4 address">
-          <button type="submit">Add by IP</button>
-        </form>
+    </header>
+    <div id="notice" class="notice-wrap" role="status" aria-live="polite"></div>
+    <main class="content">
+      <div class="pending-bar" id="restartBanner" hidden>
+        <div><strong>Apple Home changes are pending</strong><p>A bridge restart is needed to publish your updated accessory layout.</p></div>
+        <button type="button" class="btn primary sm" id="restartNow">Restart bridge</button>
       </div>
-    </section>
-    <section>
-      <div class="panel">
-        <h2>Preset switches</h2><p>Expose only your favorite saved WLED presets to Apple Home.</p>
-        <div id="presets"></div>
-        <form id="addPreset">
-          <div class="actionrow"><select id="presetLight" aria-label="Choose WLED light"></select><button type="button" id="loadCatalog">Load presets</button></div>
-          <div class="actionrow"><select id="presetId" aria-label="Choose saved preset"><option value="">Load a catalog first</option></select><button type="submit">Add as switch</button></div>
-          <div class="actionrow"><button type="button" id="inspectPreset">Inspect saved segments</button></div>
-          <div class="small" id="presetInspection" role="status" aria-live="polite"></div>
-        </form>
-      </div>
-      <div class="panel">
-        <h2>WLED effects groups <span class="pill">UP TO 8</span></h2>
-        <p>Give each WLED light up to five favorites: saved presets and playlists together. A playlist stays On while WLED cycles through its steps. Existing grouped accessories keep their HomeKit IDs.</p>
-        <div id="effectController"></div>
-        <div class="actionrow">
-          <select id="effectsLight" aria-label="WLED device for effects"></select>
-          <button type="button" id="loadEffectsCatalog">Load presets &amp; playlists</button>
+      <section data-view="overview" id="view-overview">
+        <div class="page-head"><div><div class="kicker">Your connected lighting</div><h1>Bridge overview</h1><p class="lede">Everything in one place. Check your lights, then jump into effects or device management.</p></div></div>
+        <div class="metrics">
+          <div class="metric"><div class="metric-label">WLED lights</div><strong id="lightCount">—</strong><div class="metric-note" id="onlineCount">Checking devices</div></div>
+          <div class="metric"><div class="metric-label">Effects groups</div><strong id="groupCount">—</strong><div class="metric-note">Up to 8 groups</div></div>
+          <div class="metric"><div class="metric-label">Preset switches</div><strong id="presetCount">—</strong><div class="metric-note">Standalone actions</div></div>
+          <div class="metric"><div class="metric-label">Free memory</div><strong id="heap">—</strong><div class="metric-note">ESP32 available heap</div></div>
         </div>
-        <div class="actionrow">
-          <select id="effectsPreset" aria-label="Saved WLED preset to add"><option value="">Select a light, then load presets and playlists</option></select>
-          <button type="button" class="primary" id="addEffect">Add selected preset or playlist</button>
+        <div class="split">
+          <section class="panel">
+            <div class="panel-header"><div><h2>WLED lights</h2><p>Recent state from each device</p></div><button type="button" class="btn ghost sm" data-open-view="lights">Manage lights</button></div>
+            <div id="overviewDevices" class="empty">Connecting to bridge…</div>
+          </section>
+          <div class="stack">
+            <section class="panel"><div class="panel-header"><h2>Quick actions</h2></div>
+              <div class="quickgrid">
+                <button type="button" class="quick" data-open-view="effects"><strong>Effects &amp; playlists</strong><span>Choose favorites for Apple Home</span></button>
+                <button type="button" class="quick" data-open-view="lights" data-open-discovery><strong>Add WLED light</strong><span>Discover or connect by IP</span></button>
+                <button type="button" class="quick" data-open-view="switches"><strong>Preset switches</strong><span>Standalone HomeKit triggers</span></button>
+                <button type="button" class="quick" data-open-view="settings"><strong>Bridge health</strong><span>Diagnostics and OTA guidance</span></button>
+              </div>
+            </section>
+            <div class="note"><b>How this works:</b> WLED runs your saved presets and playlists. The bridge exposes selected controls to Apple Home without changing what is saved on the WLED device.</div>
+          </div>
         </div>
-        <p class="small">Adding or renaming preserves current accessory identity. Removing or reordering a button rebuilds ONLY that effects group with a new HomeKit ID; confirm before changing it. The original WLED light and other effects groups remain paired.</p>
-      </div>
-      <div class="panel">
-        <h2>Bridge maintenance</h2>
-        <p id="network">Network status loading...</p>
-        <div class="small">OTA firmware updates use HomeSpan's password-protected ArduinoOTA service. Use the Arduino IDE network port or a compatible ESP OTA uploader. OTA uses the administrator password configured at the device's serial console.</div>
-        <div class="actionrow"><button class="danger" id="restart">Restart bridge</button></div>
-      </div>
-    </section>
+      </section>
+      <section data-view="lights" id="view-lights" hidden>
+        <div class="page-head"><div><div class="kicker">Devices</div><h1>WLED lights</h1><p class="lede">Control power and brightness, check connection health, and enroll new WLED devices.</p></div><button type="button" class="btn primary" id="addLightJump">+ Add a light</button></div>
+        <section class="panel"><div class="panel-header"><div><h2>Your lights</h2><p>Controls affect only the selected device</p></div><span class="pill" id="deviceCount">0 / 8</span></div><div id="devices" class="empty">Loading lights…</div></section>
+        <details id="addWled" class="disclosure">
+          <summary>Discover or add another WLED light</summary>
+          <p class="small">Scan the local network to find supported WLED devices. Enroll only the device you recognize; a restart makes it available in Apple Home.</p>
+          <div class="row"><button type="button" class="btn primary" id="scan">Scan for WLED devices</button><span class="small" id="scanStatus"></span></div>
+          <div id="discovered" style="margin:16px 0"></div>
+          <div class="divider"></div>
+          <form id="addIp" class="form-grid">
+            <div class="field"><label for="manualIp">Or enter the WLED device IP</label><input id="manualIp" name="ip" type="text" inputmode="decimal" placeholder="192.168.1.50" required></div>
+            <button class="btn" type="submit">Add by IP</button>
+          </form>
+        </details>
+      </section>
+      <section data-view="effects" id="view-effects" hidden>
+        <div class="page-head"><div><div class="kicker">Apple Home accessories</div><h1>Effects &amp; playlists</h1><p class="lede">Pick a light, then choose which saved WLED presets and playlists should appear as named controls in Apple Home.</p></div></div>
+        <section class="panel">
+          <div class="panel-header"><div><h2>1. Choose a WLED light</h2><p>Each light can have its own group of up to 5 favorites</p></div><span class="pill" id="effectsGroupCount">0 / 8 groups</span></div>
+          <div class="device-chooser">
+            <div class="field"><label for="effectsLight">WLED device</label><select id="effectsLight" aria-label="WLED device for effects"><option value="">Loading…</option></select></div>
+            <button type="button" class="btn ghost" id="loadEffectsCatalog">Load saved presets &amp; playlists</button>
+          </div>
+          <div class="segmented" id="groupPicker" style="margin-top:14px"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-header"><div><h2>2. Manage Apple Home favorites</h2><p id="selectedGroupSummary">Select a light to see its Effects accessory</p></div><span class="pill" id="groupStatus">Not configured</span></div>
+          <div id="effectController" class="empty">Choose a WLED light above.</div>
+          <div class="divider"></div>
+          <div class="field"><label for="effectsPreset">3. Add a saved preset or playlist</label><select id="effectsPreset"><option value="">Load the saved items for this light first</option></select></div>
+          <div class="row" style="margin-top:13px"><button type="button" class="btn primary" id="addEffect">+ Add to Apple Home</button><span class="small">Adding a button keeps the existing Effects accessory ID.</span></div>
+        </section>
+        <div class="note"><b>Accessory safety:</b> Renaming keeps a group’s HomeKit ID. Removing or reordering a button rebuilds that one group with a new ID and may require updating any Home scenes that use it. All changes need a restart before Apple Home reflects them.</div>
+      </section>
+      <section data-view="switches" id="view-switches" hidden>
+        <div class="page-head"><div><div class="kicker">Optional HomeKit actions</div><h1>Preset switches</h1><p class="lede">Standalone, momentary switches for presets. For grouped On/Off-style favorites, use Effects &amp; playlists instead.</p></div></div>
+        <section class="panel">
+          <div class="panel-header"><div><h2>Exposed preset switches</h2><p>Separate accessories that trigger once</p></div><span id="switchLimit" class="pill">0 / 12</span></div>
+          <div id="presets"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-header"><div><h2>Add a standalone switch</h2><p>Choose a light and a saved WLED preset</p></div></div>
+          <form id="addPreset">
+            <div class="device-chooser">
+              <div class="field"><label for="presetLight">WLED device</label><select id="presetLight" aria-label="Choose WLED light"></select></div>
+              <button type="button" class="btn ghost" id="loadCatalog">Load presets</button>
+            </div>
+            <div class="field" style="margin-top:14px"><label for="presetId">Saved preset</label><select id="presetId"><option value="">Load presets for this light</option></select></div>
+            <div class="row" style="margin-top:13px"><button type="submit" class="btn primary">+ Add standalone switch</button><button type="button" class="btn ghost" id="inspectPreset">Inspect saved segments</button></div>
+            <div class="small" id="presetInspection" aria-live="polite" style="margin-top:12px"></div>
+          </form>
+        </section>
+      </section>
+      <section data-view="settings" id="view-settings" hidden>
+        <div class="page-head"><div><div class="kicker">System &amp; connectivity</div><h1>Bridge settings</h1><p class="lede">Monitor the ESP32, safely restart after HomeKit changes, and access the firmware update instructions.</p></div></div>
+        <div class="split">
+          <section class="panel"><div class="panel-header"><div><h2>Bridge health</h2><p>Updated every 10 seconds when connected</p></div><span class="pill" id="bridgeHealth">Checking</span></div>
+            <div class="info-grid">
+              <div class="info-item"><span>Firmware</span><strong id="version">—</strong></div>
+              <div class="info-item"><span>Bridge IP</span><strong id="bridgeIp">—</strong></div>
+              <div class="info-item"><span>Wi-Fi signal</span><strong id="wifiRssi">—</strong></div>
+              <div class="info-item"><span>Uptime</span><strong id="uptime">—</strong></div>
+              <div class="info-item"><span>Free heap</span><strong id="freeHeap">—</strong></div>
+              <div class="info-item"><span>Minimum heap</span><strong id="minHeap">—</strong></div>
+              <div class="info-item"><span>Free sketch space</span><strong id="freeSketch">—</strong></div>
+              <div class="info-item"><span>Last refresh</span><strong id="lastUpdated">—</strong></div>
+            </div>
+            <p id="network" class="small" style="margin-top:16px">Network status loading…</p>
+          </section>
+          <div class="stack">
+            <section class="panel"><div class="panel-header"><h2>Restart bridge</h2></div><p class="small">Restart to publish added or removed lights, grouped effects, and renamed presets to Apple Home. This temporarily interrupts responses, but does not erase pairing.</p>
+              <button type="button" class="btn primary" id="restart">Restart ESP32 bridge</button>
+            </section>
+            <section class="panel"><div class="panel-header"><h2>Firmware updates</h2></div>
+              <p class="small">Update over HomeSpan’s password-protected ArduinoOTA service. The browser dashboard does not upload firmware directly.</p>
+              <div class="note"><b>Important:</b> Download the binary for your exact board, use its network OTA port and configured admin password, and never erase ESP32 NVS or repartition the flash.</div>
+              <a href="https://github.com/ggrant111/wled-applehome/actions" target="_blank" rel="noopener noreferrer" class="btn ghost sm" style="margin-top:13px">Open firmware builds ↗</a>
+            </section>
+          </div>
+        </div>
+        <div class="note"><b>Security:</b> This local HTTP dashboard uses password-based Digest authentication and a per-boot CSRF token. Keep port 8080 and OTA available only on your trusted LAN; do not publish either service to the internet.</div>
+      </section>
+    </main>
+    <footer class="footer">GlowDeck · Local-first WLED / Apple Home bridge · No cloud connection required</footer>
   </div>
-  <footer>Local access only · Port 8080 · Digest authentication · No cloud account · Do not expose this device to the public internet.</footer>
-</main>
+</div>
+<dialog id="renameDialog" aria-labelledby="renameTitle">
+  <h2 id="renameTitle">Rename effect</h2>
+  <p class="small">This updates the HomeKit display name after a bridge restart. It does not rename the saved preset in WLED.</p>
+  <form id="renameForm">
+    <div class="field"><label for="renameValue">Display name</label><input id="renameValue" name="name" type="text" minlength="1" maxlength="30" required></div>
+    <div class="row" style="justify-content:flex-end;margin-top:22px"><button type="button" class="btn ghost" id="renameCancel">Cancel</button><button type="submit" class="btn primary">Save name</button></div>
+  </form>
+</dialog>
+
 <script>
 "use strict";
 let CSRF="";
 const $=id=>document.getElementById(id);
-let snapshot={devices:[],presets:[],effectControllers:[]};
 function safe(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function notice(message){const n=$("notice");n.innerHTML='<div class="notice">'+safe(message)+'</div>';setTimeout(()=>{n.textContent="";},7000);}
 async function api(path,fields,retry=true){
   const modifying=fields!==undefined;
   const sentToken=CSRF;
@@ -145,151 +276,346 @@ async function api(path,fields,retry=true){
   if(json.ok===false)throw Error(json.error||"Request failed");
   return json;
 }
+
+let snapshot={devices:[],presets:[],effectControllers:[]};
+let currentView="overview", selectedEffectsAid="", restartRequired=false, renaming=null;
+let noticeTimer=0, lastStatusAt="";
+function notice(message){
+  const n=$("notice");
+  n.innerHTML='<div class="toast">'+safe(message)+'</div>';
+  clearTimeout(noticeTimer);
+  noticeTimer=setTimeout(()=>{n.textContent="";},6500);
+}
+function showView(name){
+  if(!["overview","lights","effects","switches","settings"].includes(name))return;
+  currentView=name;
+  document.querySelectorAll("[data-view]").forEach(e=>{e.hidden=e.dataset.view!==name;});
+  document.querySelectorAll("[data-view-target]").forEach(e=>{
+    const active=e.dataset.viewTarget===name;
+    e.classList.toggle("active",active);
+    if(active)e.setAttribute("aria-current","page");else e.removeAttribute("aria-current");
+  });
+  const titles={overview:"Overview",lights:"WLED lights",effects:"Effects & playlists",switches:"Preset switches",settings:"Bridge settings"};
+  $("viewTitle").textContent=titles[name];
+  if(name==="effects")renderEffects();
+  if(name==="lights")renderLights();
+  window.scrollTo({top:0,behavior:"auto"});
+}
+function deviceByAid(aid){return (snapshot.devices||[]).find(d=>String(d.aid)===String(aid));}
+function groupByLight(aid){return (snapshot.effectControllers||[]).find(c=>String(c.deviceAid)===String(aid));}
+function deviceState(d){
+  if(d.pending)return {label:"Restart needed",type:"warn"};
+  if(!d.online)return {label:"Offline",type:"danger"};
+  return {label:d.on?"On":"Off",type:d.on?"live":""};
+}
+function currentProgram(d){
+  if(!d||!d.online)return "Not connected";
+  if(!d.on)return "Power off";
+  const g=groupByLight(d.aid);
+  if(g){
+    const active=(g.inputs||[]).find(x=>x.kind==="playlist"
+      ?Number(d.playlistId)===Number(x.presetId)
+      :Number(d.playlistId??-1)<0&&Number(d.presetId)===Number(x.presetId));
+    if(active)return active.name+(active.kind==="playlist"?" · playlist":" · preset");
+  }
+  if(Number(d.playlistId??-1)>0)return "Playlist #"+d.playlistId;
+  if(Number(d.presetId??-1)>0)return "Preset #"+d.presetId;
+  return "Custom / solid";
+}
 function card(d){
-  const brightness=Number.isFinite(d.brightness)?d.brightness:50;
-  return '<div class="device"><div class="devicehead"><div><div class="title">'+safe(d.name)+'</div>'+
-    '<div class="meta">AID '+d.aid+' · '+safe(d.ip||"Not configured")+' · '+safe(d.mac||"MAC not set")+
-    ' · Queued '+(d.pendingCommands||0)+' · Failures '+(d.networkFailures||0)+'</div></div>'+
-    '<span class="pill '+(d.online?"live":"")+'">'+(d.pending?"Restart needed":d.online?"Online":"Not confirmed online")+'</span></div>'+
-    '<div class="controls"><button data-action="on" data-aid="'+d.aid+'">On</button>'+
-    '<button data-action="off" data-aid="'+d.aid+'">Off</button>'+
-    '<input type="number" min="1" max="100" id="bright-'+d.aid+'" value="'+brightness+'" aria-label="Brightness percent">'+
-    '<button data-action="brightness" data-aid="'+d.aid+'">Set %</button>'+
-    '<button class="danger" data-action="remove" data-aid="'+d.aid+'">Remove</button></div></div>';
+  const status=deviceState(d),bright=Number.isFinite(d.brightness)?Math.min(100,Math.max(1,Math.round(d.brightness))):50;
+  return '<article class="tile"><div class="tile-top"><div><div class="tile-title">'+safe(d.name)+'</div>'+
+    '<div class="tile-meta">'+safe(d.ip||"Not configured")+' · AID '+d.aid+'</div>'+
+    '<div class="tile-meta">Current: '+safe(currentProgram(d))+'</div></div>'+
+    '<span class="pill '+status.type+'">'+safe(status.label)+'</span></div>'+
+    '<div class="tile-bottom"><div class="tile-controls">'+
+    '<button type="button" class="btn sm" data-action="on" data-aid="'+d.aid+'">Power on</button>'+
+    '<button type="button" class="btn sm ghost" data-action="off" data-aid="'+d.aid+'">Power off</button>'+
+    '<div class="brightness"><label for="bright-'+d.aid+'">Brightness</label>'+
+    '<input type="number" min="1" max="100" id="bright-'+d.aid+'" value="'+bright+'" aria-label="Brightness percent for '+safe(d.name)+'">'+
+    '<button type="button" class="btn sm" data-action="brightness" data-aid="'+d.aid+'">Set %</button></div>'+
+    '<button type="button" class="btn link-btn" data-action="manageEffects" data-aid="'+d.aid+'">Effects →</button>'+
+    '<button type="button" class="btn sm danger" data-action="remove" data-aid="'+d.aid+'">Remove</button>'+
+    '</div><div class="tile-meta" style="margin-top:10px">Queued: '+(d.pendingCommands||0)+' · Network failures: '+(d.networkFailures||0)+
+    ' · Last seen: '+(typeof d.lastSeenSec==="number"&&d.lastSeenSec>=0?d.lastSeenSec+"s ago":"Unknown")+'</div></div></article>';
+}
+function overviewRow(d){
+  const status=deviceState(d);
+  return '<div class="device-row"><div><div class="title">'+safe(d.name)+'</div>'+
+    '<div class="meta">'+safe(currentProgram(d))+'</div></div>'+
+    '<span class="pill '+status.type+'">'+safe(status.label)+'</span>'+
+    '<button type="button" class="btn ghost sm" data-action="manageEffects" data-aid="'+d.aid+'">Effects</button></div>';
+}
+function populateDevices(id,preferred){
+  const sel=$(id),list=snapshot.devices||[];
+  const signature=list.map(d=>String(d.aid)+":"+d.name).join("|");
+  if(sel.dataset.signature!==signature){
+    sel.innerHTML=list.length?list.map(d=>'<option value="'+d.aid+'">'+safe(d.name)+'</option>').join(""):
+      '<option value="">No enrolled WLED devices</option>';
+    sel.dataset.signature=signature;
+  }
+  const target=String(preferred||sel.value||"");
+  if(list.some(d=>String(d.aid)===target))sel.value=target;
+  else if(list.length)sel.value=String(list[0].aid);
+  return sel.value;
+}
+function renderLights(){
+  const items=snapshot.devices||[];
+  const target=$("devices");
+  // Do not clear a brightness input while someone is typing in it.
+  if(!target.contains(document.activeElement)){
+    target.className=items.length?"":"empty";
+    target.innerHTML=items.length?items.map(card).join(""):
+      '<div class="empty"><strong>No WLED lights connected</strong>Use the discovery section below to add your first device.</div>';
+  }
+  $("deviceCount").textContent=items.length+" / 8";
+}
+function renderEffects(){
+  const items=snapshot.devices||[];
+  selectedEffectsAid=populateDevices("effectsLight",selectedEffectsAid);
+  const d=deviceByAid(selectedEffectsAid),g=groupByLight(selectedEffectsAid);
+  $("effectsGroupCount").textContent=(snapshot.effectControllers||[]).length+" / 8 groups";
+  $("groupPicker").innerHTML=items.map(x=>{
+    const active=String(x.aid)===String(selectedEffectsAid);
+    return '<button type="button" class="group-pill'+(active?' selected':'')+
+      '" data-action="selectEffectsLight" data-aid="'+x.aid+'">'+safe(x.name)+
+      ' · '+(groupByLight(x.aid)?.inputs?.length||0)+'/5</button>';
+  }).join("");
+  $("selectedGroupSummary").textContent=d?d.name+" · "+(g?(g.inputs||[]).length+" of 5 favorites":"No Effects group yet"):"Choose a WLED device";
+  const groupStatus=$("groupStatus");
+  groupStatus.textContent=!d?"Select light":!g?"Not added":g.pending?"Restart needed":g.mode==="tv"?"Legacy TV":"Available in Home";
+  groupStatus.className="pill"+(g&&g.pending?" warn":g&&g.mode==="grouped"?" live":"");
+  const area=$("effectController");
+  if(!d){
+    area.className="empty";
+    area.innerHTML='<strong>No lights enrolled</strong>Add a WLED device first, then return here.';
+    return;
+  }
+  if(!g){
+    area.className="empty";
+    area.innerHTML='<strong>Nothing exposed for '+safe(d.name)+'</strong>Load saved WLED presets and playlists below, then add one to create this light’s Effects group.';
+    return;
+  }
+  area.className="effects-items";
+  const rows=(g.inputs||[]).map((x,i)=>{
+    const active=Boolean(d.on)&&Boolean(d.online)&&(x.kind==="playlist"
+       ?Number(d.playlistId)===Number(x.presetId)
+       :Number(d.playlistId??-1)<0&&Number(d.presetId)===Number(x.presetId));
+    return '<div class="effect-row'+(active?" active":"")+'">'+
+      '<div><div class="effect-name">'+(active?'<span class="on-dot"></span>':'')+safe(x.name)+'</div>'+
+      '<div class="effect-kind">'+(x.kind==="playlist"?"Playlist":"Preset")+' #'+x.presetId+
+      (active?" · Running":"")+'</div></div>'+
+      '<div class="effect-actions">'+
+      '<button type="button" class="btn primary sm" data-action="runEffect" data-aid="'+g.aid+
+      '" data-preset="'+x.presetId+'">▶ Run</button>'+
+      '<button type="button" class="btn ghost sm" data-action="renameEffect" data-aid="'+g.aid+
+      '" data-preset="'+x.presetId+'">Rename</button>'+
+      (i>0?'<button type="button" class="btn ghost sm" data-action="moveEffect" data-aid="'+g.aid+
+      '" data-preset="'+x.presetId+'" data-direction="up" aria-label="Move '+safe(x.name)+' up">↑</button>':"")+
+      (i<g.inputs.length-1?'<button type="button" class="btn ghost sm" data-action="moveEffect" data-aid="'+g.aid+
+      '" data-preset="'+x.presetId+'" data-direction="down" aria-label="Move '+safe(x.name)+' down">↓</button>':"")+
+      '<button type="button" class="btn danger sm" data-action="removeEffect" data-aid="'+g.aid+
+      '" data-preset="'+x.presetId+'">Remove</button></div></div>';
+  }).join("");
+  area.innerHTML='<div class="group-header"><span class="small">Group AID '+g.aid+' · '+
+    (g.mode==="grouped"?"Named HomeKit switches":"Legacy TV-style selector")+
+    '</span><div class="row">'+(g.mode==="tv"?'<button type="button" class="btn sm" data-action="convertEffects" data-aid="'+g.aid+'">Convert to switches</button>':"")+
+    '<button type="button" class="btn danger sm" data-action="deleteEffects" data-aid="'+g.aid+'">Remove group</button></div></div>'+rows;
 }
 function render(data){
   snapshot=data;
-  $("version").textContent=data.version||"—";
+  const connected=(data.devices||[]).filter(d=>d.online).length;
+  $("sidebarVersion").textContent=data.version||"Bridge firmware";
+  $("sidebarStatus").textContent=data.wifi?"Wi-Fi connected":"Wi-Fi unavailable";
+  $("connection").textContent=data.wifi?"Bridge online":"Bridge offline";
+  for(const id of ["sidebarDot","topDot"])$(id).className="status-dot "+(data.wifi?"online":"offline");
   $("lightCount").textContent=(data.devices||[]).length+" / 8";
+  $("onlineCount").textContent=connected+" online";
+  $("groupCount").textContent=(data.effectControllers||[]).length+" / 8";
   $("presetCount").textContent=(data.presets||[]).length+" / 12";
-  $("heap").textContent=(Math.round((data.freeHeap||0)/1024))+" KB";
-  $("connection").textContent=data.wifi?"Wi-Fi connected":"Wi-Fi unavailable";
-  $("network").textContent="IP: "+(data.ip||"none")+" · RSSI: "+data.rssi+" dBm · Uptime: "+data.uptimeSec+" s";
-  $("devices").className=data.devices.length?"":"empty";
-  $("devices").innerHTML=data.devices.length?data.devices.map(card).join(""):"No enrolled devices.";
-  $("presets").innerHTML=data.presets.length?data.presets.map(p=>
-    '<div class="device"><div class="devicehead"><div><div class="title">'+safe(p.name)+'</div><div class="meta">Switch AID '+p.aid+' · Light AID '+p.deviceAid+' · Preset '+p.presetId+'</div></div>'+
-    '<button class="danger" data-action="deletePreset" data-aid="'+p.aid+'">Remove</button></div></div>').join(""):"<p>No preset switches selected yet.</p>";
-  const controllers=data.effectControllers||[];
-  $("effectController").innerHTML=controllers.length?controllers.map(c=>
-    '<div class="device"><div class="devicehead"><div><div class="title">'+safe(c.lightName||("Light AID "+c.deviceAid))+' Effects</div>'+
-    '<div class="meta">'+(c.mode==="grouped"?"Named buttons":"Legacy TV inputs")+' · Group AID '+c.aid+
-    ' · '+(c.pending?"Restart needed":"Published on last boot")+' · '+(c.inputs||[]).length+'/5 effects</div></div>'+
-    '<div class="controls">'+(c.mode==="tv"?'<button data-action="convertEffects" data-aid="'+c.aid+'">Convert legacy TV</button>':'')+
-    '<button class="danger" data-action="deleteEffects" data-aid="'+c.aid+'">Remove group</button></div></div>'+
-    '<div class="effects-items">'+(c.inputs||[]).map((x,i)=>
-      '<div class="controls"><div class="title" style="flex:1;min-width:125px">'+safe(x.name)+' <span class="small">'+(x.kind==="playlist"?"Playlist":"Preset")+' #'+x.presetId+'</span></div>'+
-      '<button data-action="renameEffect" data-aid="'+c.aid+'" data-preset="'+x.presetId+'">Rename</button>'+
-      (i>0?'<button data-action="moveEffect" data-aid="'+c.aid+'" data-preset="'+x.presetId+'" data-direction="up">Up</button>':'')+
-      (i<c.inputs.length-1?'<button data-action="moveEffect" data-aid="'+c.aid+'" data-preset="'+x.presetId+'" data-direction="down">Down</button>':'')+
-      '<button class="danger" data-action="removeEffect" data-aid="'+c.aid+'" data-preset="'+x.presetId+'">Remove</button></div>').join("")+
-      '</div></div>').join(""):
-    '<div class="empty">No effects groups yet. Choose a WLED light below and add its first saved preset.</div>';
-  const effectsLight=$("effectsLight");const effectsPrevious=effectsLight.value;
-  effectsLight.innerHTML=data.devices.map(d=>'<option value="'+d.aid+'">'+safe(d.name)+' (AID '+d.aid+')</option>').join("");
-  if(data.devices.some(d=>String(d.aid)===effectsPrevious))effectsLight.value=effectsPrevious;
-  const lightSelect=$("presetLight");const previous=lightSelect.value;
-  lightSelect.innerHTML=data.devices.map(d=>'<option value="'+d.aid+'">'+safe(d.name)+' (AID '+d.aid+')</option>').join("");
-  if(data.devices.some(d=>String(d.aid)===previous))lightSelect.value=previous;
+  $("heap").textContent=Math.round((data.freeHeap||0)/1024)+" KB";
+  $("deviceCount").textContent=(data.devices||[]).length+" / 8";
+  $("effectsGroupCount").textContent=(data.effectControllers||[]).length+" / 8 groups";
+  $("switchLimit").textContent=(data.presets||[]).length+" / 12";
+  $("version").textContent=data.version||"—";
+  $("bridgeIp").textContent=data.ip||"—";
+  $("wifiRssi").textContent=typeof data.rssi==="number"?data.rssi+" dBm":"—";
+  $("uptime").textContent=typeof data.uptimeSec==="number"?Math.floor(data.uptimeSec/3600)+"h "+Math.floor(data.uptimeSec%3600/60)+"m":"—";
+  $("freeHeap").textContent=Math.round((data.freeHeap||0)/1024)+" KB";
+  $("minHeap").textContent=Math.round((data.minFreeHeap||0)/1024)+" KB";
+  $("freeSketch").textContent=Math.round((data.freeSketchSpace||0)/1024)+" KB";
+  $("bridgeHealth").textContent=data.wifi?"Connected":"Offline";
+  $("bridgeHealth").className="pill "+(data.wifi?"live":"danger");
+  lastStatusAt=new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
+  $("lastUpdated").textContent=lastStatusAt;
+  $("network").textContent="IP "+(data.ip||"unknown")+" · Wi-Fi "+(data.wifi?"connected":"disconnected")+
+     " · "+(data.rssi??"—")+" dBm";
+  const pending=(data.devices||[]).some(d=>d.pending)||(data.effectControllers||[]).some(c=>c.pending);
+  $("restartBanner").hidden=!(pending||restartRequired);
+  $("overviewDevices").className=(data.devices||[]).length?"":"empty";
+  $("overviewDevices").innerHTML=(data.devices||[]).length?(data.devices||[]).map(overviewRow).join(""):
+    '<div class="empty"><strong>No WLED devices yet</strong>Go to WLED lights to enroll a controller.</div>';
+  renderLights();
+  $("presets").innerHTML=(data.presets||[]).length?data.presets.map(p=>{
+    const light=deviceByAid(p.deviceAid);
+    return '<div class="effect-row"><div><div class="effect-name">'+safe(p.name)+'</div><div class="effect-kind">'+
+      safe(light?.name||"Unknown light")+' · Preset #'+p.presetId+' · AID '+p.aid+'</div></div>'+
+      '<button type="button" class="btn danger sm" data-action="deletePreset" data-aid="'+p.aid+'">Remove</button></div>';
+  }).join(""):'<div class="empty"><strong>No standalone switches</strong>These are optional. Grouped Effects favorites are usually easier to manage.</div>';
+  populateDevices("presetLight");
+  renderEffects();
 }
-async function refresh(){try{render(await api("/api/status"));}catch(error){$("connection").textContent="Portal unavailable";notice(error.message);}}
+async function refresh(){
+  try{render(await api("/api/status"));}
+  catch(error){
+    $("connection").textContent="Portal unavailable";
+    $("sidebarStatus").textContent="Connection lost";
+    for(const id of ["sidebarDot","topDot"])$(id).className="status-dot offline";
+    notice(error.message);
+  }
+}
 async function mutate(path,fields){
   const result=await api(path,fields);
-  notice(result.message||"Saved. "+(result.requiresReboot?"Restart to update Apple Home.":""));
+  if(result.requiresReboot){restartRequired=true;$("restartBanner").hidden=false;}
+  notice(result.message||"Request accepted.");
   await refresh();
   return result;
 }
-$("refresh").onclick=refresh;
-$("scan").onclick=async()=>{
-  $("scan").disabled=true;try{
-    const result=await api("/api/scan",{});
-    $("discovered").innerHTML=(result.devices||[]).map((d,i)=>
-      '<div class="device"><div class="title">'+safe(d.name)+'</div><div class="meta">'+safe(d.ip)+' · '+safe(d.mac)+'</div>'+
-      '<div class="controls"><button data-action="enrollScan" data-index="'+(i+1)+'">Add this WLED</button></div></div>').join("")||'<p>No WLED controllers found; try IP entry.</p>';
-    notice("Discovery finished.");
-  }catch(e){notice(e.message);}finally{$("scan").disabled=false;}
-};
-$("addIp").onsubmit=async e=>{e.preventDefault();try{await mutate("/api/enroll",{ip:e.target.elements.namedItem("ip").value});}catch(ex){notice(ex.message);}};
-$("loadCatalog").onclick=async()=>{
-  const id=$("presetLight").value;
-  if(!id)return notice("Add a WLED light first.");
-  try {
-    const result=await api("/api/catalog?aid="+encodeURIComponent(id));
-    $("presetId").innerHTML=(result.presets||[]).map(p=>'<option value="'+p.id+'">'+safe(p.name)+' (#'+p.id+')</option>').join("")||'<option value="">No saved presets found</option>';
-  }catch(e){notice(e.message);}
-};
-$("presetLight").onchange=()=>{$("presetId").innerHTML='<option value="">Load presets for this light</option>';$("presetInspection").textContent="";};
-$("effectsLight").onchange=()=>{
-  $("effectsPreset").innerHTML='<option value="">Load saved presets for this light</option>';
-};
-$("loadEffectsCatalog").onclick=async()=>{
-  const aid=$("effectsLight").value;
-  if(!aid)return notice("Choose a WLED light.");
+function switchEffectsLight(aid){
+  const previous=selectedEffectsAid;
+  selectedEffectsAid=String(aid);
+  if(previous!==selectedEffectsAid){
+    $("effectsPreset").innerHTML='<option value="">Load presets and playlists for this light</option>';
+  }
+  showView("effects");
+  renderEffects();
+}
+async function loadCatalog(aid,selectId,button){
+  if(!aid)return notice("Add a WLED light first.");
+  const old=button.textContent;
+  button.disabled=true;button.textContent="Loading…";
   try{
     const result=await api("/api/catalog?aid="+encodeURIComponent(aid));
-    $("effectsPreset").innerHTML=(result.presets||[]).map(p=>
-      '<option value="'+p.id+'">'+(p.kind==="playlist"?"Playlist":"Preset")+' · '+safe(p.name)+' (#'+p.id+')</option>').join("")||
-      '<option value="">No saved WLED presets or playlists found</option>';
+    const list=result.presets||[];
+    $(selectId).innerHTML=list.length?list.map(p=>
+      '<option value="'+p.id+'">'+(p.kind==="playlist"?"Playlist":"Preset")+' · '+safe(p.name)+' (#'+p.id+')</option>').join(""):
+      '<option value="">No saved presets or playlists found</option>';
+    if(list.length)notice("Loaded "+list.length+" saved presets and playlists.");
+  }catch(ex){notice(ex.message);}finally{button.disabled=false;button.textContent=old;}
+}
+async function restartBridge(){
+  if(!confirm("Restart the ESP32 bridge now? Apple Home will briefly show No Response; your pairing stays intact."))return;
+  try{
+    await api("/api/restart",{confirm:"REBOOT"});
+    restartRequired=false;$("restartBanner").hidden=true;
+    notice("Restart requested. The dashboard will reconnect when the bridge is ready.");
   }catch(ex){notice(ex.message);}
+}
+document.querySelectorAll("[data-view-target]").forEach(btn=>btn.addEventListener("click",()=>showView(btn.dataset.viewTarget)));
+document.querySelectorAll("[data-open-view]").forEach(btn=>btn.addEventListener("click",()=>{
+  if(btn.hasAttribute("data-open-discovery"))$("addWled").open=true;
+  showView(btn.dataset.openView);
+}));
+$("refresh").onclick=refresh;
+$("addLightJump").onclick=()=>{$("addWled").open=true;$("addWled").scrollIntoView({behavior:"smooth",block:"start"});};
+$("scan").onclick=async()=>{
+  const button=$("scan");button.disabled=true;
+  $("scanStatus").textContent="Searching your local network…";
+  try{
+    const res=await api("/api/scan",{});
+    $("discovered").innerHTML=(res.devices||[]).length?(res.devices||[]).map((d,i)=>
+      '<div class="effect-row"><div><div class="effect-name">'+safe(d.name)+'</div>'+
+      '<div class="effect-kind">'+safe(d.ip)+' · '+safe(d.mac)+'</div></div>'+
+      '<button type="button" class="btn primary sm" data-action="enrollScan" data-index="'+(i+1)+'">Add to bridge</button></div>').join(""):
+      '<div class="empty">No devices found. Try entering a known WLED IP address below.</div>';
+    $("scanStatus").textContent=(res.devices||[]).length+" device(s) discovered";
+  }catch(ex){$("scanStatus").textContent="Scan failed";notice(ex.message);}
+  finally{button.disabled=false;}
 };
+$("addIp").onsubmit=async e=>{
+  e.preventDefault();
+  try{await mutate("/api/enroll",{ip:e.target.elements.namedItem("ip").value});}
+  catch(ex){notice(ex.message);}
+};
+$("effectsLight").onchange=()=>switchEffectsLight($("effectsLight").value);
+$("presetLight").onchange=()=>{$("presetId").innerHTML='<option value="">Load presets for this light</option>';$("presetInspection").textContent="";};
+$("loadEffectsCatalog").onclick=()=>loadCatalog($("effectsLight").value,"effectsPreset",$("loadEffectsCatalog"));
+$("loadCatalog").onclick=()=>loadCatalog($("presetLight").value,"presetId",$("loadCatalog"));
 $("addEffect").onclick=async()=>{
   const aid=$("effectsLight").value,preset=$("effectsPreset").value;
-  if(!aid||!preset)return notice("Choose a WLED light and load its saved presets and playlists first.");
+  if(!aid||!preset)return notice("Choose a WLED light, then load and select a preset or playlist.");
   try{await mutate("/api/effects/add",{aid,preset});}catch(ex){notice(ex.message);}
 };
-$("inspectPreset").onclick=async()=>{
-  const aid=$("presetLight").value,preset=$("presetId").value;
-  if(!aid||!preset)return notice("Load and choose a saved WLED preset to inspect.");
-  const output=$("presetInspection");
-  output.textContent="Checking the saved WLED preset...";
-  try{
-    const r=await api("/api/presets/inspect?aid="+encodeURIComponent(aid)+
-                      "&preset="+encodeURIComponent(preset));
-    if(r.hasCompleteBounds)
-      output.textContent="Saved: "+r.savedSegments+" segment entries with stored boundaries. If applying this preset from Apple Home still fails to restore layout, test the same preset directly in WLED and compare the result.";
-    else if(r.hasSegmentArray)
-      output.textContent="Saved: "+r.savedSegments+" segment entries, but only "+r.segmentsWithBounds+
-        " include segment boundaries. In WLED, configure the desired segments, edit this preset, enable 'Use current state / Overwrite with state' and 'Save segment bounds', then save it again.";
-    else
-      output.textContent=r.apiMacro?
-        "This preset is an API command/playlist without stored segment bounds. Its behavior depends on the command. Inspect it in WLED before changing anything.":
-        "This preset does not store a segment array. Re-save the preset from the intended current WLED state with 'Save segment bounds' enabled.";
-  }catch(ex){output.textContent="Inspection failed: "+ex.message;}
-};
-$("presetId").onchange=()=>{$("presetInspection").textContent="";};
 $("addPreset").onsubmit=async e=>{
   e.preventDefault();
-  const aid=$("presetLight").value, preset=$("presetId").value;
-  if(!aid||!preset)return notice("Choose a light and saved preset.");
+  const aid=$("presetLight").value,preset=$("presetId").value;
+  if(!aid||!preset)return notice("Choose a light and a saved preset.");
   try{await mutate("/api/presets/add",{aid,preset});}catch(ex){notice(ex.message);}
+};
+$("inspectPreset").onclick=async()=>{
+  const aid=$("presetLight").value,preset=$("presetId").value,output=$("presetInspection");
+  if(!aid||!preset)return notice("Load and choose a saved WLED preset first.");
+  output.textContent="Inspecting segment layout…";
+  try{
+    const r=await api("/api/presets/inspect?aid="+encodeURIComponent(aid)+"&preset="+encodeURIComponent(preset));
+    output.textContent=r.hasCompleteBounds
+      ?r.savedSegments+" saved segment entries contain boundaries. Test this saved preset in WLED if the layout does not restore."
+      :r.hasSegmentArray
+        ?r.savedSegments+" saved segments, but only "+r.segmentsWithBounds+" have boundaries. In WLED, re-save the current state with 'Save segment bounds' enabled."
+        :r.apiMacro
+          ?"This saved entry is a playlist or API macro with no stored segment bounds. Its behavior comes from the WLED sequence."
+          :"This preset does not store segment bounds. Re-save it in WLED with 'Save segment bounds' enabled.";
+  }catch(ex){output.textContent="Could not inspect: "+ex.message;}
+};
+$("presetId").onchange=()=>{$("presetInspection").textContent="";};
+$("restart").onclick=restartBridge;
+$("restartNow").onclick=restartBridge;
+$("renameCancel").onclick=()=>$("renameDialog").close();
+$("renameForm").onsubmit=async e=>{
+  e.preventDefault();
+  const name=$("renameValue").value.trim();
+  if(!renaming||!name)return;
+  try{
+    await mutate("/api/effects/rename",{aid:renaming.aid,preset:renaming.preset,name});
+    $("renameDialog").close();renaming=null;
+  }catch(ex){notice(ex.message);}
 };
 document.body.addEventListener("click",async e=>{
   const el=e.target.closest("button[data-action]");if(!el)return;
-  const aid=el.dataset.aid,action=el.dataset.action;
+  const aid=el.dataset.aid,action=el.dataset.action,preset=el.dataset.preset;
+  if(action==="manageEffects"||action==="selectEffectsLight"){
+    switchEffectsLight(aid);
+    return;
+  }
+  if(action==="renameEffect"){
+    const group=(snapshot.effectControllers||[]).find(x=>String(x.aid)===aid);
+    const item=group?.inputs?.find(x=>String(x.presetId)===String(preset));
+    if(!item)return notice("Effect is no longer available. Refresh and try again.");
+    renaming={aid,preset};
+    $("renameValue").value=item.name;
+    $("renameDialog").showModal();$("renameValue").focus();
+    return;
+  }
   el.disabled=true;
   try{
     if(action==="enrollScan")await mutate("/api/enroll",{index:el.dataset.index});
     if(action==="on"||action==="off"||action==="brightness"){
-      const brightness=$("bright-"+aid)?.value;
-      await mutate("/api/control",{aid,action,brightness:brightness||""});
+      const brightness=Number($("bright-"+aid)?.value||50);
+      if(action==="brightness"&&(!Number.isInteger(brightness)||brightness<1||brightness>100))
+        throw Error("Brightness must be between 1 and 100.");
+      await mutate("/api/control",{aid,action,brightness:String(brightness)});
     }
-    if(action==="remove"&&confirm("Remove this light and its preset switches from Apple Home after restart?"))await mutate("/api/devices/remove",{aid});
-    if(action==="deletePreset"&&confirm("Remove this HomeKit preset switch?"))await mutate("/api/presets/remove",{aid});
-    if(action==="convertEffects"&&confirm("Convert this legacy TV input controller to grouped switches? It will get a new AID and needs a restart."))await mutate("/api/effects/convert",{aid,confirm:"GROUP"});
-    if(action==="deleteEffects"&&confirm("Remove ONLY this effects group? Your light and other effects groups stay."))await mutate("/api/effects/remove",{aid});
-    if(action==="renameEffect"){
-      const name=prompt("New name for this effect (1–30 characters):");
-      if(name!==null&&name.trim())await mutate("/api/effects/rename",{aid,preset:el.dataset.preset,name:name.trim()});
-    }
-    if(action==="removeEffect"&&confirm("Remove this effect? HomeKit requires rebuilding this ONE effects group with a NEW accessory ID. Its Home scenes or automations might need updating. Other WLED lights and effects groups stay paired."))await mutate("/api/effects/remove-preset",{aid,preset:el.dataset.preset,confirm:"REBUILD"});
-    if(action==="moveEffect"&&confirm("Reorder this effect? This ONE group gets a NEW HomeKit accessory ID and its scenes/automations may need updating. Continue?"))await mutate("/api/effects/move",{aid,preset:el.dataset.preset,direction:el.dataset.direction,confirm:"REBUILD"});
+    if(action==="runEffect")await mutate("/api/effects/run",{aid,preset});
+    if(action==="remove"&&confirm("Remove this WLED light and its associated HomeKit controls? Other WLED lights remain. Restart required."))await mutate("/api/devices/remove",{aid});
+    if(action==="deletePreset"&&confirm("Remove this standalone HomeKit preset switch?"))await mutate("/api/presets/remove",{aid});
+    if(action==="convertEffects"&&confirm("Convert this legacy TV-style controller to named Switch services? The Effects group gets a new HomeKit ID."))await mutate("/api/effects/convert",{aid,confirm:"GROUP"});
+    if(action==="deleteEffects"&&confirm("Remove ONLY this Effects group? The WLED light and other groups stay connected."))await mutate("/api/effects/remove",{aid});
+    if(action==="removeEffect"&&confirm("Removing a button rebuilds this ONE Effects group with a NEW HomeKit ID. Scenes and automations may need updating. Continue?"))await mutate("/api/effects/remove-preset",{aid,preset,confirm:"REBUILD"});
+    if(action==="moveEffect"&&confirm("Reordering rebuilds this ONE Effects group with a NEW HomeKit ID. Apple Home scenes may need updating. Continue?"))await mutate("/api/effects/move",{aid,preset,direction:el.dataset.direction,confirm:"REBUILD"});
   }catch(ex){notice(ex.message);}finally{el.disabled=false;}
 });
-$("restart").onclick=async()=>{
-  if(!confirm("Restart bridge now? Apple Home may show No Response temporarily."))return;
-  try{await api("/api/restart",{confirm:"REBOOT"});notice("Bridge is restarting...");}catch(e){notice(e.message);}
-};
 refresh();
 setInterval(refresh,10000);
+
 </script>
 </body></html>

@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.9.1 saved WLED playlists in Effects groups (CI passed; physical playlist playback and HomeKit sync pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.9.2 dashboard UX redesign (code complete candidate; CI/browser/hardware pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -196,6 +196,19 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 **Merge:** [PR #10](https://github.com/ggrant111/wled-applehome/pull/10) merged into `main`. **Hardware acceptance pending**: actual WLED playlist progression and selected HomeKit On indicators must be verified.
 
 **Non-goals:** The bridge does not build/edit playlist sequences, duration, transition, shuffle, or repeats; those stay in WLED. No HomeKit effect picker beyond the already physically working named grouped Switch controls.
+
+### Phase 9C / v0.9.2 — Redesigned local dashboard
+
+- [x] **Code candidate:** Replace scrolling two-column admin page with responsive five-section workspace (Overview, WLED Lights, Effects & Playlists, Preset Switches, Bridge Settings). No new dependencies and no remote assets.
+- [x] **Code candidate:** Group per-light Effects management around one WLED selector, active playlist/preset badges, named favorites, clear Add/Run/Rename/Move/Remove actions; highlight state using existing `ps`/`pl` status. Separate momentary switches to avoid confusing them with persistent favorites.
+- [x] **Code candidate:** Dedicated light health, power/brightness, discovery and enrollment; device-count and memory summaries; firmware, RSSI, uptime, heap, OTA instructions and clear restart affordance.
+- [x] **Code candidate:** New Digest + CSRF protected `POST /api/effects/run` validates an existing Effects-group AID and enrolled resource before queuing a normal WLED `{"ps":id}` request. Does not create an Apple Home accessory or modify WLED presets/playlists/segments.
+- [x] **Code candidate:** Accessible status feedback and native rename dialog; responsive phone navigation and focus states; prevent resetting a focused brightness input during 10-second status refresh; selected WLED device persists across refresh; refreshed CSRF token retry remains unchanged.
+- [x] **Code candidate:** Add VM-backed browser regression tests for five-page navigation, device/playlist rendering and HTML escaping, command POST/CSRF, pending-restart banner and quick navigation. Static endpoint/authorization test updated for Run.
+- [ ] **CI:** JS/host regressions, self-contained gzip portal, ESP32 D1 Mini and CYD builds and OTA headroom guard.
+- [ ] **Hardware/UI:** Check dashboard on iPhone and desktop, grouped playlist labels, device light selection, inline commands, rename and safe edit warnings, startup reconnect and two WLED devices. Existing HomeKit pairing and AIDs must remain untouched.
+
+**Risk controls:** No new NVS schema, WLED controller modification, HomeKit accessory topology or OTA service change. All POSTs still require Digest + per-boot CSRF. UI-only change is except the explicitly scoped Run endpoint. Do not claim hardware validation from browser unit tests.
 
 ## After MVP
 

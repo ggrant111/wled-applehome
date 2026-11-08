@@ -18,7 +18,7 @@
 #include "WledLightService.h"
 
 #ifndef WLED_APP_VERSION
-#define WLED_APP_VERSION "0.9.1-dev"
+#define WLED_APP_VERSION "0.9.2-dev"
 #endif
 
 namespace {

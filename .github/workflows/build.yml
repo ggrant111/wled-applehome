@@ -68,6 +68,8 @@ jobs:
 
       - name: Check multi-WLED effects portal and CSRF contract
         run: node tests/test_effects_portal.mjs
+      - name: Test redesigned portal navigation and live interactions
+        run: node tests/test_portal_ux.mjs
 
   firmware:
     runs-on: ubuntu-latest

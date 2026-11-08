@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.9.1-dev — saved WLED playlists alongside presets with HomeKit active-playlist tracking (**CI passed; physical playlist test pending**). [Download firmware](https://github.com/ggrant111/wled-applehome/actions/runs/42505219721). [Download firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880).
+**Current version:** v0.9.2-dev — redesigned responsive local bridge dashboard with dedicated Overview, Lights, Effects & Playlists, Preset Switches and Bridge Settings views (**CI and on-device UI tests pending**). [Download firmware](https://github.com/ggrant111/wled-applehome/actions/runs/42505219721). [Download firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -23,6 +23,18 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 - Automated PlatformIO builds for D1 Mini/CYD and host-side brightness/registry policy tests.
 
 **Build verified:** v0.3 passed native tests, D1 Mini and CYD firmware builds ([CI run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722)). **Physical tests remain pending** for Phases 2, 3 and 4. **Not yet hardware-verified:** v0.2 discovery, 8-light operation, and paired Apple Home database refresh after adding/removing devices. No presets, web setup UI, or CYD touchscreen interface yet.
+
+## v0.9.2 — Dashboard UX refresh
+
+The same local Digest-authenticated web portal on port **8080** now uses a clean, responsive five-view interface:
+
+- **Overview:** device availability, active preset/playlist, number of Effects groups and shortcuts to common tasks.
+- **WLED lights:** live power/brightness controls, connection health, discovery and manual enrollment.
+- **Effects & playlists:** choose one light, review its named HomeKit favorite buttons and their active state, add saved presets and playlists, rename or reorder, and **Run** selected saved WLED resources directly from the dashboard using the existing queued WLED command path. The run action does **not** modify the WLED saved resource.
+- **Preset switches:** manage separate momentary HomeKit preset switches and inspect saved segment boundaries.
+- **Bridge settings:** firmware/uptime/RSSI/heap diagnostics, safe restart, OTA guidance and local-only security reminders.
+
+HomeKit-pending changes surface as a dedicated restart notice; all user-entered names are escaped in the UI, and keyboard/mobile navigation is supported. The dashboard remains a single gzip-compressed HTML asset in flash; no remote script, font, external CDN, new NVS keys, new pairing or change to WLED device configuration. The **new authenticated CSRF-protected run endpoint** validates that a resource belongs to the selected Effects group before queuing its existing WLED preset ID. [v0.9.2 UX test plan](docs/PHASE9_PORTAL_UX_TEST_PLAN.md).
 
 ## v0.9.1 — WLED saved playlists inside HomeKit Effects groups
 

@@ -4,11 +4,11 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 const server=readFileSync("src/PortalServer.cpp","utf8");
 const html=readFileSync("web/portal.html","utf8");
-for(const endpoint of ["rename","remove-preset","move"]){
+for(const endpoint of ["rename","remove-preset","move","run"]){
   assert(server.includes('"/api/effects/'+endpoint+'"'));
   assert(html.includes('"/api/effects/'+endpoint+'"'));
 }
-for(const method of ["handleRenameEffect","handleRemoveEffectInput","handleMoveEffectInput"]){
+for(const method of ["handleRenameEffect","handleRemoveEffectInput","handleMoveEffectInput","handleRunEffect"]){
   const start=server.indexOf("void PortalServer::"+method+"() {");
   const end=server.indexOf("\n}\n",start);
   assert(start>=0&&end>start,method);
@@ -18,6 +18,7 @@ for(const method of ["handleRenameEffect","handleRemoveEffectInput","handleMoveE
 assert(html.includes('data-action="moveEffect"'));
 assert(html.includes('data-action="removeEffect"'));
 assert(html.includes('data-action="renameEffect"'));
+assert(html.includes('data-action="runEffect"'));
 assert(html.includes('safe(x.name)'),"Effect labels must be escaped");
 assert(html.includes('p.kind==="playlist"'),"WLED playlist labeling missing");
 assert(html.includes('x.kind==="playlist"'),"Effects group playlist labeling missing");
