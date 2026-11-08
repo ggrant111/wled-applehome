@@ -111,7 +111,8 @@
 - Code investigation: all preset switch paths call `WledClient::applyPreset`, which queues the normal WLED `{"ps":id}` through the background worker. No bridge API is intentionally omitting `seg` during preset recall. WLED itself may lack saved `start`/`stop` segment bounds, depending on its **Save segment bounds** preset option. This must be inspected, not assumed.
 - Added read-only per-preset inspection in the authenticated portal with streaming ArduinoJson filter, no WLED preset mutations. Reports total saved segment entries, boundaries present, and whether the preset appears to be a macro.
 - Updated only grouped named effect switches to keep a selected preset On while the WLED `ps` and power match; selecting another preset turns the previous indicator Off after background reconciliation; toggling the current preset Off queues WLED Off. Standalone momentary switches stay unchanged. No AID/NVS/partition changes.
-- **CI and physical validation pending**, including WLED direct preset restore vs HomeKit behavior. [Phase 8 checklist](PHASE8_TEST_PLAN.md).
+- **CI passed:** [run 42452061034](https://github.com/ggrant111/wled-applehome/actions/runs/42452061034) — new power/bounds host tests, existing regressions, D1 Mini/CYD firmware and OTA margin gate. Both images 1,564,800 bytes/2,031,616 slot, with 466,816 bytes free. **Physical segment restoration and selected On/Off HomeKit behavior still pending.** [Phase 8 checklist](PHASE8_TEST_PLAN.md).
+- **Merged to main:** [PR #8](https://github.com/ggrant111/wled-applehome/pull/8). Existing light and grouped-effect accessory AIDs/characteristics preserved.
 
 ## Next actions
 

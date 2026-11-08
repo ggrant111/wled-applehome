@@ -1,5 +1,7 @@
 # Phase 8 — Saved WLED segments and grouped power semantics
 
+**CI:** [run 42452061034](https://github.com/ggrant111/wled-applehome/actions/runs/42452061034) passed all host tests plus D1 Mini and CYD firmware and OTA budget. Both images 1,564,800 bytes; 466,816 bytes free. This does not certify on-device WLED or Apple Home behavior.
+
 **Reported by user:** v0.7.1 grouped effects work on iPhone. Problem: some WLED preset segment settings do not restore. User would prefer preset power selection rather than momentary switches.
 
 ## Diagnose segments first

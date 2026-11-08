@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.8 grouped power-selection and WLED preset segment diagnostics (code candidate; CI/hardware pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.8 grouped power-selection and WLED preset segment diagnostics (CI passed; physical segment/power verification pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -150,7 +150,7 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 - [x] **Research:** WLED's JSON `{"ps":id}` is the normal full saved-preset activation request (the bridge already sends it). Segment bounds are only restored if WLED saved `start` and `stop` geometry. WLED's own guide instructs enabling **Use current state** and **Save segment bounds** when saving a preset.
 - [x] **Code candidate:** Add a **read-only** authenticated API and portal inspection for the chosen WLED preset, stream-filtering only the selected preset's `seg[].start`/`stop`, and reporting segment counts with saved bounds. Diagnose missing preset data without rewriting WLED `presets.json`.
 - [x] **Code candidate:** Grouped effect controls persist On for the active saved WLED preset; activating a different effect synchronizes other On indicators to Off after the background worker's authoritative WLED GET; turning the active effect Off powers WLED Off. Keep standalone switch actions momentary. Preserve all existing paired AIDs and HomeKit service types.
-- [ ] **CI:** New pure host power-state/bounds tests, old regressions and both ESP32 builds/OTA headroom.
+- [x] **CI passed:** [run 42452061034](https://github.com/ggrant111/wled-applehome/actions/runs/42452061034) — host behavior, browser/CSRF, both ESP32 images and minimum OTA headroom. Both images 1,564,800 bytes; 466,816 bytes free.
 - [ ] **Hardware:** Inspect a problematic saved preset; if bounds missing, fix the **WLED preset** in its native editor and test direct WLED recall. Compare preset activation through Apple Home. Verify toggling first, second and Off effects updates selected statuses, preserves WLED segments, and Siri color remains working.
 - [ ] **Unresolved:** If preset includes bounds and direct WLED recall fully restores segments but Apple Home doesn't, capture WLED `/json/state` before/after plus logs. Do not force-write segment geometry without clear evidence; WLED's native preset engine owns it.
 
@@ -253,10 +253,14 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 | v0.7.1 opt-in grouped effect buttons, AID migration and both ESP32 builds | **Passed** | [CI run 42449994004](https://github.com/ggrant111/wled-applehome/actions/runs/42449994004) |
 | v0.7.1 Apple Home multi-switch effect UI and WLED triggering | **Hardware pending** | [Phase 7B](PHASE7B_TEST_PLAN.md) |
 
+| v0.8 preset power/bounds diagnostics, host tests and both ESP32 builds | **Passed** | [CI run 42452061034](https://github.com/ggrant111/wled-applehome/actions/runs/42452061034) |
+| v0.8 actual WLED segment restoration and HomeKit power status | **Hardware pending** | [Phase 8 checklist](PHASE8_TEST_PLAN.md) |
+
 ## Engineering risk / budget
 
 - **4MB OTA flash budget is tight.** v0.2 compiled binary uses ~1,733,463 bytes (85.3%) of each 2,031,616-byte app slot; approximately 298KB remains. Major additions (especially touchscreen/web assets) will need explicit size-budget tests, optimization, larger flash hardware, or an altered OTA strategy.
 - v0.3 linked flash use was **1,758,847 bytes (86.6%)** of 2,031,616 per OTA application slot.
+- **v0.8 full firmware.bin with GCC -Oz:** D1 Mini and CYD **1,564,800 bytes** (**466,816 bytes free** of 2,031,616); [CI run 42452061034](https://github.com/ggrant111/wled-applehome/actions/runs/42452061034) passed minimum OTA headroom. Real segment recall depends on WLED preset content and still requires user hardware validation.
 - **v0.7.1 full firmware.bin with GCC -Oz:** both D1 Mini and CYD **1,560,144 bytes** (**471,472 bytes free** of 2,031,616); [CI run 42449994004](https://github.com/ggrant111/wled-applehome/actions/runs/42449994004) passed flash budget. Grouped HomeKit switch UI still requires physical verification.
 - **v0.7 full firmware.bin with GCC -Oz:** D1 Mini and CYD each **1,557,792 bytes** (**473,824 free** in the 2,031,616-byte OTA slot); [CI 42448093812](https://github.com/ggrant111/wled-applehome/actions/runs/42448093812) passed 70KB headroom. Home app TV input rendering remains untested.
 - **v0.6 full firmware.bin with GCC -Oz:** D1 Mini **1,545,312 bytes** (**486,304 free**, 76.1% OTA slot); CYD **1,545,296 bytes** (**486,320 free**). [CI 42445302149](https://github.com/ggrant111/wled-applehome/actions/runs/42445302149) passed both build and size gates. The -Oz option substantially changes compiler optimization: validate real device stability and OTA before release.
