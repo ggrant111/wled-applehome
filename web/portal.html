@@ -81,10 +81,10 @@ footer{color:var(--muted);font-size:12px;padding-top:12px}
       </div>
       <div class="panel">
         <h2>Effects Controller <span class="pill">EXPERIMENTAL</span></h2>
-        <p>Choose up to five saved WLED presets for one light. Apple Home may show this as a TV or generic accessory with a named input selector. Your normal RGB light stays unchanged.</p>
+        <p>Choose up to five saved WLED presets for one light. Apple Home sometimes hides bridged-TV input selection. Convert the experimental TV to one accessory with named tappable preset switches; your normal RGB light stays unchanged.</p>
         <div id="effectController"></div>
         <div class="actionrow"><button type="button" class="primary" id="addEffect">Add selected preset to Effects Controller</button></div>
-        <p class="small">Uses the light and preset selected above. Restart the bridge after edits. TV power Off turns that WLED light Off; turning it On reapplies the last selected preset.</p>
+        <p class="small">Restart after edits. Grouped preset buttons are momentary and do not turn the light off; TV mode retains its power behavior.</p>
       </div>
       <div class="panel">
         <h2>Bridge maintenance</h2>
@@ -163,8 +163,9 @@ function render(data){
     '<button class="danger" data-action="deletePreset" data-aid="'+p.aid+'">Remove</button></div></div>').join(""):"<p>No preset switches selected yet.</p>";
   const controllers=data.effectControllers||[];
   $("effectController").innerHTML=controllers.length?controllers.map(c=>
-    '<div class="device"><div class="devicehead"><div><div class="title">Effects selector · Light AID '+c.deviceAid+'</div><div class="meta">TV-style accessory AID '+c.aid+' · '+(c.pending?'Restart needed':'Published on last boot')+'</div></div>'+
-    '<button class="danger" data-action="deleteEffects" data-aid="'+c.aid+'">Remove controller</button></div>'+
+    '<div class="device"><div class="devicehead"><div><div class="title">Effects · Light AID '+c.deviceAid+'</div><div class="meta">'+(c.mode==="grouped"?"Grouped buttons":"TV-style selector")+' · AID '+c.aid+' · '+(c.pending?'Restart needed':'Published on last boot')+'</div></div>'+
+    '<div class="controls">'+(c.mode==="tv"?'<button class="primary" data-action="convertEffects" data-aid="'+c.aid+'">Convert to grouped buttons</button>':'')+
+    '<button class="danger" data-action="deleteEffects" data-aid="'+c.aid+'">Remove controller</button></div></div>'+
     '<div class="small">'+(c.inputs||[]).map(x=>x.id+'. '+safe(x.name)+' (preset #'+x.presetId+')').join(' · ')+'</div></div>').join(""):
     '<p>None configured. Load a WLED preset above to create one.</p>';
   const lightSelect=$("presetLight");const previous=lightSelect.value;
@@ -221,7 +222,8 @@ document.body.addEventListener("click",async e=>{
     }
     if(action==="remove"&&confirm("Remove this light and its preset switches from Apple Home after restart?"))await mutate("/api/devices/remove",{aid});
     if(action==="deletePreset"&&confirm("Remove this HomeKit preset switch?"))await mutate("/api/presets/remove",{aid});
-    if(action==="deleteEffects"&&confirm("Remove the experimental TV-style effects selector? Lights and preset switches stay."))await mutate("/api/effects/remove",{aid});
+    if(action==="convertEffects"&&confirm("Replace the TV-style selector with ONE Home accessory containing named preset buttons? This allocates a new accessory ID and needs a restart. Your WLED light stays intact."))await mutate("/api/effects/convert",{confirm:"GROUP"});
+    if(action==="deleteEffects"&&confirm("Remove the Effects Controller? Lights and existing preset switches stay."))await mutate("/api/effects/remove",{aid});
   }catch(ex){notice(ex.message);}finally{el.disabled=false;}
 });
 $("restart").onclick=async()=>{

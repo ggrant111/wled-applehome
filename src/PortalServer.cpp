@@ -105,7 +105,7 @@ void PortalServer::handleStatus() {
   http_.sendHeader("X-Bridge-Token", token_);
   JsonDocument doc;
   doc["ok"] = true;
-  doc["version"] = "0.7.0-dev";
+  doc["version"] = "0.7.1-dev";
   doc["wifi"] = WiFi.status() == WL_CONNECTED;
   doc["ip"] = WiFi.localIP().toString();
   doc["rssi"] = WiFi.RSSI();
@@ -153,6 +153,7 @@ void PortalServer::handleStatus() {
     const EffectsControllerRecord &e = effects_.record();
     JsonObject controller = controllers.add<JsonObject>();
     controller["aid"] = e.aid;
+    controller["mode"] = e.mode == EffectsControllerMode::GroupedButtons ? "grouped" : "tv";
     controller["deviceAid"] = e.deviceAid;
     controller["pending"] = e.aid != bootEffectsAid_;
     JsonArray inputs = controller["inputs"].to<JsonArray>();
@@ -389,6 +390,24 @@ void PortalServer::handleRemoveEffectsController() {
   sendJSON(response);
 }
 
+void PortalServer::handleConvertEffects() {
+  if (!authorize(true)) return;
+  if (!effects_.configured())
+    return respond(404, "No Effects Controller has been configured");
+  if (effects_.record().mode != EffectsControllerMode::Television)
+    return respond(409, "Effects Controller already uses grouped buttons");
+  if (http_.arg("confirm") != "GROUP")
+    return respond(400, "Explicit confirmation required");
+  const uint32_t aid = effects_.convertToGroupedButtons(devices_);
+  if (!aid) return respond(500, "Could not persist grouped button conversion");
+  JsonDocument response;
+  response["ok"] = true;
+  response["aid"] = aid;
+  response["requiresReboot"] = true;
+  response["message"] = "Converted to one Home accessory with named effect buttons. Restart bridge to publish.";
+  sendJSON(response);
+}
+
 void PortalServer::handleRestart() {
   if (!authorize(true)) return;
   if (http_.arg("confirm") != "REBOOT")
@@ -413,6 +432,7 @@ void PortalServer::routes() {
   http_.on("/api/presets/remove", HTTP_POST, [this]() { handleRemovePreset(); });
   http_.on("/api/effects/add", HTTP_POST, [this]() { handleAddEffect(); });
   http_.on("/api/effects/remove", HTTP_POST, [this]() { handleRemoveEffectsController(); });
+  http_.on("/api/effects/convert", HTTP_POST, [this]() { handleConvertEffects(); });
   http_.on("/api/restart", HTTP_POST, [this]() { handleRestart(); });
   http_.onNotFound([this]() {
     if (authorize()) respond(404, "Endpoint not found");

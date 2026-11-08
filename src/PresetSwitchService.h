@@ -4,7 +4,8 @@
 
 class PresetSwitchService : public Service::Switch {
 public:
-  PresetSwitchService(WledClient &client, uint32_t lightAid, uint8_t presetId);
+  PresetSwitchService(WledClient &client, uint32_t lightAid, uint8_t presetId,
+                      const char *serviceName = nullptr);
   boolean update() override;
   void loop() override;
 

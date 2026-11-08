@@ -2,10 +2,13 @@
 #include <Arduino.h>
 
 PresetSwitchService::PresetSwitchService(WledClient &client,
-                                         uint32_t lightAid, uint8_t presetId)
+                                         uint32_t lightAid, uint8_t presetId,
+                                         const char *serviceName)
     : Service::Switch(), client_(client), lightAid_(lightAid),
       presetId_(presetId) {
   on_ = new Characteristic::On(false);
+  if (serviceName && *serviceName)
+    new Characteristic::ConfiguredName(serviceName);
 }
 
 boolean PresetSwitchService::update() {

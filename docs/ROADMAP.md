@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.7 experimental opt-in TV-style effects selector (CI passed; Apple Home hardware UI validation pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.7.1 optional grouped effect buttons, after failed TV input-selection UI on iPhone (CI/hardware pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -133,6 +133,16 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 - [ ] **Future:** If Apple Home displays input selection reliably, expand from one prototype to optional controller per light, better refresh handling, and scene integration.
 
 **Important:** Apple Home **does not have a WLED effects API**. This repurposes TV input selection and may appear under Television/AV rather than Lighting, with TV power semantics. No guarantee that the iOS Home app accepts a TV service behind the bridge. The existing light tile is NOT modified; user must enroll an effects controller in the web portal after updating.
+
+### Phase 7B / v0.7.1 — Grouped named effect buttons, fallback from bridged TV
+
+- [x] **User hardware feedback:** v0.7 Effects Controller appears in Apple Home with four correct WLED saved preset names in **Settings → Inputs**, but its main control panel shows ONLY power; no usable input selector. This fails the native effects input UI acceptance gate.
+- [x] **Research:** HomeSpan Television docs describe input picker on an ordinary TV; HomeSpan's developer has shown that bridged TV icons become generic. Their [grouped Switch service example](https://github.com/HomeSpan/HomeSpan/discussions/485) demonstrates several named, tappable Switch controls within one HomeKit accessory.
+- [x] **Code candidate:** Add a manual, authenticated/CSRF-protected portal action **Convert to grouped buttons**. The existing TV accessory stays unchanged unless the administrator chooses conversion.
+- [x] **Code candidate:** Preserve up to five configured WLED saved preset names/IDs and the original WLED light, while allocating a **fresh HomeKit accessory AID** for a multi-`Switch` accessory. Each grouped switch queues a WLED preset and resets after 250ms.
+- [ ] **CI:** NVS/AID migration checks, existing host/browser checks, D1 Mini/CYD builds and 70KB OTA margin gate.
+- [ ] **Hardware:** Verify one grouped Home tile exposes separately named controls, preset activation, light/Siri continuity, restart/pairing, and no change to existing independent switches.
+- [ ] **Fallback:** Native Apple Home scenes and existing separate preset switches, if multi-switch presentation disappoints.
 
 ## After MVP
 

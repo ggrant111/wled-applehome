@@ -50,9 +50,24 @@ int main() {
   assert(afterReboot.record().deviceAid==2);
   assert(afterReboot.record().count()==5);
   assert(afterReboot.record().inputs[1].name=="Fire");
-  assert(afterReboot.remove(3));
+
+  // Switch away from Apple's generic bridged-TV tile. The light and saved
+  // preset mapping survive, but the different HomeKit service gets a NEW AID.
+  assert(afterReboot.convertToGroupedButtons(devices)==5);
+  assert(afterReboot.record().mode==EffectsControllerMode::GroupedButtons);
+  assert(afterReboot.record().aid==5);
+  EffectsControllerRegistry groupedReboot;
+  assert(groupedReboot.begin());
+  assert(groupedReboot.record().aid==5);
+  assert(groupedReboot.record().deviceAid==2);
+  assert(groupedReboot.record().mode==EffectsControllerMode::GroupedButtons);
+  assert(groupedReboot.record().count()==5);
+  assert(groupedReboot.record().inputs[0].presetId==5);
+  assert(groupedReboot.record().inputs[1].name=="Fire");
+  assert(groupedReboot.convertToGroupedButtons(devices)==0);
+  assert(groupedReboot.remove(5));
   EffectsControllerRegistry removed;
   assert(removed.begin() && !removed.configured());
-  assert(devices.allocateAid()==5); // TV AID 3 is never re-used.
-  std::puts("Experimental HomeKit effects TV registry and AID persistence passed");
+  assert(devices.allocateAid()==6); // Neither TV AID 3 nor grouped AID 5 reused.
+  std::puts("HomeKit effects TV-to-grouped conversion, NVS identity and AIDs passed");
 }

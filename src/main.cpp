@@ -18,7 +18,7 @@
 #include "WledLightService.h"
 
 #ifndef WLED_APP_VERSION
-#define WLED_APP_VERSION "0.7.0-dev"
+#define WLED_APP_VERSION "0.7.1-dev"
 #endif
 
 namespace {
@@ -298,17 +298,30 @@ void addEffectsController() {
   String name = registry.at(index).name + " Effects";
   if (name.length() > 35) name = name.substring(0, 35);
   new SpanAccessory(record.aid);
-    addBridgeInformation(name.c_str(), "WLED Effects Input Selector");
-    WledEffectsTV *tv = new WledEffectsTV(clients[index], *lightServices[index],
-                                          record, name.c_str());
-    for (unsigned i = 0; i < record.count(); ++i) {
-      SpanService *input = new Service::InputSource();
-        new Characteristic::ConfiguredName(record.inputs[i].name.c_str());
-        new Characteristic::Identifier(i + 1);
-        new Characteristic::IsConfigured(1);
-      tv->addLink(input);
+    addBridgeInformation(name.c_str(),
+      record.mode == EffectsControllerMode::GroupedButtons
+          ? "WLED Grouped Effects Buttons" : "WLED Effects Input Selector");
+    if (record.mode == EffectsControllerMode::GroupedButtons) {
+      // Grouped Switch services display multiple named, tappable controls
+      // inside one HomeKit accessory. No TV power semantics apply here.
+      for (unsigned i = 0; i < record.count(); ++i)
+        new PresetSwitchService(clients[index], record.deviceAid,
+                                record.inputs[i].presetId,
+                                record.inputs[i].name.c_str());
+    } else {
+      WledEffectsTV *tv = new WledEffectsTV(clients[index], *lightServices[index],
+                                            record, name.c_str());
+      for (unsigned i = 0; i < record.count(); ++i) {
+        SpanService *input = new Service::InputSource();
+          new Characteristic::ConfiguredName(record.inputs[i].name.c_str());
+          new Characteristic::Identifier(i + 1);
+          new Characteristic::IsConfigured(1);
+        tv->addLink(input);
+      }
     }
-  Serial.printf("[Effects] Added HomeKit TV-style selector AID=%lu for WLED AID=%lu\n",
+  Serial.printf("[Effects] Added %s AID=%lu for WLED AID=%lu\n",
+                record.mode == EffectsControllerMode::GroupedButtons
+                    ? "grouped buttons" : "TV selector",
                 static_cast<unsigned long>(record.aid),
                 static_cast<unsigned long>(record.deviceAid));
 }

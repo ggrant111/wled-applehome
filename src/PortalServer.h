@@ -49,5 +49,6 @@ private:
   void handleRemovePreset();
   void handleAddEffect();
   void handleRemoveEffectsController();
+  void handleConvertEffects();
   void handleRestart();
 };
