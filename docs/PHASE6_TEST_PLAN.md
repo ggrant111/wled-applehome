@@ -1,6 +1,6 @@
 # v0.6 Apple Home Hue/Saturation — hardware acceptance
 
-Code and CI alone do not prove that Apple Home refreshes optional characteristics or that RGB works with the user's WLED LED hardware.
+[CI run 42445302149](https://github.com/ggrant111/wled-applehome/actions/runs/42445302149) passed firmware and regression tests, but compile-only evidence does not prove that Apple Home refreshes optional characteristics or that RGB works with actual WLED hardware. This firmware uses GCC -Oz size optimization, so physically verify stability before relying on unattended OTA.
 
 ## Before update
 - [ ] Confirm WLED color strip is RGB or RGBW; record your current preset switch names, AIDs and working firmware version.

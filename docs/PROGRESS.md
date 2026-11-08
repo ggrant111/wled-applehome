@@ -79,7 +79,8 @@
 - HomeKit hue/saturation converted to WLED RGB via portable pure C++ code, with explicit RGBW white=0 and targeted WLED main segment Solid effect only when user changes color; includes an explicit main segment ID to protect other selected segments. No segment arrangement, other segments, NVS, or preset switch definitions changed.
 - WLED main-segment primary RGB read back during routine background polls and converted to HomeKit color characteristics; no attempt to show rapidly changing animation colors.
 - Reused v0.5 nonblocking queue, combined HomeKit color/power/brightness updates and existing stale-response safeguards.
-- Added native conversion/round-trip tests. **CI and physical on-device testing pending.** [Phase 6 test plan](PHASE6_TEST_PLAN.md).
+- Added native conversion/round-trip tests. **CI passed:** [run 42445302149](https://github.com/ggrant111/wled-applehome/actions/runs/42445302149) — HSV↔RGB tests, existing host/browser/security checks, D1 Mini/CYD firmware and OTA image-size check. D1 Mini image 1,545,312 / 2,031,616 bytes (486,304 free); CYD image 1,545,296 bytes (486,320 free). **On-device Apple Home color control, pairing persistence and OTA still require testing.** [Phase 6 test plan](PHASE6_TEST_PLAN.md).
+- **Merged to main:** [PR #5](https://github.com/ggrant111/wled-applehome/pull/5). Keep the prior v0.5 binary available for rollback until the -Oz-optimized image is tested on hardware.
 
 ## Next actions
 

@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.6 Apple Home RGB color (code candidate; CI and hardware verification pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.6 Apple Home RGB color (CI verified; physical HomeKit & WLED tests pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -99,14 +99,14 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 
 **Preservation:** No NVS schema, HomeKit AID, password, preset registry, partition table or pairing change in v0.5. Upgrade without erase.
 
-### Phase 6 / v0.6 — Apple Home full-color light controls — **IMPLEMENTED CANDIDATE / CI & HARDWARE PENDING**
+### Phase 6 / v0.6 — Apple Home full-color light controls — **CI PASSED / HARDWARE PENDING**
 
 - [x] **Code:** Append Hue (0–360 degrees) and Saturation (0–100%) HomeSpan characteristics to existing light services after On and Brightness, preserving original service/characteristic ordering and accessory AIDs.
 - [x] **Code:** Convert HomeKit HSV (value remains under the independent Brightness characteristic) to 8-bit WLED RGB primary color on the **main WLED segment** using a targeted JSON `seg` object with an explicit main-segment ID, leaving other segment layout untouched. Explicit color selection sets the main segment to Solid effect (`fx:0`) to ensure the color is visible; restores effects through normal preset switches.
 - [x] **Code:** Combine HomeKit power/brightness/color edits in one queued worker command. Default WLED white channel to 0 on RGB color choice, without changing other segment colors.
 - [x] **Code:** Parse current main-segment RGB primary from WLED's `/json/state`, publish Hue/Saturation to HomeKit after a fresh background poll. Never claim a color if WLED doesn't return an RGB primary.
 - [x] **Code:** Add portable HSV↔RGB tests for the six color-wheel anchors, grayscale, rounding and representative round-trips.
-- [ ] **CI:** Both firmware builds, binary size guard and all host tests green.
+- [x] **CI PASSED:** [run 42445302149](https://github.com/ggrant111/wled-applehome/actions/runs/42445302149) — all host tests, D1 Mini/CYD firmware builds and OTA 70KB headroom check.
 - [ ] **Hardware:** Color wheel appears for existing paired lights; Apple Home red/green/blue and white render correctly; direct WLED edits and presets refresh Apple Home color; multi-segment device affects only main segment; current pairing/preset AIDs retained.
 - [ ] **Future:** Color temperature (actual CCT/white-channel handling), group/segment selection and WLED effects, palettes, speed and intensity in a separate advanced web interface; not represented as native HomeKit effects.
 
@@ -200,10 +200,14 @@ An always-on, **local-only** ESP32 bridge that makes existing WLED devices appea
 | v0.5 worker / gzip portal / D1 Mini + CYD builds | **Passed** | [CI run 42443428109](https://github.com/ggrant111/wled-applehome/actions/runs/42443428109) |
 | v0.5 background worker behavior with offline controllers | **Pending hardware** | [v0.5 test plan](PHASE5_TEST_PLAN.md) |
 
+| v0.6 HomeKit Hue/Saturation, D1 Mini + CYD builds, -Oz sizing | **Passed** | [CI run 42445302149](https://github.com/ggrant111/wled-applehome/actions/runs/42445302149) |
+| v0.6 real Apple Home color wheel, multi-segment targeting | **Hardware pending** | [Phase 6 test plan](PHASE6_TEST_PLAN.md) |
+
 ## Engineering risk / budget
 
 - **4MB OTA flash budget is tight.** v0.2 compiled binary uses ~1,733,463 bytes (85.3%) of each 2,031,616-byte app slot; approximately 298KB remains. Major additions (especially touchscreen/web assets) will need explicit size-budget tests, optimization, larger flash hardware, or an altered OTA strategy.
 - v0.3 linked flash use was **1,758,847 bytes (86.6%)** of 2,031,616 per OTA application slot.
+- **v0.6 full firmware.bin with GCC -Oz:** D1 Mini **1,545,312 bytes** (**486,304 free**, 76.1% OTA slot); CYD **1,545,296 bytes** (**486,320 free**). [CI 42445302149](https://github.com/ggrant111/wled-applehome/actions/runs/42445302149) passed both build and size gates. The -Oz option substantially changes compiler optimization: validate real device stability and OTA before release.
 - **v0.5 full firmware.bin:** D1 Mini **1,957,408** / 2,031,616 bytes (**74,208 free**); CYD **1,957,424** bytes (**74,192 free**) — **96.3%** of OTA slot. Portal raw HTML 13,425 bytes compresses to 5,001 bytes at build time. CI 42443428109 passed all gates.
 - **v0.4.1 full firmware.bin:** 1,956,928 / 2,031,616 bytes (96.3% OTA slot); **74,688 bytes remaining** on both D1 Mini and CYD.
 - **v0.4 linked flash:** D1 Mini **1,876,139 bytes (92.3%)**, CYD 1,876,155 (92.3%). **Full firmware.bin** (includes headers/padding): D1 Mini **1,955,232** bytes, CYD **1,955,248**; **96.2% OTA slot** and only **76,384 / 76,368 bytes spare** respectively. Do not plan significant more UI code on 4MB boards without moving to larger-flash hardware, compression, or optimizing flash use. CI requires at least 70KB spare.

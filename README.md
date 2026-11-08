@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.6.0-dev — Apple Home Hue/Saturation color wheel (**code candidate; CI and hardware tests pending**).
+**Current version:** v0.6.0-dev — Apple Home Hue/Saturation color wheel (**CI passed; hardware validation pending**). [v0.6 firmware downloads / CI](https://github.com/ggrant111/wled-applehome/actions/runs/42445302149).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -26,7 +26,7 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 
 ## v0.6 — Apple Home RGB color wheel
 
-Apple Home light accessories now expose **Hue** and **Saturation**, alongside the existing On/Brightness controls. Changing color selects **Solid** on WLED's main segment and sets RGB (white channel off), while WLED's other segments and saved presets remain untouched. Brightness remains independent; the main segment's primary color is polled back into Apple Home (animated pixel colors are not tracked). Existing paired bridge and stable AIDs are preserved; upgrade without erasing NVS. **On-device validation still pending.** See [color test plan](docs/PHASE6_TEST_PLAN.md).
+Apple Home light accessories now expose **Hue** and **Saturation**, alongside the existing On/Brightness controls. Changing color selects **Solid** on WLED's main segment and sets RGB (white channel off), while WLED's other segments and saved presets remain untouched. Brightness remains independent; the main segment's primary color is polled back into Apple Home (animated pixel colors are not tracked). Existing paired bridge and stable AIDs are preserved; upgrade without erasing NVS. **CI builds passed** (D1 Mini 1,545,312 bytes; CYD 1,545,296 bytes with -Oz; both have >486KB OTA space available). **On-device validation still pending**, especially under aggressive size optimization. See [color test plan](docs/PHASE6_TEST_PLAN.md).
 
 ## v0.5 — Network reliability and flash budget
 
