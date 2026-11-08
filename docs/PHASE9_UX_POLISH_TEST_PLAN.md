@@ -1,5 +1,7 @@
 # v0.9.3 — Screenshot-driven dashboard refinement
 
+**CI passed:** [run 42508487092](https://github.com/ggrant111/wled-applehome/actions/runs/42508487092) — browser/CSRF/gzip and host tests, both ESP32 firmware builds and OTA partition guard (1,585,216-byte images with 446,400 bytes free). This does **not** certify actual desktop/mobile appearance.
+
 ## Visual and navigation
 - [ ] OTA-install board-appropriate v0.9.3, preserving ESP32 NVS and HomeKit pairing.
 - [ ] On desktop monitor, confirm the Overview dashboard takes advantage of more of the available width and text is more legible; no horizontal overflow.

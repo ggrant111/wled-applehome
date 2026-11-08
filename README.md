@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.9.3-dev — desktop-width and Effects-screen usability refinements based on actual bridge screenshots (**CI and user on-device verification pending**). [Download firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42506904065). [Download firmware](https://github.com/ggrant111/wled-applehome/actions/runs/42505219721). [Download firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880).
+**Current version:** v0.9.3-dev — screenshot-driven responsive dashboard usability refinements (**CI passed; user desktop/mobile visual check pending**). [Download firmware](https://github.com/ggrant111/wled-applehome/actions/runs/42508487092). [Download firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42506904065). [Download firmware](https://github.com/ggrant111/wled-applehome/actions/runs/42505219721). [Download firmware artifacts](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -30,7 +30,7 @@ The user confirmed v0.9.2 is running with **five enrolled WLED lights** and **tw
 
 The portal now uses a wider desktop workspace, slightly larger text, single group tabs on desktop, and a single device dropdown on mobile. It **opens the first existing configured Effects group on initial load**; explicit user selection persists on subsequent live status refresh. Current favorites remain the prominent content. Adding a new preset or playlist moves to a compact expandable editor that is automatically open for lights without an Effects group. Loading a WLED resource catalog is explicit and its loaded-resource state is invalidated on device changes, preventing accidental additions against a stale dropdown. No saved preset/playlist data is altered.
 
-All five workspace sections, HomeKit services/AIDs, authentication, per-boot CSRF, NVS registry and WLED event/preset behavior remain unchanged. [v0.9.3 test plan](docs/PHASE9_UX_POLISH_TEST_PLAN.md).
+All five workspace sections, HomeKit services/AIDs, authentication, per-boot CSRF, NVS registry and WLED event/preset behavior remain unchanged. [v0.9.3 test plan](docs/PHASE9_UX_POLISH_TEST_PLAN.md). **CI [42508487092](https://github.com/ggrant111/wled-applehome/actions/runs/42508487092) passed** all host/browser regressions and both ESP32 builds (1,585,216-byte images, 446,400-byte OTA headroom each).
 
 ## v0.9.2 — Dashboard UX refresh
 

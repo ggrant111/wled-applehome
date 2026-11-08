@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.9.3 dashboard usability polish informed by desktop screenshots (CI/hardware pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.9.3 screenshot-driven dashboard usability polish (CI passed/merged; user desktop/mobile visual check pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -218,7 +218,7 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 - [x] **Code candidate:** Keep current named effects front and center; move adding a saved preset or playlist behind an expandable section, automatically opened for a light without a group. Maintain visible AID-change warnings for destructive edits.
 - [x] **Code candidate:** Disable Add until WLED catalog for the selected light is explicitly loaded; changing light invalidates stale catalog. Distinguish untouched catalog from WLED with no saved resources.
 - [x] **Code candidate:** Extend existing JS VM browser tests to verify default configured group, tab/label escaping, catalog lifecycle, cross-device safety and unchanged CSRF/Run behavior.
-- [ ] **CI:** Browser regression, all host tests, gzip portal, D1 Mini and CYD firmware builds / OTA headroom.
+- [x] **CI passed:** [run 42508487092](https://github.com/ggrant111/wled-applehome/actions/runs/42508487092) — all host/VM browser regression and CSRF/gzip tests, D1 Mini and CYD firmware builds and OTA size guard. Both images 1,585,216 bytes with 446,400 bytes free in each 2,031,616-byte OTA slot.
 - [ ] **User UI:** Confirm wider desktop canvas, first configured group shown by default, correct mobile dropdown and expandable Add flow on actual bridge; existing Apple Home lights and pairing unaffected.
 
 **No underlying HomeKit/NVS/REST route changes**; v0.9.3 is a dashboard-only refinement with an app/firmware version bump.
@@ -332,10 +332,14 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 | v0.9.2 local portal UX, browser/CSRF/gzip tests, D1 Mini + CYD builds | **Passed** | [CI run 42506904065](https://github.com/ggrant111/wled-applehome/actions/runs/42506904065) |
 | v0.9.2 desktop/iPhone UI and direct WLED effect Run | **Hardware pending** | [UX test plan](PHASE9_PORTAL_UX_TEST_PLAN.md) |
 
+| v0.9.3 screenshot-driven UX refinements, host/browser regressions and both ESP32 builds | **Passed** | [CI run 42508487092](https://github.com/ggrant111/wled-applehome/actions/runs/42508487092) |
+| v0.9.3 live desktop/mobile UX flow and HomeKit continuity | **Hardware pending** | [v0.9.3 test plan](PHASE9_UX_POLISH_TEST_PLAN.md) |
+
 ## Engineering risk / budget
 
 - **4MB OTA flash budget is tight.** v0.2 compiled binary uses ~1,733,463 bytes (85.3%) of each 2,031,616-byte app slot; approximately 298KB remains. Major additions (especially touchscreen/web assets) will need explicit size-budget tests, optimization, larger flash hardware, or an altered OTA strategy.
 - v0.3 linked flash use was **1,758,847 bytes (86.6%)** of 2,031,616 per OTA application slot.
+- **v0.9.3 full firmware.bin with GCC -Oz:** D1 Mini and CYD each **1,585,216 bytes**, leaving **446,400 bytes free** in each 2,031,616-byte OTA slot; [CI 42508487092](https://github.com/ggrant111/wled-applehome/actions/runs/42508487092) passed. Physical browser layout still needs user verification.
 - **v0.9.2 full firmware.bin with GCC -Oz:** D1 Mini and CYD each **1,584,544 bytes**, with **447,072 bytes free** in 2,031,616-byte OTA slots; [CI run 42506904065](https://github.com/ggrant111/wled-applehome/actions/runs/42506904065) passed build/size checks. Physical dashboard layout and WLED Run request still require user testing.
 - **v0.9.1 full firmware.bin with GCC -Oz:** D1 Mini **1,576,656 bytes** (**454,960 bytes free**); CYD **1,576,640 bytes** (**454,976 bytes free**) of 2,031,616. [CI 42505219721](https://github.com/ggrant111/wled-applehome/actions/runs/42505219721) passed all build gates. Physical playlist behavior pending.
 - **v0.9 full firmware.bin with GCC -Oz:** D1 Mini **1,574,848 bytes** (456,768 free); CYD **1,574,832 bytes** (456,784 free) in each 2,031,616-byte OTA slot. [CI run 42454610880](https://github.com/ggrant111/wled-applehome/actions/runs/42454610880) passed all gates; on-device multi-WLED performance and HomeKit display still unverified.

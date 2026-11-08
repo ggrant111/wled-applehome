@@ -156,7 +156,8 @@
 - The layout renders correctly, but the centered desktop content area is narrow with large unused screen margins, Effects has redundant dropdown and pill selectors, and the add form dominates the page even when the goal is reviewing existing favorites.
 - Refined the dashboard with a wider content area, larger typography, single desktop device tabs/mobile dropdown, default initial selection to a light that already has a group, current favorites emphasized and Add editor folded away until needed.
 - Preset/playlist catalog loads remain explicit and bound to the selected WLED device. Invalidating the old catalog on device changes prevents using the wrong device's saved preset ID.
-- Added browser VM assertions for first-group default, cross-device catalog lifecycle and unchanged Effects/CSRF functionality. **CI/device verification pending.** [Phase 9D checklist](PHASE9_UX_POLISH_TEST_PLAN.md).
+- Added browser VM assertions for first-group default, cross-device catalog lifecycle and unchanged Effects/CSRF functionality. **CI passed:** [run 42508487092](https://github.com/ggrant111/wled-applehome/actions/runs/42508487092) — host/VM browser, CSRF/gzip, D1 Mini and CYD builds and OTA headroom. Both firmware images 1,585,216 bytes, 446,400 bytes OTA free.
+- **Merged to main:** [PR #12](https://github.com/ggrant111/wled-applehome/pull/12) at 54f74b8. **User's desktop/mobile UI validation of v0.9.3 remains pending.** [Phase 9D checklist](PHASE9_UX_POLISH_TEST_PLAN.md).
 
 ## Next actions
 
