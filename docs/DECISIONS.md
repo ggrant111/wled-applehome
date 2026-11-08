@@ -91,3 +91,11 @@ HomeKit cannot natively offer arbitrary WLED effect/palette/speed sliders throug
 The first v0.6 color builds compiled but exceeded the project's 70KB OTA-app headroom rule (about 61KB remaining). Whole-framework GCC LTO attempts failed on this ESP32/Arduino/HomeSpan toolchain: default linker flags include `-fno-lto`, and enabling LTO eventually overflows instruction RAM (`iram0_0_seg`) with extensive relocation errors. **Do not ship LTO-enabled builds.**
 
 Attempt GCC 14 `-Oz` (aggressive size optimization) instead of `-Os`, without altering the ESP32 linker, NVS, HomeKit IDs or OTA partitions. Require passing both 4MB-board builds with at least 70KB spare before merging. Hardware performance/OTA testing remains mandatory.
+
+## ADR-021 — Opt-in Television InputSource experimental effects selector (2026-11-07)
+
+Use a separate **HomeKit Television accessory** with linked `InputSource` services as an experiment to surface up to five named WLED saved presets in one native Apple Home selector. This is a **TV service**, not a new standard Lighting effect picker. Keep it **disabled by default**, only one controller total during prototype, tied to exactly one already enrolled WLED device. The HomeSpan TV guide reports generic TV tile icons when bridged, so Apple Home presentation is an explicit hardware acceptance gate.
+
+Configure the UI through Digest+CSRF protected web endpoints. Store controller AID, bound light AID, and ordered preset IDs/names in separate `wled-fx` NVS. Use `DeviceRegistry::allocateAid()` to reserve unique non-reusable AIDs; never alter light/preset-switch AIDs or existing storage. Input identifiers are the consecutive 1..N ordered slots. Removal deletes controller AID and does not touch the WLED device or its saved presets. Reboot after topology changes.
+
+A Television InputSource selection queues only WLED `{"ps":ID}` via the existing network worker; on/off maps to WLED power-off and reapply-current-preset on power-on. Keep the normal full-color LightBulb accessory as-is, with its state updated by WLED polling. Do not claim future WLED effect/palette selection to be supported by Apple’s Lighting API.

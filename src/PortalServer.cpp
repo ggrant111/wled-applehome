@@ -22,13 +22,15 @@ bool parseIpv4(String text, String &normalized) {
 }
 
 PortalServer::PortalServer(DeviceRegistry &devices, PresetRegistry &presets,
+                           EffectsControllerRegistry &effects,
                            WledDiscovery &discovery, WledClient *clients,
                            WledLightService **services)
-    : devices_(devices), presets_(presets), discovery_(discovery),
-      clients_(clients), services_(services) {}
+    : devices_(devices), presets_(presets), effects_(effects),
+      discovery_(discovery), clients_(clients), services_(services) {}
 
 void PortalServer::configure(const String &adminPassword) {
   password_ = adminPassword;
+  bootEffectsAid_ = effects_.record().aid;
   for (unsigned i = 0; i < bridge::kMaxDevices; ++i)
     bootAids_[i] = devices_.at(i).aid;
 
@@ -103,7 +105,7 @@ void PortalServer::handleStatus() {
   http_.sendHeader("X-Bridge-Token", token_);
   JsonDocument doc;
   doc["ok"] = true;
-  doc["version"] = "0.6.0-dev";
+  doc["version"] = "0.7.0-dev";
   doc["wifi"] = WiFi.status() == WL_CONNECTED;
   doc["ip"] = WiFi.localIP().toString();
   doc["rssi"] = WiFi.RSSI();
@@ -145,6 +147,21 @@ void PortalServer::handleStatus() {
     row["deviceAid"] = p.deviceAid;
     row["presetId"] = p.presetId;
     row["name"] = p.name;
+  }
+  JsonArray controllers = doc["effectControllers"].to<JsonArray>();
+  if (effects_.configured()) {
+    const EffectsControllerRecord &e = effects_.record();
+    JsonObject controller = controllers.add<JsonObject>();
+    controller["aid"] = e.aid;
+    controller["deviceAid"] = e.deviceAid;
+    controller["pending"] = e.aid != bootEffectsAid_;
+    JsonArray inputs = controller["inputs"].to<JsonArray>();
+    for (unsigned i = 0; i < e.count(); ++i) {
+      JsonObject item = inputs.add<JsonObject>();
+      item["id"] = i + 1;
+      item["presetId"] = e.inputs[i].presetId;
+      item["name"] = e.inputs[i].name;
+    }
   }
   sendJSON(doc);
 }
@@ -267,10 +284,15 @@ void PortalServer::handleRemoveDevice() {
     return respond(500, "Could not persist removal");
   clients_[index].setHost("");
   const unsigned removed = presets_.removeForDevice(aid);
+  const bool attached = effects_.configured() && effects_.record().deviceAid == aid;
+  const bool removedEffects = attached && effects_.remove(effects_.record().aid);
+  if (attached && !removedEffects)
+    Serial.println("[Effects] WARNING unable to remove orphaned controller; boot will suppress it");
   JsonDocument response;
   response["ok"] = true;
   response["requiresReboot"] = true;
   response["removedPresetSwitches"] = removed;
+  response["removedEffectsController"] = removedEffects;
   response["message"] = "Light removed from registry. Restart bridge to update Apple Home.";
   sendJSON(response);
 }
@@ -319,6 +341,54 @@ void PortalServer::handleRemovePreset() {
   sendJSON(response);
 }
 
+void PortalServer::handleAddEffect() {
+  if (!authorize(true)) return;
+  uint32_t aid = 0, id = 0;
+  if (!parseRequestId(http_.arg("aid"), aid)
+      || !parseRequestId(http_.arg("preset"), id)
+      || !bridge::validPresetId(id))
+    return respond(400, "Select a WLED light and saved preset (1-250)");
+  const int index = devices_.indexByAid(aid);
+  if (index < 0) return respond(404, "Light not registered");
+  if (effects_.configured() && effects_.record().deviceAid != aid)
+    return respond(409, "Prototype supports one Effects Controller; remove it first");
+
+  String name;
+  if (!clients_[index].lookupPresetName(static_cast<uint8_t>(id), name))
+    return respond(502, "Saved WLED preset not found or controller offline");
+
+  uint32_t tvAid = 0;
+  const EffectsAddResult result =
+      effects_.add(devices_, aid, static_cast<uint8_t>(id), name, &tvAid);
+  if (result == EffectsAddResult::Invalid) return respond(400, "Invalid WLED light/preset");
+  if (result == EffectsAddResult::Full) return respond(409, "Five effects maximum in prototype");
+  if (result == EffectsAddResult::AssignedToAnotherLight)
+    return respond(409, "Only one experimental controller supported");
+  if (result == EffectsAddResult::PersistenceFailed)
+    return respond(500, "Unable to save effects controller");
+
+  JsonDocument response;
+  response["ok"] = true;
+  response["aid"] = tvAid;
+  response["requiresReboot"] = result != EffectsAddResult::Exists;
+  response["message"] = result == EffectsAddResult::Exists
+      ? "Preset already listed in Effects Controller."
+      : "Saved to TV-style effects selector. Restart bridge to update Apple Home.";
+  sendJSON(response);
+}
+
+void PortalServer::handleRemoveEffectsController() {
+  if (!authorize(true)) return;
+  uint32_t aid = 0;
+  if (!parseRequestId(http_.arg("aid"), aid) || !effects_.remove(aid))
+    return respond(404, "Effects Controller not found");
+  JsonDocument response;
+  response["ok"] = true;
+  response["requiresReboot"] = true;
+  response["message"] = "Experimental Effects Controller removed. Restart bridge; lights and preset switches remain.";
+  sendJSON(response);
+}
+
 void PortalServer::handleRestart() {
   if (!authorize(true)) return;
   if (http_.arg("confirm") != "REBOOT")
@@ -341,6 +411,8 @@ void PortalServer::routes() {
   http_.on("/api/devices/remove", HTTP_POST, [this]() { handleRemoveDevice(); });
   http_.on("/api/presets/add", HTTP_POST, [this]() { handleAddPreset(); });
   http_.on("/api/presets/remove", HTTP_POST, [this]() { handleRemovePreset(); });
+  http_.on("/api/effects/add", HTTP_POST, [this]() { handleAddEffect(); });
+  http_.on("/api/effects/remove", HTTP_POST, [this]() { handleRemoveEffectsController(); });
   http_.on("/api/restart", HTTP_POST, [this]() { handleRestart(); });
   http_.onNotFound([this]() {
     if (authorize()) respond(404, "Endpoint not found");

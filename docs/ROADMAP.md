@@ -2,7 +2,7 @@
 
 > **Source of truth:** Update this file whenever a milestone changes, and record decisions in `docs/DECISIONS.md`. Do not mark hardware or HomeKit pairing tests complete from a successful compile alone.
 >
-> **Updated:** 2026-11-07 · **Active milestone:** v0.6 Apple Home RGB color (user-confirmed color changes and Siri control; remaining test gates pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
+> **Updated:** 2026-11-07 · **Active milestone:** v0.7 experimental opt-in TV-style effects selector (implementation/CI testing; user hardware pending) · **Primary target:** ESP32 D1 Mini · **Secondary target:** ESP32-2432S028R CYD (headless mode first).
 
 ## Goal
 
@@ -120,6 +120,19 @@ Apple Home's standard LightBulb characteristic list includes On, Brightness, Hue
 - **Recommended UX:** Keep HomeKit preset trigger switches internally for WLED JSON preset actions, but let users organize a small number into named **Apple Home scenes** (e.g., Fireplace, Rainbow, Movie Night). Scenes expose a natural Home app tile and Siri invocation without hijacking the color wheel.
 - **Future software exploration (not implemented):** Optional scene-helper setup documentation and clearer preset switch names; possible Apple Shortcuts integration. Apple Home scenes must be configured by the user in Apple's Home app; the ESP32/HomeSpan bridge cannot independently create scenes in the user's Apple Home database.
 - **Avoid:** Mapping special colors or brightness values to effects. That undermines basic light control and breaks Siri/color semantics. Alternative HomeKit service types won't place WLED effects inside the native LightBulb controls.
+
+### Phase 7 / v0.7 — Experimental HomeKit Effects Controller using Television inputs
+
+- [x] **Candidate code:** Create exactly ONE **opt-in** TV-style HomeKit accessory linked to ONE existing WLED light, initially with up to FIVE explicitly selected **saved** WLED presets.
+- [x] **Candidate code:** A list of `Service::InputSource` items with `ConfiguredName`, `Identifier` (1–5), and `IsConfigured(1)`, linked to `Service::Television` with `ActiveIdentifier`, `Active`, and deterministic `DisplayOrder`.
+- [x] **Candidate code:** Selecting an input queues the chosen WLED saved preset using the existing nonblocking WLED worker; TV accessory Off turns off the light, On reapplies last selected preset. WLED preset changes can update selected input after state polling.
+- [x] **Candidate code:** New `wled-fx` NVS namespace, allocated AID from existing non-recycled allocator, independent from other WLED lights and preset switches; controller absent unless user opts in. Portal can add selected presets / remove controller; changes require bridge reboot.
+- [x] **Candidate code:** Native NVS migration/identity/slot-limit tests and portal web security checks; roadmap and test plan.
+- [ ] **CI:** Host tests, both boards, size guard, browser regression.
+- [ ] **Hardware:** Verify Apple Home displays selector for a **bridged** Television service (HomeSpan documents generic icon in bridged cases). Verify input names, five selections, actual WLED preset actions, HomeKit light state sync, restart/pairing persistence, removing selector without losing lights.
+- [ ] **Future:** If Apple Home displays input selection reliably, expand from one prototype to optional controller per light, better refresh handling, and scene integration.
+
+**Important:** Apple Home **does not have a WLED effects API**. This repurposes TV input selection and may appear under Television/AV rather than Lighting, with TV power semantics. No guarantee that the iOS Home app accepts a TV service behind the bridge. The existing light tile is NOT modified; user must enroll an effects controller in the web portal after updating.
 
 ## After MVP
 

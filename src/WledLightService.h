@@ -11,6 +11,7 @@ public:
   bool online() const { return online_; }
   bool observedOn() const { return observedOn_; }
   int observedBrightness() const { return observedBrightness_; }
+  int observedPresetId() const { return lastObservedPresetId_; }
   uint32_t lastSeenMs() const { return lastSeenMs_; }
   uint16_t pendingCommands() const { return pendingCommands_; }
   uint32_t networkFailures() const { return failures_; }

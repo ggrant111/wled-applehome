@@ -54,6 +54,13 @@ jobs:
           g++ -std=c++17 -Wall -Wextra -Werror -Iinclude tests/test_color_math.cpp -o /tmp/bridge-color-math
           /tmp/bridge-color-math
 
+      - name: Test opt-in Effects Controller NVS registry and stable AIDs
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -Itests/stubs -Isrc -Iinclude \
+            tests/test_effects_controller.cpp src/DeviceRegistry.cpp \
+            src/EffectsControllerRegistry.cpp -o /tmp/bridge-effects-controller
+          /tmp/bridge-effects-controller
+
   firmware:
     runs-on: ubuntu-latest
     strategy:

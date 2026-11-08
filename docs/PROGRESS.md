@@ -88,6 +88,15 @@
 - Only the color control and Siri path are verified by this report; do **not** infer successful WLED-to-Home color synchronization, preset effects, eight-device stress, OTA update, multi-segment isolation or long-run stability.
 - Discussed native effects: HomeKit's LightBulb service does not expose an effects/palettes picker. Recommend user-created Apple Home scenes that activate selected existing preset switches, giving named scenes and Siri invocation while retaining standard light color controls. No firmware change required for user-created scenes.
 
+## 2026-11-07 — v0.7 experimental TV-input effects selector candidate
+
+- User approved an experiment to expose several WLED saved presets as one HomeKit input selector rather than individual momentary switches.
+- Implemented an **opt-in** prototype that publishes one separate bridged Television service with linked InputSources (up to 5), persistent AID and preset IDs/names. This leaves normal HomeKit light, Siri colors, and existing preset switch AIDs untouched.
+- One experimental controller, bound to one WLED light, is added from the authenticated web portal after choosing the light and saved preset. Subsequent additions append inputs until reaching five; user can remove the entire controller. Reboot required for the HomeKit accessory topology to refresh.
+- Selection queues a saved WLED preset using v0.5 worker. TV Off sends WLED Off; TV On re-applies the last selected preset. WLED-originated saved preset selections are reconciled back to TV input when observed.
+- HomeSpan's TV guide warns that Television behind a bridge may show a **generic icon**, and iOS has no supported Lighting effects list. Actual Apple Home UI on user's iPhone remains to be validated.
+- **CI and physical device tests pending** until build and acceptance checklist are complete; see [Phase 7 test plan](PHASE7_TEST_PLAN.md).
+
 ## Next actions
 
 1. **Done:** v0.4 host tests, migration regression, D1 Mini/CYD builds and OTA size guard passed.

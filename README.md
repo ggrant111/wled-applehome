@@ -2,7 +2,7 @@
 
 A **local-only** Apple Home / Siri bridge for existing WLED controllers, running on an ESP32. The firmware exposes WLED controllers as independently dimmable HomeKit lights, without modifying their WLED firmware.
 
-**Current version:** v0.6.0-dev — Apple Home Hue/Saturation color wheel (**CI passed; hardware validation pending**). [v0.6 firmware downloads / CI](https://github.com/ggrant111/wled-applehome/actions/runs/42445302149).
+**Current version:** v0.7.0-dev — experimental opt-in TV-style effects selector (**code candidate; CI and Apple Home UI test pending**).
 
 ## Hardware
 - **Primary:** ESP32 D1 Mini (`wemos_d1_mini32`, not ESP8266).
@@ -23,6 +23,10 @@ A **local-only** Apple Home / Siri bridge for existing WLED controllers, running
 - Automated PlatformIO builds for D1 Mini/CYD and host-side brightness/registry policy tests.
 
 **Build verified:** v0.3 passed native tests, D1 Mini and CYD firmware builds ([CI run 42438580722](https://github.com/ggrant111/wled-applehome/actions/runs/42438580722)). **Physical tests remain pending** for Phases 2, 3 and 4. **Not yet hardware-verified:** v0.2 discovery, 8-light operation, and paired Apple Home database refresh after adding/removing devices. No presets, web setup UI, or CYD touchscreen interface yet.
+
+## v0.7 — Experimental effects selector
+
+The management portal can optionally expose **one** HomeKit Television-style Effects Controller for **one** WLED light. Select up to **five existing saved WLED presets** in the portal. After a bridge restart, Apple Home should present these as named inputs under a separate accessory; each input invokes the corresponding WLED preset via the existing queued HTTP worker. This is NOT a native Lighting effects dropdown, and TV-style accessories may show a generic icon when bridged. The current full-color light stays intact. See [Phase 7 checklist](docs/PHASE7_TEST_PLAN.md).
 
 ## v0.6 — Apple Home RGB color wheel
 

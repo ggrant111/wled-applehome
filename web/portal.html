@@ -43,7 +43,7 @@ footer{color:var(--muted);font-size:12px;padding-top:12px}
 <main>
   <div class="top">
     <div><div class="eyebrow">GLOWDECK / LOCAL BRIDGE</div><h1>WLED Apple Home</h1>
-      <p>Lights, WLED presets, discovery and bridge health.</p></div>
+      <p>Lights, WLED presets, experimental effects selector and bridge health.</p></div>
     <div class="status"><span class="dot"></span><span id="connection">Connecting...</span></div>
   </div>
   <div id="notice"></div>
@@ -53,7 +53,7 @@ footer{color:var(--muted);font-size:12px;padding-top:12px}
     <div class="stat"><span>PRESET SWITCHES</span><strong id="presetCount">—</strong></div>
     <div class="stat"><span>FREE HEAP</span><strong id="heap">—</strong></div>
   </div>
-  <div class="banner"><strong>Changes to Apple Home:</strong> Adding/removing lights or preset switches requires a bridge restart. Your existing pairing should be retained. Never erase the ESP32 flash/NVS for an update.</div>
+  <div class="banner"><strong>Changes to Apple Home:</strong> Adding/removing lights, preset switches or effects inputs requires a bridge restart. Your existing pairing should be retained. Never erase the ESP32 flash/NVS for an update.</div>
   <div class="panels">
     <section>
       <div class="panel">
@@ -76,8 +76,15 @@ footer{color:var(--muted);font-size:12px;padding-top:12px}
         <div id="presets"></div>
         <form id="addPreset">
           <div class="actionrow"><select id="presetLight" aria-label="Choose WLED light"></select><button type="button" id="loadCatalog">Load presets</button></div>
-          <div class="actionrow"><select id="presetId" aria-label="Choose saved preset"><option value="">Load a catalog first</option></select><button type="submit" class="primary">Add to Home</button></div>
+          <div class="actionrow"><select id="presetId" aria-label="Choose saved preset"><option value="">Load a catalog first</option></select><button type="submit">Add as switch</button></div>
         </form>
+      </div>
+      <div class="panel">
+        <h2>Effects Controller <span class="pill">EXPERIMENTAL</span></h2>
+        <p>Choose up to five saved WLED presets for one light. Apple Home may show this as a TV or generic accessory with a named input selector. Your normal RGB light stays unchanged.</p>
+        <div id="effectController"></div>
+        <div class="actionrow"><button type="button" class="primary" id="addEffect">Add selected preset to Effects Controller</button></div>
+        <p class="small">Uses the light and preset selected above. Restart the bridge after edits. TV power Off turns that WLED light Off; turning it On reapplies the last selected preset.</p>
       </div>
       <div class="panel">
         <h2>Bridge maintenance</h2>
@@ -93,7 +100,7 @@ footer{color:var(--muted);font-size:12px;padding-top:12px}
 "use strict";
 let CSRF="";
 const $=id=>document.getElementById(id);
-let snapshot={devices:[],presets:[]};
+let snapshot={devices:[],presets:[],effectControllers:[]};
 function safe(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function notice(message){const n=$("notice");n.innerHTML='<div class="notice">'+safe(message)+'</div>';setTimeout(()=>{n.textContent="";},7000);}
 async function api(path,fields,retry=true){
@@ -154,6 +161,12 @@ function render(data){
   $("presets").innerHTML=data.presets.length?data.presets.map(p=>
     '<div class="device"><div class="devicehead"><div><div class="title">'+safe(p.name)+'</div><div class="meta">Switch AID '+p.aid+' · Light AID '+p.deviceAid+' · Preset '+p.presetId+'</div></div>'+
     '<button class="danger" data-action="deletePreset" data-aid="'+p.aid+'">Remove</button></div></div>').join(""):"<p>No preset switches selected yet.</p>";
+  const controllers=data.effectControllers||[];
+  $("effectController").innerHTML=controllers.length?controllers.map(c=>
+    '<div class="device"><div class="devicehead"><div><div class="title">Effects selector · Light AID '+c.deviceAid+'</div><div class="meta">TV-style accessory AID '+c.aid+' · '+(c.pending?'Restart needed':'Published on last boot')+'</div></div>'+
+    '<button class="danger" data-action="deleteEffects" data-aid="'+c.aid+'">Remove controller</button></div>'+
+    '<div class="small">'+(c.inputs||[]).map(x=>x.id+'. '+safe(x.name)+' (preset #'+x.presetId+')').join(' · ')+'</div></div>').join(""):
+    '<p>None configured. Load a WLED preset above to create one.</p>';
   const lightSelect=$("presetLight");const previous=lightSelect.value;
   lightSelect.innerHTML=data.devices.map(d=>'<option value="'+d.aid+'">'+safe(d.name)+' (AID '+d.aid+')</option>').join("");
   if(data.devices.some(d=>String(d.aid)===previous))lightSelect.value=previous;
@@ -184,6 +197,12 @@ $("loadCatalog").onclick=async()=>{
     $("presetId").innerHTML=(result.presets||[]).map(p=>'<option value="'+p.id+'">'+safe(p.name)+' (#'+p.id+')</option>').join("")||'<option value="">No saved presets found</option>';
   }catch(e){notice(e.message);}
 };
+$("presetLight").onchange=()=>{$("presetId").innerHTML='<option value="">Load presets for this light</option>';};
+$("addEffect").onclick=async()=>{
+  const aid=$("presetLight").value,preset=$("presetId").value;
+  if(!aid||!preset)return notice("Load and choose a saved WLED preset first.");
+  try{await mutate("/api/effects/add",{aid,preset});}catch(ex){notice(ex.message);}
+};
 $("addPreset").onsubmit=async e=>{
   e.preventDefault();
   const aid=$("presetLight").value, preset=$("presetId").value;
@@ -202,6 +221,7 @@ document.body.addEventListener("click",async e=>{
     }
     if(action==="remove"&&confirm("Remove this light and its preset switches from Apple Home after restart?"))await mutate("/api/devices/remove",{aid});
     if(action==="deletePreset"&&confirm("Remove this HomeKit preset switch?"))await mutate("/api/presets/remove",{aid});
+    if(action==="deleteEffects"&&confirm("Remove the experimental TV-style effects selector? Lights and preset switches stay."))await mutate("/api/effects/remove",{aid});
   }catch(ex){notice(ex.message);}finally{el.disabled=false;}
 });
 $("restart").onclick=async()=>{
